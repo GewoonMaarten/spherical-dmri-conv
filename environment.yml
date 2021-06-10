@@ -11,4 +11,5 @@ dependencies:
   - pytorch=1.8.*
   - cudatoolkit=11.1
   pip:
-    - h5py=3.2.1
+    - h5py
+    - python-dotenv

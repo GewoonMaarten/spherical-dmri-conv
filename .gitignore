@@ -1,6 +1,7 @@
 # DL training related directories
 runs
 logs
+data
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

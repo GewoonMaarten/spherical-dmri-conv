@@ -4,12 +4,14 @@ channels:
   - nvidia
   - anaconda
   - defaults
+  - conda-forge
 dependencies:
   - numpy=1.20.*
   - pandas=1.2.*
-  - python=3.8.*
+  - python=3.9
   - pytorch=1.8.*
-  - cudatoolkit=11.1
-  pip:
+  - cudatoolkit=11.1.*
+  - pip
+  - pip:
     - h5py
     - python-dotenv

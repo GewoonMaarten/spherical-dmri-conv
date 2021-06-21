@@ -10,6 +10,7 @@ NOTSET      0
 """
 
 import logging
+import sys
 
 from tqdm import tqdm
 
@@ -75,13 +76,13 @@ class ColorFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def init_logger(name, log_level):
+def init_logger(name, log_level = 30):
     """Create a logger and add a colored formatter if not added already"""
 
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
     if not logger.hasHandlers():
-        stream = logging.StreamHandler()
+        stream = logging.StreamHandler(stream=sys.stdout)
         stream.setLevel(log_level)
         stream.setFormatter(ColorFormatter())
 

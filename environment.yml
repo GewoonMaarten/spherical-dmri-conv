@@ -13,5 +13,6 @@ dependencies:
   - cudatoolkit=11.1.*
   - pip
   - pip:
-    - h5py
-    - python-dotenv
+      - h5py
+      - python-dotenv
+      - tqdm=4.*

@@ -1,3 +1,5 @@
+.vscode
+
 # DL training related directories
 runs
 logs

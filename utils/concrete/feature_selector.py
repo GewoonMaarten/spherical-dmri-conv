@@ -14,8 +14,9 @@ class ConcreteAutoencoderFeatureSelector():
 
     # def __init__(self, K, output_function, num_epochs = 100, learning_rate = 0.001, start_temp = 10.0, min_temp = 0.1, tryout_limit = 5, input_dim = 1344, callback=None, writer=None): #batch_size = None,
     # , losstrain=None, lossval=None): #batch_size = None,
-    def __init__(self, K, device, num_features=500, num_epochs=100, learning_rate=0.001, start_temp=10.0, min_temp=0.1, tryout_limit=5, input_dim=1344, checkpt=True, callback=None, writer=None, path=''):
+    def __init__(self, K, decoder, device, num_features=500, num_epochs=100, learning_rate=0.001, start_temp=10.0, min_temp=0.1, tryout_limit=5, input_dim=1344, checkpt=True, callback=None, writer=None, path=''):
         self.K = K  # equivalent to output_dim
+        self.decoder = decoder
         self.device = device
         # self.output_function = output_function # this function is now included in the ConcreteSelect class
         # but now we have to define the number of features to be extracted from the encoder
@@ -51,7 +52,7 @@ class ConcreteAutoencoderFeatureSelector():
 
             # we apply the model
             self.model = ConcreteSelect(
-                self.K, self.input_dim, self.device, self.num_features, self.start_temp, self.min_temp, alpha).to(self.device)
+                self.K, self.input_dim, self.decoder, self.device, self.num_features, self.start_temp, self.min_temp, alpha).to(self.device)
 
             # we define the loss and the optimizer functions
             criterion = nn.MSELoss().to(self.device)

@@ -4,14 +4,47 @@ from torch import nn
 import torch.nn.functional as F
 
 
+def decoder_1l(n_features, device):
+    dense1344 = nn.Linear(n_features, 1344, device=device)
+
+    def decoder(x):
+        return dense1344(x)
+    return decoder
+
+
+def decoder_2l(n_features, device):
+    dense1000 = nn.Linear(n_features, 1000, device=device)
+    dense1344 = nn.Linear(1000, 1344, device=device)
+    act = nn.LeakyReLU(0.2)
+
+    def decoder(x):
+        x = act(dense1000(x))
+        return dense1344(x)
+    return decoder
+
+
+def decoder_3l(n_features, device):
+    dense800 = nn.Linear(n_features, 1000, device=device)
+    dense1000 = nn.Linear(800, 1000, device=device)
+    dense1344 = nn.Linear(1000, 1344, device=device)
+    act = nn.LeakyReLU(0.2)
+
+    def decoder(x):
+        x = act(dense800(x))
+        x = act(dense1000(x))
+        return dense1344(x)
+    return decoder
+
+
 class ConcreteSelect(nn.Module):
 
-    def __init__(self, output_dim, input_shape, device, n_features=500, start_temp=10.0, min_temp=0.1, alpha=0.99999, **kwargs):
+    def __init__(self, output_dim, input_shape, decoder, device, n_features=500, start_temp=10.0, min_temp=0.1, alpha=0.99999, **kwargs):
         super(ConcreteSelect, self).__init__(**kwargs)
         # encoder
         self.output_dim = output_dim
         # the input layer has output (None,N_params_in). In this case, probably equal to input_dim
         self.input_shape = input_shape
+        self.decoder = decoder(n_features, device)
         self.device = device
         self.start_temp = start_temp
         #self.min_temp = K.constant(min_temp)
@@ -28,14 +61,8 @@ class ConcreteSelect(nn.Module):
             self.output_dim, self.input_shape, device=self.device))
         self.logits = nn.Parameter(tensor_logits, requires_grad=True)
 
-        # for the decoder, we define three different Linear/dense layers and the activation function
-        self.dense800 = nn.Linear(n_features, 800)
-        # self.dense800 = nn.Linear(500,800) # the example for the standard 500 features value
-        self.dense1000 = nn.Linear(800, 1000)
-        self.dense1344 = nn.Linear(1000, 1344)
-        self.act = nn.LeakyReLU(0.2)
-
     # equivalent to call in Keras -> encoder, the concrete layer itself
+
     def encoder(self, X, training=None):
 
         uniform = torch.rand(self.logits.size(), device=self.device)
@@ -64,15 +91,6 @@ class ConcreteSelect(nn.Module):
         # dot is not exactly equal to a dot product, it could be a matrix product in keras
         Y = torch.matmul(X, torch.transpose(self.selections.float(), 0, 1))
         return Y
-
-    # decoder: we suppose the two-layers scheme. In keras this is defined outside
-    def decoder(self, x):
-        # x.to("cpu")
-        x = self.act(self.dense800(x))
-        x = self.act(self.dense1000(x))
-        x = self.dense1344(x)
-
-        return x
 
     def forward(self, X, training=None):
         y = self.encoder(X)  # selected features

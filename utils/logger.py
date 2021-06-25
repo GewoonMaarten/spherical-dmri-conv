@@ -10,6 +10,7 @@ NOTSET      0
 
 import logging
 import sys
+from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
 from tqdm import tqdm
@@ -30,7 +31,7 @@ class logging_tqdm(tqdm):
         mininterval: float = 1,
         bar_format: str = "{desc}{percentage:3.0f}%{r_bar}",
         desc: str = "progress: ",
-        **kwargs
+        **kwargs,
     ):
         self._logger = logger
         super().__init__(
@@ -81,15 +82,17 @@ def init_logger(name, log_level=30):
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
     if not logger.hasHandlers():
-        path = Path(Path(__file__).parent.parent, "logs", "geometric.logs")
+        path = Path(Path(__file__).parent.parent, "logs", f"{name}.log")
+        path.parent.mkdir(parents=True, exist_ok=True)
 
         streamHandler = logging.StreamHandler(stream=sys.stdout)
         streamHandler.setLevel(log_level)
         streamHandler.setFormatter(ColorFormatter())
 
-        fileHandler = logging.TimedRotatingFileHandler(path, when="h", interval=1)
+        fileHandler = TimedRotatingFileHandler(path, when="h", interval=1)
         fileHandler.setLevel(log_level)
-        fileHandler.setFormatter(FORMATTER)
+        formatter = logging.Formatter(FORMATTER)
+        fileHandler.setFormatter(formatter)
 
         logger.addHandler(streamHandler)
         logger.addHandler(fileHandler)

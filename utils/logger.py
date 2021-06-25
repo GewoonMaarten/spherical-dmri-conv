@@ -1,4 +1,3 @@
-
 """
 Logging levels:
 CRITICAL    50
@@ -11,30 +10,31 @@ NOTSET      0
 
 import logging
 import sys
+from pathlib import Path
 
 from tqdm import tqdm
 
 from .env import LOGGING_LEVEL
 
-LOGGER_NAME = 'geometric-dl'
+LOGGER_NAME = "geometric-dl"
+FORMATTER = (
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+)
 
 
 class logging_tqdm(tqdm):
     def __init__(
-            self,
-            *args,
-            logger: logging.Logger = None,
-            mininterval: float = 1,
-            bar_format: str = '{desc}{percentage:3.0f}%{r_bar}',
-            desc: str = 'progress: ',
-            **kwargs):
+        self,
+        *args,
+        logger: logging.Logger = None,
+        mininterval: float = 1,
+        bar_format: str = "{desc}{percentage:3.0f}%{r_bar}",
+        desc: str = "progress: ",
+        **kwargs
+    ):
         self._logger = logger
         super().__init__(
-            *args,
-            mininterval=mininterval,
-            bar_format=bar_format,
-            desc=desc,
-            **kwargs
+            *args, mininterval=mininterval, bar_format=bar_format, desc=desc, **kwargs
         )
 
     @property
@@ -49,7 +49,7 @@ class logging_tqdm(tqdm):
             return
         if not msg:
             msg = self.__str__()
-        self.logger.info('%s', msg)
+        self.logger.info("%s", msg)
 
 
 class ColorFormatter(logging.Formatter):
@@ -60,14 +60,13 @@ class ColorFormatter(logging.Formatter):
     red = "\x1b[31;21m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
 
     FORMATS = {
-        logging.DEBUG: grey + format + reset,
-        logging.INFO: grey + format + reset,
-        logging.WARNING: yellow + format + reset,
-        logging.ERROR: red + format + reset,
-        logging.CRITICAL: bold_red + format + reset
+        logging.DEBUG: grey + FORMATTER + reset,
+        logging.INFO: grey + FORMATTER + reset,
+        logging.WARNING: yellow + FORMATTER + reset,
+        logging.ERROR: red + FORMATTER + reset,
+        logging.CRITICAL: bold_red + FORMATTER + reset,
     }
 
     def format(self, record):
@@ -76,17 +75,24 @@ class ColorFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def init_logger(name, log_level = 30):
-    """Create a logger and add a colored formatter if not added already"""
+def init_logger(name, log_level=30):
+    """Create a logger with a stream handler and a file handler"""
 
     logger = logging.getLogger(name)
     logger.setLevel(log_level)
     if not logger.hasHandlers():
-        stream = logging.StreamHandler(stream=sys.stdout)
-        stream.setLevel(log_level)
-        stream.setFormatter(ColorFormatter())
+        path = Path(Path(__file__).parent.parent, "logs", "geometric.logs")
 
-        logger.addHandler(stream)
+        streamHandler = logging.StreamHandler(stream=sys.stdout)
+        streamHandler.setLevel(log_level)
+        streamHandler.setFormatter(ColorFormatter())
+
+        fileHandler = logging.TimedRotatingFileHandler(path, when="h", interval=1)
+        fileHandler.setLevel(log_level)
+        fileHandler.setFormatter(FORMATTER)
+
+        logger.addHandler(streamHandler)
+        logger.addHandler(fileHandler)
 
 
 init_logger(LOGGER_NAME, LOGGING_LEVEL)

@@ -70,8 +70,6 @@ class ConcreteAutoencoderFeatureSelector():
 
             stopper_callback = StopperCallback()  # writer=self.writer)
 
-            logger.info('%s', self.callback)
-
             for epoch in range(num_epochs):
 
                 if self.checkpt == True:
@@ -81,32 +79,14 @@ class ConcreteAutoencoderFeatureSelector():
                 value_stop = torch.mean(
                     torch.max(F.softmax(self.model.logits, dim=1), 1).values)
 
-                logger.info('epoch: %s/%s', epoch, num_epochs)
-                logger.info('mean max of probabilities: %.8f, temperature: %.8f',
-                            value_stop.item(), self.model.temp.item())
-
                 if value_stop >= stopper_callback.mean_max_target:
                     break
 
                 self.model.train()
-#                 with torch.profiler.profile(
-#                     activities=[
-#                         torch.profiler.ProfilerActivity.CPU,
-#                         torch.profiler.ProfilerActivity.CUDA],
-#                     schedule=torch.profiler.schedule(
-#                         wait=2,
-#                         warmup=3,
-#                         active=6),
-#                     on_trace_ready=torch.profiler.tensorboard_trace_handler('./logs', worker_name='worker0'),
-#                     record_shapes=True,
-#                     profile_memory=True,
-#                     with_stack=True
-#                 ) as p:
+
+                total_loss, total_val_loss = 0, 0
                 for j, signals in enumerate(X):
                     signals = signals.to(self.device)
-                    # just to check how it's going, the next two lines can be commented or removed
-                    if(j % 500 == 0):
-                        logger.info("iteration: %s", j)
 
                     # steps in pytorch:
                     # 1. Initialise gradients at the start of each batch
@@ -127,10 +107,10 @@ class ConcreteAutoencoderFeatureSelector():
 
                     # Backward pass
                     loss.backward()
-
                     # Compute the loss and update the weights
                     optimizer.step()
-#                         p.step()
+
+                    total_loss += loss.item()
 
                 if val_X is not None:
                     # Evaluate the model
@@ -142,8 +122,16 @@ class ConcreteAutoencoderFeatureSelector():
                         outputs_pred, _ = self.model(signals)
 
                         loss = criterion(outputs_pred, signals)
+                        total_val_loss += loss.item()
 
-                logger.info('loss: %0.4f', loss.item())
+                total_loss = total_loss / len(X)
+                total_val_loss = total_val_loss / len(val_X)
+
+                logger.info('epoch: %s/%s, loss: %4.4f, val loss: %4.4f',
+                            epoch + 1, num_epochs, total_loss, total_val_loss)
+                logger.info('mean max of probabilities: %.8f, temperature: %.8f',
+                            value_stop.item(), self.model.temp.item())
+
                 # save for checkpoint
                 torch.save({'epoch': epoch,
                             'model_state_dict': self.model.state_dict(),

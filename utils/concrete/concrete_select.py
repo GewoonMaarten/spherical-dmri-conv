@@ -24,7 +24,7 @@ def decoder_2l(n_features, device):
 
 
 def decoder_3l(n_features, device):
-    dense800 = nn.Linear(n_features, 1000, device=device)
+    dense800 = nn.Linear(n_features, 800, device=device)
     dense1000 = nn.Linear(800, 1000, device=device)
     dense1344 = nn.Linear(1000, 1344, device=device)
     act = nn.LeakyReLU(0.2)
@@ -63,7 +63,7 @@ class ConcreteSelect(nn.Module):
 
     # equivalent to call in Keras -> encoder, the concrete layer itself
 
-    def encoder(self, X, training=None):
+    def encoder(self, X):
 
         uniform = torch.rand(self.logits.size(), device=self.device)
         gumbel = -torch.log(-torch.log(uniform))
@@ -78,10 +78,6 @@ class ConcreteSelect(nn.Module):
         discrete_logits = F.one_hot(torch.argmax(
             self.logits, dim_argmax), num_classes=self.logits.size()[1])
 
-        # probably unnecessary
-        if training is None:
-            training = self.training
-
         if self.training:
             self.selections = samples
         else:
@@ -92,7 +88,7 @@ class ConcreteSelect(nn.Module):
         Y = torch.matmul(X, torch.transpose(self.selections.float(), 0, 1))
         return Y
 
-    def forward(self, X, training=None):
+    def forward(self, X):
         y = self.encoder(X)  # selected features
         x = self.decoder(y)  # reconstructed signals
 

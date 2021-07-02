@@ -9,17 +9,20 @@ from torch.utils.data import Dataset
 class MRISelectorSubjDataset(Dataset):
     """MRI dataset to select features from."""
 
-    def __init__(self, root_dir, dataf, headerf, subj_list):
+    def __init__(self, root_dir, dataf, headerf, subj_list, exclude=[]):
         """
-        batch_size & shuffle are defined with 'DataLoader' in pytorch 
+        batch_size & shuffle are defined with 'DataLoader' in pytorch
 
         Args:
             root_dir (string): Directory with the data and header files
             data (string): Data h5 file
             header (string): Header csv file
             subj_list (list): list of all the subjects to include
+            exclude (list): list of features to exclude from training
         """
         super().__init__()
+
+        self.exclude = exclude
 
         header_path = Path(root_dir, headerf)
         data_path = Path(root_dir, dataf)
@@ -31,8 +34,8 @@ class MRISelectorSubjDataset(Dataset):
 
         # load the data in memory. The file is *only* 3GB so it should be
         # doable on most systems.
-        archive = h5py.File(data_path, 'r')
-        self.data = archive.get('data1')[:]
+        archive = h5py.File(data_path, "r")
+        self.data = archive.get("data1")[:]
 
     def __len__(self):
         """Denotes the total number of samples"""
@@ -42,4 +45,8 @@ class MRISelectorSubjDataset(Dataset):
         """Generates one sample of data"""
         # Find list of IDs
         list_IDs_temp = self.ind[self.indexes[index]]
-        return self.data[list_IDs_temp, :]
+
+        data = self.data[list_IDs_temp, :]
+        data = np.delete(data, self.exclude)
+
+        return data

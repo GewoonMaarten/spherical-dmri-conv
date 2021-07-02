@@ -4,9 +4,9 @@ import torch.nn.functional as F
 from torch import nn
 
 
-def decoder_1l(n_features, device):
+def decoder_1l(n_features, device, output_shape):
     """Simple decoder from the latent layer to the output layer"""
-    dense1344 = nn.Linear(n_features, 1344, device=device)
+    dense1344 = nn.Linear(n_features, output_shape, device=device)
 
     def decoder(x):
         return dense1344(x)
@@ -14,10 +14,10 @@ def decoder_1l(n_features, device):
     return decoder
 
 
-def decoder_2l(n_features, device):
+def decoder_2l(n_features, device, output_shape):
     """Decoder from the latent layer to the output layer with an extra layer of size 1000 in between"""
     dense1000 = nn.Linear(n_features, 1000, device=device)
-    dense1344 = nn.Linear(1000, 1344, device=device)
+    dense1344 = nn.Linear(1000, output_shape, device=device)
     act = nn.LeakyReLU(0.2)
 
     def decoder(x):
@@ -27,11 +27,11 @@ def decoder_2l(n_features, device):
     return decoder
 
 
-def decoder_3l(n_features, device):
+def decoder_3l(n_features, device, output_shape):
     """Complex decoder with two intermediate layers between the latent and output layer."""
     dense800 = nn.Linear(n_features, 800, device=device)
     dense1000 = nn.Linear(800, 1000, device=device)
-    dense1344 = nn.Linear(1000, 1344, device=device)
+    dense1344 = nn.Linear(1000, output_shape, device=device)
     act = nn.LeakyReLU(0.2)
 
     def decoder(x):
@@ -60,7 +60,7 @@ class ConcreteSelect(nn.Module):
         self.output_dim = output_dim
         # the input layer has output (None,N_params_in). In this case, probably equal to input_dim
         self.input_shape = input_shape
-        self.decoder = decoder(n_features, device)
+        self.decoder = decoder(n_features, device, input_shape)
         self.device = device
         self.start_temp = start_temp
         # self.min_temp = K.constant(min_temp)

@@ -1,9 +1,13 @@
+import os
 from pathlib import Path
 
 import h5py
 import numpy as np
 import pandas as pd
+import psutil
 from torch.utils.data import Dataset
+
+from .logger import logger
 
 
 class MRISelectorSubjDataset(Dataset):
@@ -20,33 +24,38 @@ class MRISelectorSubjDataset(Dataset):
             subj_list (list): list of all the subjects to include
             exclude (list): list of features to exclude from training
         """
-        super().__init__()
-
-        self.exclude = exclude
 
         header_path = Path(root_dir, headerf)
         data_path = Path(root_dir, dataf)
 
         # load the header
-        header = pd.read_csv(header_path, index_col=0).to_numpy()
-        self.ind = header[np.isin(header[:, 1], subj_list), 0]
-        self.indexes = np.arange(len(self.ind))
+        header = pd.read_csv(header_path, index_col=0)
+        header = header[header["1"].isin(subj_list)]
+        # indexes of the data we want to load
+        indexes = header["0"].to_numpy(dtype=np.uint32)
 
-        # load the data in memory. The file is *only* 3GB so it should be
-        # doable on most systems.
+        # load the data in memory. The total file is *only* 3GB so it should be
+        # doable on most systems. Lets check anyway...
+        file_size = os.path.getsize(data_path)
+        available_memory = psutil.virtual_memory().available
+        if available_memory - file_size < 0:
+            logger.warning(
+                "Data file requires %s bytes of memory but %s was available",
+                format(file_size, ","),
+                format(available_memory, ","),
+            )
+
         archive = h5py.File(data_path, "r")
-        self.data = archive.get("data1")[:]
+        self.data = archive.get("data1")[
+            indexes,
+        ]
+        # delete excluded features
+        self.data = np.delete(self.data, exclude, axis=1)
 
     def __len__(self):
         """Denotes the total number of samples"""
-        return len(self.ind)
+        return len(self.data)
 
     def __getitem__(self, index):
         """Generates one sample of data"""
-        # Find list of IDs
-        list_IDs_temp = self.ind[self.indexes[index]]
-
-        data = self.data[list_IDs_temp, :]
-        data = np.delete(data, self.exclude)
-
-        return data
+        return self.data[index]

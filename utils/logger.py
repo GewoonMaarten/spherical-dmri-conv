@@ -53,6 +53,24 @@ class logging_tqdm(tqdm):
         self.logger.info("%s", msg)
 
 
+class BraceString(str):
+    def __mod__(self, other):
+        return self.format(*other)
+
+    def __str__(self):
+        return self
+
+
+class StyleAdapter(logging.LoggerAdapter):
+    def __init__(self, logger, extra=None):
+        super(StyleAdapter, self).__init__(logger, extra)
+
+    def process(self, msg, kwargs):
+        if kwargs.pop("style", "%") == "{":  # optional
+            msg = BraceString(msg)
+        return msg, kwargs
+
+
 class ColorFormatter(logging.Formatter):
     """Logging Formatter to add colors and count warning / errors"""
 
@@ -99,4 +117,4 @@ def init_logger(name, log_level=30):
 
 
 init_logger(LOGGER_NAME, LOGGING_LEVEL)
-logger = logging.getLogger(LOGGER_NAME)
+logger = StyleAdapter(logging.getLogger(LOGGER_NAME))

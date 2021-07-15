@@ -1,8 +1,33 @@
-# Geometric Deep Learning on Diffusion MRI
+# Geometric Deep Learning on Multi-Dimensional Diffusion MRI
 
-The dataset was kindly provided by [Centre for the Developing Brain](http://cmic.cs.ucl.ac.uk/cdmri20/challenge.html).
+[![Made with Pytorch](https://img.shields.io/badge/MADE%20WITH-pytorch-red?style=for-the-badge&logo=pytorch)](https://pytorch.org/)
+
+## Notebooks
+
+- `concrete_autoencoder_pytorch.ipynb`.
+  This notebook is used to train various concrete autoencoders on de multi-dimensional diffusion MR scans.
+- `data_preprocessing.ipynb`.
+  This notebook is used to turn the multi-dimensional diffusion MR scans into usable data for the concrete autoencoder.
+- `model-analysis.ipynb`.
+  This notebook is used to evaluate the accuracies of the learned models.
 
 ## Running the notebooks
+
+### Conda/Miniconda
+
+It is recommended that you use Conda or Miniconda.
+An environment file is provided with the necessary dependencies.
+You can install it with:
+
+```console
+conda env create -f environment.yml
+```
+
+Or if you already have a Conda environment:
+
+```console
+conda env update -n my_env -f environment.yml
+```
 
 ### Environment variables and .env file
 
@@ -17,6 +42,7 @@ The following environment variables can be declared:
         <tr>
             <th>Name</th>
             <th>Description</th>
+            <th>Default</th>
         </tr>
     </thead>
     <tbody>
@@ -30,9 +56,6 @@ The following environment variables can be declared:
         <tr>
             <td><code>LOGGING_LEVEL</code></td>
             <td>
-                <b>Optional.</b>
-                Default value is <code>30</code>.
-                It is recommend to set this <code>&gt;20</code> when training the models for real.
                 <table>
                     <thead>
                         <tr>
@@ -67,9 +90,12 @@ The following environment variables can be declared:
                         </tr>
                     </tbody>
                 </table>
+                It is recommend to set this <code>&gt;20</code> when training the models for real.
             </td>
+            <td>30</td>
         </tr>
     </tbody>
+
 </table>
 
 Example:
@@ -78,3 +104,7 @@ Example:
 DATA_PATH=/home/user/MUDI
 LOGGING_LEVEL=10
 ```
+
+## Acknowledgements
+
+The dataset was kindly provided by [Centre for the Developing Brain](http://cmic.cs.ucl.ac.uk/cdmri20/challenge.html).

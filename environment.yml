@@ -1,18 +1,25 @@
 name: mudi
 channels:
-  - pytorch
-  - nvidia
   - anaconda
-  - defaults
   - conda-forge
+  - defaults
+  - nvidia
+  - pytorch
 dependencies:
+  - bokeh
+  - cudatoolkit=11.1.*
+  - jupyter_bokeh
+  - jupyterlab
   - numpy=1.20.*
   - pandas=1.2.*
+  - pip
   - python=3.9
   - pytorch=1.8.*
-  - cudatoolkit=11.1.*
-  - pip
   - pip:
       - h5py
+      - nibabel
+      - nilearn
+      - psutil
       - python-dotenv
-      - tqdm=4.*
+      - seaborn
+      - tqdm

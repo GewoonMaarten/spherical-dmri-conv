@@ -7,7 +7,7 @@ import pandas as pd
 import psutil
 from torch.utils.data import Dataset
 
-from .logger import logger
+from utils.logger import logger
 
 
 class MRISelectorSubjDataset(Dataset):

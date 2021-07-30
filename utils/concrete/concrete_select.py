@@ -1,48 +1,57 @@
+from collections import OrderedDict
+
 import numpy as np
+import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from torch import nn
 
 
-def decoder_1l(n_features, device, output_shape):
-    """Simple decoder from the latent layer to the output layer"""
-    dense1344 = nn.Linear(n_features, output_shape, device=device)
+class Decoder(pl.LightningModule):
+    def __init__(
+        self,
+        input_size: int,
+        output_size: int,
+        n_hidden_layers: int,
+        negative_slope: float = 0.2,
+    ) -> None:
+        """Constructs an decoder of an autoencoder. It generates a network from `input_size` to `output_size`. The
+        layers are generates as follows:
+        ```python
+        import numpy as np
+        step_size = abs(output_size - input_size) // n_hidden_layers
+        layer_sizes = np.arange(input_size, output_size, step_size)
+        ```
 
-    def decoder(x):
-        return dense1344(x)
+        Args:
+            input_size (int): size of the latent layer.
+            output_size (int): size of the output layer. Should be the same size as the input layer of the encoder.
+            n_hidden_layers (int): number of hidden layers.
+            negative_slope (float, optional): negative slope for the Leaky ReLu activation layer. Defaults to 0.2.
+        """
+        super(Decoder, self).__init__()
 
-    return decoder
+        step_size = abs(output_size - input_size) // n_hidden_layers
+        layer_sizes = np.arange(input_size, output_size, step_size)
 
+        # Construct the network
+        layers = OrderedDict()
+        for i in range(len(layer_sizes)):
+            if i + 1 == len(layer_sizes):  # Last layer
+                layers[f"linear_{i}"] = nn.Linear(layer_sizes[i], output_size)
+                layers[f"sigmoid_{i}"] = nn.Sigmoid()
+            else:
+                layers[f"linear_{i}"] = nn.Linear(layer_sizes[i], layer_sizes[i + 1])
+                layers[f"relu_{i}"] = nn.LeakyReLU(negative_slope)
 
-def decoder_2l(n_features, device, output_shape):
-    """Decoder from the latent layer to the output layer with an extra layer of size 1000 in between"""
-    dense1000 = nn.Linear(n_features, 1000, device=device)
-    dense1344 = nn.Linear(1000, output_shape, device=device)
-    act = nn.LeakyReLU(0.2)
+        self.decoder = nn.Sequential(layers)
 
-    def decoder(x):
-        x = act(dense1000(x))
-        return dense1344(x)
-
-    return decoder
-
-
-def decoder_3l(n_features, device, output_shape):
-    """Complex decoder with two intermediate layers between the latent and output layer."""
-    dense800 = nn.Linear(n_features, 800, device=device)
-    dense1000 = nn.Linear(800, 1000, device=device)
-    dense1344 = nn.Linear(1000, output_shape, device=device)
-    act = nn.LeakyReLU(0.2)
-
-    def decoder(x):
-        x = act(dense800(x))
-        x = act(dense1000(x))
-        return dense1344(x)
-
-    return decoder
+    def forward(self, x: F.Tensor) -> F.Tensor:
+        decoded = self.decoder(x)
+        return decoded
 
 
-class ConcreteSelect(nn.Module):
+class ConcreteAutoencoder(nn.Module):
     def __init__(
         self,
         output_dim,
@@ -53,9 +62,9 @@ class ConcreteSelect(nn.Module):
         start_temp=10.0,
         min_temp=0.1,
         alpha=0.99999,
-        **kwargs
+        **kwargs,
     ):
-        super(ConcreteSelect, self).__init__(**kwargs)
+        super(ConcreteAutoencoder, self).__init__(**kwargs)
         # encoder
         self.output_dim = output_dim
         # the input layer has output (None,N_params_in). In this case, probably equal to input_dim

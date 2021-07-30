@@ -7,6 +7,57 @@ import torch.nn.functional as F
 from torch import nn
 
 
+class Encoder(nn.Module):
+    def __init__(
+        self,
+        input_size: int,
+        output_size: int,
+        max_temp: float = 10.0,
+        min_temp: float = 0.1,
+        alpha: float = 0.99999,
+    ) -> None:
+        """Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346)
+
+        Args:
+            input_size (int): size of the input layer. Should be the same as the `output_size` of the decoder.
+            output_size (int): size of the latent layer. Should be the same as the `input_size` of the decoder.
+            max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
+            min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
+            alpha (float, optional): amount to multiply with current `temp` to decrease it. Should be `< 1.0`. Defaults
+            to 0.99999.
+        """
+        super(Encoder, self).__init__()
+
+        self.temp = torch.tensor(max_temp)
+        self.min_temp = torch.tensor(min_temp)
+        self.alpha = torch.tensor(alpha)
+
+        logits = nn.init.xavier_normal_(torch.empty(output_size, input_size))
+        self.logits = nn.parameter.Parameter(logits, requires_grad=True)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        logits_size = self.logits.size()
+
+        self.temp = torch.maximum(self.min_temp, self.temp * self.alpha)
+
+        selections: torch.Tensor = None
+        if self.training:
+            uniform = torch.rand(logits_size)
+            gumbel = -torch.log(-torch.log(uniform))
+            noisy_logits = (self.logits + gumbel) / self.temp
+            samples = F.softmax(noisy_logits, dim=1)
+            selections = samples
+        else:
+            dim_argmax = len(self.logits.size()) - 1
+            discrete_logits = F.one_hot(
+                torch.argmax(self.logits, dim_argmax), num_classes=logits_size[1]
+            )
+            selections = discrete_logits
+
+        encoded = torch.matmul(x, torch.transpose(selections.float(), 0, 1))
+        return encoded
+
+
 class Decoder(nn.Module):
     def __init__(
         self,
@@ -15,8 +66,7 @@ class Decoder(nn.Module):
         n_hidden_layers: int,
         negative_slope: float = 0.2,
     ) -> None:
-        """Constructs an decoder of an autoencoder. It generates a network from `input_size` to `output_size`. The
-        layers are generates as follows:
+        """Standard decoder. It generates a network from `input_size` to `output_size`. The layers are generates as follows:
         ```python
         import numpy as np
         step_size = abs(output_size - input_size) // n_hidden_layers
@@ -24,8 +74,8 @@ class Decoder(nn.Module):
         ```
 
         Args:
-            input_size (int): size of the latent layer.
-            output_size (int): size of the output layer. Should be the same size as the input layer of the encoder.
+            input_size (int): size of the latent layer. Should be the same as the `output_size` of the encoder.
+            output_size (int): size of the output layer. Should be the same as `input_size` of the encoder.
             n_hidden_layers (int): number of hidden layers.
             negative_slope (float, optional): negative slope for the Leaky ReLu activation layer. Defaults to 0.2.
         """
@@ -46,7 +96,7 @@ class Decoder(nn.Module):
 
         self.decoder = nn.Sequential(layers)
 
-    def forward(self, x: F.Tensor) -> F.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         decoded = self.decoder(x)
         return decoded
 

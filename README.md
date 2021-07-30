@@ -1,4 +1,6 @@
-# Geometric Deep Learning on Multi-Dimensional Diffusion MRI
+# Rotation Equivariant MUDI
+
+> Sub-sampling on multi-dimensional diffusion MRI with rotation equivariance.
 
 [![Made with Pytorch](https://img.shields.io/badge/MADE%20WITH-pytorch-red?style=for-the-badge&logo=pytorch)](https://pytorch.org/)
 
@@ -29,6 +31,12 @@ Or if you already have a Conda environment:
 conda env update -n my_env -f environment.yml
 ```
 
+Install the project with:
+
+```console
+python -m pip install -e .
+```
+
 ### Environment variables and .env file
 
 Create a `.env` file in the root directory of this project.
@@ -52,6 +60,7 @@ The following environment variables can be declared:
                 The path to the MUDI data. The directory structure is expected to be the same as provided by
                 <a href="http://cmic.cs.ucl.ac.uk/cdmri20/challenge.html">Centre for the Developing Brain</a>.
             </td>
+            <td></td>
         </tr>
         <tr>
             <td><code>LOGGING_LEVEL</code></td>
@@ -90,7 +99,7 @@ The following environment variables can be declared:
                         </tr>
                     </tbody>
                 </table>
-                It is recommend to set this <code>&gt;20</code> when training the models for real.
+                It is recommend to set this <code>&gt;=20</code> when training the models for real.
             </td>
             <td>30</td>
         </tr>

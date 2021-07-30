@@ -20,6 +20,7 @@ dependencies:
       - nibabel
       - nilearn
       - psutil
+      - pytest
       - python-dotenv
       - pytorch-lightning~=1.3.8
       - seaborn

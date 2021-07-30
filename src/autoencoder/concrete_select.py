@@ -1,3 +1,4 @@
+import math
 from collections import OrderedDict
 
 import numpy as np
@@ -7,7 +8,7 @@ import torch.nn.functional as F
 from torch import nn
 
 
-class Encoder(nn.Module):
+class Encoder(pl.LightningModule):
     def __init__(
         self,
         input_size: int,
@@ -16,7 +17,7 @@ class Encoder(nn.Module):
         min_temp: float = 0.1,
         alpha: float = 0.99999,
     ) -> None:
-        """Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346)
+        """Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
         Args:
             input_size (int): size of the input layer. Should be the same as the `output_size` of the decoder.
@@ -28,21 +29,29 @@ class Encoder(nn.Module):
         """
         super(Encoder, self).__init__()
 
-        self.temp = torch.tensor(max_temp)
-        self.min_temp = torch.tensor(min_temp)
-        self.alpha = torch.tensor(alpha)
+        self.temp = torch.tensor(max_temp, device=self.device)
+        self.min_temp = torch.tensor(min_temp, device=self.device)
+        self.alpha = torch.tensor(alpha, device=self.device)
 
         logits = nn.init.xavier_normal_(torch.empty(output_size, input_size))
         self.logits = nn.parameter.Parameter(logits, requires_grad=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Uses the trained encoder to make inferences.
+
+        Args:
+            x (torch.Tensor): input data. Should be the same size as the encoder input.
+
+        Returns:
+            torch.Tensor: encoder output of size `output_size`.
+        """
         logits_size = self.logits.size()
 
         self.temp = torch.maximum(self.min_temp, self.temp * self.alpha)
 
         selections: torch.Tensor = None
         if self.training:
-            uniform = torch.rand(logits_size)
+            uniform = torch.rand(logits_size, device=self.device)
             gumbel = -torch.log(-torch.log(uniform))
             noisy_logits = (self.logits + gumbel) / self.temp
             samples = F.softmax(noisy_logits, dim=1)
@@ -58,7 +67,7 @@ class Encoder(nn.Module):
         return encoded
 
 
-class Decoder(nn.Module):
+class Decoder(pl.LightningModule):
     def __init__(
         self,
         input_size: int,
@@ -97,78 +106,97 @@ class Decoder(nn.Module):
         self.decoder = nn.Sequential(layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Uses the trained decoder to make inferences.
+
+        Args:
+            x (torch.Tensor): input data. Should be the same size as the decoder input.
+
+        Returns:
+            torch.Tensor: decoder output of size `output_size`.
+        """
         decoded = self.decoder(x)
         return decoded
 
 
-class ConcreteAutoencoder(nn.Module):
-    def __init__(
-        self,
-        output_dim,
-        input_shape,
-        decoder,
-        device,
-        n_features=500,
-        start_temp=10.0,
-        min_temp=0.1,
-        alpha=0.99999,
-        **kwargs,
-    ):
-        super(ConcreteAutoencoder, self).__init__(**kwargs)
-        # encoder
-        self.output_dim = output_dim
-        # the input layer has output (None,N_params_in). In this case, probably equal to input_dim
-        self.input_shape = input_shape
-        self.decoder = decoder(n_features, device, input_shape)
-        self.device = device
-        self.start_temp = start_temp
-        # self.min_temp = K.constant(min_temp)
-        self.min_temp = nn.init.constant_(
-            torch.tensor(np.zeros(1), device=self.device), min_temp
+class ConcreteAutoencoder(pl.LightningModule):
+    def __init__(self, input_output_size: int, latent_size: int) -> None:
+        """Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
+
+        Args:
+            input_output_size (int): size of the input and output layer.
+            latent_size (int): size of the latent layer.
+        """
+        super(ConcreteAutoencoder, self).__init__()
+
+        self.encoder = Encoder(input_output_size, latent_size)
+        self.decoder = Decoder(latent_size, input_output_size, 2)
+
+    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Uses the trained autoencoder to make inferences.
+
+        Args:
+            x (torch.Tensor): input data. Should be the same size as encoder input.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: (encoder output, decoder output)
+        """
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return encoded, decoded
+
+    def configure_optimizers(self) -> torch.optim.Adam:
+        """Initializes the Adam optimizer.
+
+        Returns:
+            torch.optim.Adam: the created optimizer.
+        """
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        return optimizer
+
+    def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
+        """Trains one batch of data.
+
+        Args:
+            batch (torch.Tensor): batch data
+            batch_idx (int): batch index
+
+        Returns:
+            torch.Tensor: calculated loss
+        """
+        encoded = self.encoder(batch)
+        decoded = self.decoder(encoded)
+        loss = F.mse_loss(decoded, batch)
+        self.log("train_loss", loss, on_epoch=True)
+        return loss
+
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
+        """Validateds one batch of data.
+
+        Args:
+            batch (torch.Tensor): batch data.
+            batch_idx (int): batch id.
+        """
+        encoded = self.encoder(batch)
+        decoded = self.decoder(encoded)
+        loss = F.mse_loss(decoded, batch)
+        self.log("val_loss", loss)
+
+    def on_epoch_start(self) -> None:
+        """Each epoch the mean max of probabilities of the feature selector of the encoder is calculated. This is
+        tracked for early stopping under the name `mean_max`."""
+        mean_max = torch.mean(
+            torch.max(F.softmax(self.encoder.logits, dim=1), 1).values
         )
-        # self.alpha = K.constant(alpha)
-        self.alpha = nn.init.constant_(
-            torch.tensor(np.zeros(1), device=self.device), alpha
-        )
-        # self.name = name
+        self.log("mean_max", mean_max, prog_bar=True)
 
-        # equivalent to build in Keras
-        self.temp = torch.tensor([self.start_temp], device=self.device)
-        tensor_logits = nn.init.xavier_normal_(
-            torch.empty(self.output_dim, self.input_shape, device=self.device)
-        )
-        self.logits = nn.Parameter(tensor_logits, requires_grad=True)
+    def on_train_start(self) -> None:
+        """At the beginning of training the `alpha` for the encoder is calculated."""
+        dataset = self.train_dataloader()
+        batch_size = dataset.batch_size
 
-    # equivalent to call in Keras -> encoder, the concrete layer itself
+        num_epochs = self.trainer.max_epochs
+        min_temp = self.encoder.min_temp
+        temp = self.encoder.temp
 
-    def encoder(self, X):
-
-        uniform = torch.rand(self.logits.size(), device=self.device)
-        gumbel = -torch.log(-torch.log(uniform))
-        self.temp = torch.maximum(self.min_temp, self.temp * self.alpha)
-        # print('temperature {}'.format(self.temp))
-        # noisy_logits = (self.logits + gumbel.to(device)) / self.temp
-        noisy_logits = (self.logits + gumbel) / self.temp
-        samples = F.softmax(noisy_logits, dim=1)
-
-        # numClasses = self.logits.size()[1]
-        dim_argmax = len(self.logits.size()) - 1
-        discrete_logits = F.one_hot(
-            torch.argmax(self.logits, dim_argmax), num_classes=self.logits.size()[1]
-        )
-
-        if self.training:
-            self.selections = samples
-        else:
-            self.selections = discrete_logits
-
-        # Y = torch.dot(X,torch.transpose(self.selections, 0, 1))
-        # dot is not exactly equal to a dot product, it could be a matrix product in keras
-        Y = torch.matmul(X, torch.transpose(self.selections.float(), 0, 1))
-        return Y
-
-    def forward(self, X):
-        y = self.encoder(X)  # selected features
-        x = self.decoder(y)  # reconstructed signals
-
-        return x, y
+        alpha = math.exp(math.log(min_temp / temp) / (num_epochs * batch_size))
+        self.encoder.alpha = torch.tensor(alpha, device=self.device)

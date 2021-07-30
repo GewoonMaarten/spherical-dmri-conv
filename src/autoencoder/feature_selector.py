@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from ..logger import logger
+from utils.logger import logger
 from .concrete_select import ConcreteSelect
 from .stopper import StopperCallback
 

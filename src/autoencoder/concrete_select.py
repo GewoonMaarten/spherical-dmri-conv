@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch import nn
 
 
-class Decoder(pl.LightningModule):
+class Decoder(nn.Module):
     def __init__(
         self,
         input_size: int,

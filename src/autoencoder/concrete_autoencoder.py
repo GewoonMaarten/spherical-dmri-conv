@@ -120,18 +120,31 @@ class Decoder(pl.LightningModule):
 
 class ConcreteAutoencoder(pl.LightningModule):
     def __init__(
-        self, input_output_size: int, latent_size: int, decoder_hidden_layers: int = 2
+        self,
+        input_output_size: int,
+        latent_size: int,
+        decoder_hidden_layers: int = 2,
+        learning_rate: float = 1e-2,
+        max_temp: float = 10.0,
+        min_temp: float = 0.1,
     ) -> None:
         """Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
         Args:
             input_output_size (int): size of the input and output layer.
             latent_size (int): size of the latent layer.
+            decoder_hidden_layers (int, optional): number of hidden layers for the decoder. Defaults to 2.
+            learning_rate (float, optional): learning rate for the optimizer. Defaults to 1e-2.
+            max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
+            min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
         """
         super(ConcreteAutoencoder, self).__init__()
+        self.save_hyperparameters()
 
-        self.encoder = Encoder(input_output_size, latent_size)
+        self.encoder = Encoder(input_output_size, latent_size, max_temp, min_temp)
         self.decoder = Decoder(latent_size, input_output_size, decoder_hidden_layers)
+
+        self.learning_rate = learning_rate
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Uses the trained autoencoder to make inferences.
@@ -152,7 +165,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         Returns:
             torch.optim.Adam: the created optimizer.
         """
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
@@ -165,11 +178,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         Returns:
             torch.Tensor: calculated loss
         """
-        encoded = self.encoder(batch)
-        decoded = self.decoder(encoded)
-        loss = F.mse_loss(decoded, batch)
-        self.log("train_loss", loss, on_epoch=True)
-        return loss
+        self._shared_eval(batch, batch_idx, "train")
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
         """Validateds one batch of data.
@@ -178,10 +187,7 @@ class ConcreteAutoencoder(pl.LightningModule):
             batch (torch.Tensor): batch data.
             batch_idx (int): batch id.
         """
-        encoded = self.encoder(batch)
-        decoded = self.decoder(encoded)
-        loss = F.mse_loss(decoded, batch)
-        self.log("val_loss", loss)
+        self._shared_eval(batch, batch_idx, "val")
 
     def on_epoch_start(self) -> None:
         """Each epoch the mean max of probabilities of the feature selector of the encoder is calculated. This is
@@ -202,3 +208,17 @@ class ConcreteAutoencoder(pl.LightningModule):
 
         alpha = math.exp(math.log(min_temp / temp) / (num_epochs * batch_size))
         self.encoder.alpha = torch.tensor(alpha, device=self.device)
+
+    def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str):
+        """Calculate the loss for a batch.
+
+        Args:
+            batch (torch.Tensor): batch data.
+            batch_idx (int): batch id.
+            prefix (str): prefix for logging.
+        """
+        encoded = self.encoder(batch)
+        decoded = self.decoder(encoded)
+        loss = F.mse_loss(decoded, batch)
+
+        self.log(f"{prefix}_loss", loss)

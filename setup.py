@@ -17,6 +17,7 @@ setuptools.setup(
     },
     classifiers=[
         "Environment :: GPU :: NVIDIA CUDA :: 11.1",
+        "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering :: Medical Science Apps.",

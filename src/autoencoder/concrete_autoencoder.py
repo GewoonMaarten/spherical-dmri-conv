@@ -119,7 +119,9 @@ class Decoder(pl.LightningModule):
 
 
 class ConcreteAutoencoder(pl.LightningModule):
-    def __init__(self, input_output_size: int, latent_size: int) -> None:
+    def __init__(
+        self, input_output_size: int, latent_size: int, decoder_hidden_layers: int = 2
+    ) -> None:
         """Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
         Args:
@@ -129,7 +131,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         super(ConcreteAutoencoder, self).__init__()
 
         self.encoder = Encoder(input_output_size, latent_size)
-        self.decoder = Decoder(latent_size, input_output_size, 2)
+        self.decoder = Decoder(latent_size, input_output_size, decoder_hidden_layers)
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Uses the trained autoencoder to make inferences.

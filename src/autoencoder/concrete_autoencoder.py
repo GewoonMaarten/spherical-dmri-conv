@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from torch import nn
+from utils.logger import logger
 
 
 class Encoder(pl.LightningModule):
@@ -85,23 +86,26 @@ class Decoder(pl.LightningModule):
         Args:
             input_size (int): size of the latent layer. Should be the same as the `output_size` of the encoder.
             output_size (int): size of the output layer. Should be the same as `input_size` of the encoder.
-            n_hidden_layers (int): number of hidden layers.
+            n_hidden_layers (int): number of hidden layers. If 0 then the input will be directly connected to the output.
             negative_slope (float, optional): negative slope for the Leaky ReLu activation layer. Defaults to 0.2.
         """
         super(Decoder, self).__init__()
 
-        step_size = abs(output_size - input_size) // n_hidden_layers
+        step_size = abs(output_size - input_size) // (n_hidden_layers + 1)
         layer_sizes = np.arange(input_size, output_size, step_size)
+        n_layers = len(layer_sizes)
 
         # Construct the network
         layers = OrderedDict()
-        for i in range(len(layer_sizes)):
-            if i + 1 == len(layer_sizes):  # Last layer
+        for i in range(n_layers):
+            if i + 1 == n_layers:  # Last layer
                 layers[f"linear_{i}"] = nn.Linear(layer_sizes[i], output_size)
                 layers[f"sigmoid_{i}"] = nn.Sigmoid()
             else:
                 layers[f"linear_{i}"] = nn.Linear(layer_sizes[i], layer_sizes[i + 1])
                 layers[f"relu_{i}"] = nn.LeakyReLU(negative_slope)
+
+        logger.debug("decoder layers: %s", layers)
 
         self.decoder = nn.Sequential(layers)
 
@@ -178,7 +182,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         Returns:
             torch.Tensor: calculated loss
         """
-        self._shared_eval(batch, batch_idx, "train")
+        return self._shared_eval(batch, batch_idx, "train")
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
         """Validateds one batch of data.
@@ -187,7 +191,7 @@ class ConcreteAutoencoder(pl.LightningModule):
             batch (torch.Tensor): batch data.
             batch_idx (int): batch id.
         """
-        self._shared_eval(batch, batch_idx, "val")
+        return self._shared_eval(batch, batch_idx, "val")
 
     def on_epoch_start(self) -> None:
         """Each epoch the mean max of probabilities of the feature selector of the encoder is calculated. This is
@@ -209,16 +213,23 @@ class ConcreteAutoencoder(pl.LightningModule):
         alpha = math.exp(math.log(min_temp / temp) / (num_epochs * batch_size))
         self.encoder.alpha = torch.tensor(alpha, device=self.device)
 
-    def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str):
+    def _shared_eval(
+        self, batch: torch.Tensor, batch_idx: int, prefix: str
+    ) -> torch.Tensor:
         """Calculate the loss for a batch.
 
         Args:
             batch (torch.Tensor): batch data.
             batch_idx (int): batch id.
             prefix (str): prefix for logging.
+
+        Returns:
+            torch.Tensor: calculated loss.
         """
         encoded = self.encoder(batch)
         decoded = self.decoder(encoded)
         loss = F.mse_loss(decoded, batch)
 
         self.log(f"{prefix}_loss", loss)
+
+        return loss

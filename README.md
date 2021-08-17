@@ -37,81 +37,36 @@ Install the project with:
 python -m pip install -e .
 ```
 
-### Environment variables and .env file
+### Training
 
-Create a `.env` file in the root directory of this project.
-`utils.env.py` will load file and set the variables.
-If the file is not present it will use the system environment variables.
+`trainer.py` can be used as a CLI for training models.
 
-The following environment variables can be declared:
-
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Default</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td><code>DATA_PATH</code></td>
-            <td>
-                The path to the MUDI data. The directory structure is expected to be the same as provided by
-                <a href="http://cmic.cs.ucl.ac.uk/cdmri20/challenge.html">Centre for the Developing Brain</a>.
-            </td>
-            <td></td>
-        </tr>
-        <tr>
-            <td><code>LOGGING_LEVEL</code></td>
-            <td>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Level</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>CRITICAL</td>
-                            <td>50</td>
-                        </tr>
-                        <tr>
-                            <td>ERROR</td>
-                            <td>40</td>
-                        </tr>
-                        <tr>
-                            <td>WARNING</td>
-                            <td>30</td>
-                        </tr>
-                        <tr>
-                            <td>INFO</td>
-                            <td>20</td>
-                        </tr>
-                        <tr>
-                            <td>DEBUG</td>
-                            <td>10</td>
-                        </tr>
-                        <tr>
-                            <td>NOTSET</td>
-                            <td>0</td>
-                        </tr>
-                    </tbody>
-                </table>
-                It is recommend to set this <code>&gt;=20</code> when training the models for real.
-            </td>
-            <td>30</td>
-        </tr>
-    </tbody>
-
-</table>
+```console
+python trainer.py --help
+```
 
 Example:
 
+```console
+python trainer.py \
+    --data_file ./data/data.hdf5 \
+    --header_file ./data/header.csv \
+    --input_output_size 1344 \
+    --latent_size 500 \
+    --gpus=1 \
+    --max_epochs 10
 ```
-DATA_PATH=/home/user/MUDI
-LOGGING_LEVEL=10
+
+The output can be viewed with Tensorboard:
+
+```console
+tensorboard --logdir=./lightning_logs/
+```
+
+Or MLFlow:
+
+```console
+mlflow ui
 ```
 
 ## Acknowledgements

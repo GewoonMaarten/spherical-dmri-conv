@@ -1,9 +1,9 @@
 import pytest
-from autoencoder.concrete_select import Decoder
+from autoencoder.concrete_autoencoder import Decoder
 
 test_data = [
-    (500, 1344, 2, ["linear_0", "relu_0", "linear_1", "sigmoid_1"]),
-    (3000, 1344, 2, ["linear_0", "relu_0", "linear_1", "sigmoid_1"]),
+    (500, 1344, 1, ["linear_0", "relu_0", "linear_1", "sigmoid_1"]),
+    (3000, 1344, 1, ["linear_0", "relu_0", "linear_1", "sigmoid_1"]),
 ]
 
 

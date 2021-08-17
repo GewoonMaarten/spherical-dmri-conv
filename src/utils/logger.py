@@ -15,8 +15,6 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from .env import LOGGING_LEVEL
-
 LOGGER_NAME = "geometric-dl"
 FORMATTER = (
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
@@ -116,5 +114,4 @@ def init_logger(name, log_level=30):
         logger.addHandler(fileHandler)
 
 
-init_logger(LOGGER_NAME, LOGGING_LEVEL)
 logger = StyleAdapter(logging.getLogger(LOGGER_NAME))

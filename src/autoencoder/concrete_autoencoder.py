@@ -150,6 +150,40 @@ class ConcreteAutoencoder(pl.LightningModule):
 
         self.learning_rate = learning_rate
 
+    @staticmethod
+    def add_model_specific_args(parent_parser):
+        parser = parent_parser.add_argument_group("autoencoder.ConcreteAutoencoder")
+        parser.add_argument(
+            "--input_output_size",
+            type=int,
+            required=True,
+            metavar="N",
+            help="size of the input and output layer",
+        )
+        parser.add_argument(
+            "--latent_size",
+            type=int,
+            required=True,
+            metavar="N",
+            help="size of latent layer",
+        )
+        parser.add_argument(
+            "--decoder_hidden_layers",
+            type=int,
+            default=2,
+            metavar="N",
+            help="number of hidden layers for the decoder (default: 2)",
+        )
+        parser.add_argument(
+            "--learning_rate",
+            type=float,
+            default=1e-2,
+            metavar="N",
+            help="learning rate for the optimizer (default: 1e-2)",
+        )
+
+        return parent_parser
+
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Uses the trained autoencoder to make inferences.
 

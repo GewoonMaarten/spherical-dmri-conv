@@ -9,6 +9,7 @@ import psutil
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 from utils.logger import logger
+from utils.argparse import file_path
 
 
 class MRISelectorSubjDataset(Dataset):
@@ -64,9 +65,8 @@ class MRISelectorSubjDataset(Dataset):
 class MRIDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        data_dir: Path,
-        data_file_name: str,
-        header_file_name: str,
+        data_file: Path,
+        header_file: Path,
         batch_size: int = 265,
         subject_list_train: list[int] = [11, 12, 13, 14],
         subject_list_val: list[int] = [15],
@@ -84,23 +84,59 @@ class MRIDataModule(pl.LightningDataModule):
         super(MRIDataModule, self).__init__()
         self.save_hyperparameters()
 
-        self.data_file_path = Path(data_dir, data_file_name)
-        self.header_file_path = Path(data_dir, header_file_name)
+        self.data_file = data_file
+        self.header_file = header_file
         self.batch_size = batch_size
         self.subject_list_train = np.array(subject_list_train)
         self.subject_list_val = np.array(subject_list_val)
 
-    def setup(self, stage: Optional[str]) -> None:
+    @staticmethod
+    def add_model_specific_args(parent_parser):
+        parser = parent_parser.add_argument_group("autoencoder.MRIDataModule")
+        parser.add_argument(
+            "--data_file",
+            type=file_path,
+            required=True,
+            metavar="PATH",
+            help="file name of the H5 file",
+        )
+        parser.add_argument(
+            "--header_file",
+            type=file_path,
+            required=True,
+            metavar="PATH",
+            help="file name of the CSV file",
+        )
+        parser.add_argument(
+            "--subject_train",
+            nargs="+",
+            type=int,
+            default=[11, 12, 13, 14],
+            help="subjects to include in training (default: [11, 12, 13, 14])",
+        )
+        parser.add_argument(
+            "--subject_val",
+            nargs="+",
+            type=int,
+            default=[15],
+            help="subjects to include in validation (default: [15])",
+        )
+        parser.add_argument(
+            "--batch_size",
+            type=int,
+            default=64,
+            metavar="N",
+            help="input batch size for training (default: 64)",
+        )
 
+        return parent_parser
+
+    def setup(self, stage: Optional[str]) -> None:
         self.train_set = MRISelectorSubjDataset(
-            self.data_file_path,
-            self.header_file_path,
-            self.subject_list_train,
+            self.data_file, self.header_file, self.subject_list_train
         )
         self.val_set = MRISelectorSubjDataset(
-            self.data_file_path,
-            self.header_file_path,
-            self.subject_list_val,
+            self.data_file, self.header_file, self.subject_list_val
         )
 
     def train_dataloader(self) -> DataLoader:

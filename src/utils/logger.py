@@ -13,8 +13,6 @@ import sys
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
-from tqdm import tqdm
-
 LOGGER_NAME = "geometric-dl"
 FORMATTER = (
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
@@ -56,13 +54,13 @@ class ColorFormatter(logging.Formatter):
         logging.CRITICAL: bold_red + FORMATTER + reset,
     }
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
 
-def init_logger(name, log_level=30):
+def init_logger(name: str, log_level: int = 30) -> None:
     """Create a logger with a stream handler and a file handler"""
 
     logger = logging.getLogger(name)

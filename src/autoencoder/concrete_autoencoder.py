@@ -21,11 +21,16 @@ class Encoder(pl.LightningModule):
         """Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
         Args:
-            input_size (int): size of the input layer. Should be the same as the `output_size` of the decoder.
-            output_size (int): size of the latent layer. Should be the same as the `input_size` of the decoder.
-            max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
-            min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
-            alpha (float, optional): amount to multiply with current `temp` to decrease it. Should be `< 1.0`. Defaults
+            input_size (int): size of the input layer. Should be the same as
+            the `output_size` of the decoder.
+            output_size (int): size of the latent layer. Should be the same as
+            the `input_size` of the decoder.
+            max_temp (float, optional): maximum temperature for Gumble Softmax.
+            Defaults to 10.0.
+            min_temp (float, optional): minimum temperature for Gumble Softmax.
+            Defaults to 0.1.
+            alpha (float, optional): amount to multiply with current `temp` to
+            decrease it. Should be `< 1.0`. Defaults
             to 0.99999.
         """
         super(Encoder, self).__init__()
@@ -137,10 +142,14 @@ class ConcreteAutoencoder(pl.LightningModule):
         Args:
             input_output_size (int): size of the input and output layer.
             latent_size (int): size of the latent layer.
-            decoder_hidden_layers (int, optional): number of hidden layers for the decoder. Defaults to 2.
-            learning_rate (float, optional): learning rate for the optimizer. Defaults to 1e-2.
-            max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
-            min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
+            decoder_hidden_layers (int, optional): number of hidden layers for
+            the decoder. Defaults to 2.
+            learning_rate (float, optional): learning rate for the optimizer.
+            Defaults to 1e-2.
+            max_temp (float, optional): maximum temperature for Gumble Softmax.
+            Defaults to 10.0.
+            min_temp (float, optional): minimum temperature for Gumble Softmax.
+            Defaults to 0.1.
         """
         super(ConcreteAutoencoder, self).__init__()
         self.save_hyperparameters()

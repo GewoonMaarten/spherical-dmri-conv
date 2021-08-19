@@ -26,7 +26,8 @@ class MRISelectorSubjDataset(Dataset):
             data_file_path (Path): Data h5 file path.
             header_file_path (Path): Header csv file path.
             subject_list (np.ndarray): ist of all the subjects to include.
-            exclude (list[int], optional): list of features to exclude from training. Defaults to [].
+            exclude (list[int], optional): list of features to exclude from
+            training. Defaults to [].
         """
 
         # load the header
@@ -78,8 +79,10 @@ class MRIDataModule(pl.LightningDataModule):
             data_file_name (str): file name of the H5 file.
             header_file_name (str): file name of the CSV file.
             batch_size (int, optional): training batch size. Defaults to 265.
-            subject_list_train (list[int], optional): subjects to include in training. Defaults to [11, 12, 13, 14].
-            subject_list_val (list[int], optional): subject(s) to include in validation. Defaults to [15].
+            subject_list_train (list[int], optional): subjects to include in
+            training. Defaults to [11, 12, 13, 14].
+            subject_list_val (list[int], optional): subject(s) to include in
+            validation. Defaults to [15].
         """
         super(MRIDataModule, self).__init__()
         self.save_hyperparameters()

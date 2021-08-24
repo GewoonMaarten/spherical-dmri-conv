@@ -12,7 +12,7 @@ from utils.logger import logger
 from utils.argparse import file_path
 
 
-class MRISelectorSubjDataset(Dataset):
+class MRIMemoryDataset(Dataset):
     def __init__(
         self,
         data_file_path: Path,
@@ -63,6 +63,47 @@ class MRISelectorSubjDataset(Dataset):
         return self.data[index]
 
 
+class MRIDataset(Dataset):
+    def __init__(
+        self,
+        data_file_path: Path,
+        header_file_path: Path,
+        subject_list: np.ndarray,
+        exclude: list[int] = [],
+    ):
+        """Create a dataset from the selected subjects in the subject list
+
+        Args:
+            data_file_path (Path): Data h5 file path.
+            header_file_path (Path): Header csv file path.
+            subject_list (np.ndarray): ist of all the subjects to include.
+            exclude (list[int], optional): list of features to exclude from
+            training. Defaults to [].
+        """
+
+        self.exclude = exclude
+
+        # load the header
+        header = pd.read_csv(header_file_path, index_col=0)
+        header = header[header["1"].isin(subject_list)]
+        # indexes of the data we want to load
+        self.indexes = header["0"].to_numpy(dtype=np.uint32)
+
+        archive = h5py.File(data_file_path, "r")
+        self.dataset = archive.get("data1")
+
+    def __len__(self):
+        """Denotes the total number of samples"""
+        return len(self.indexes)
+
+    def __getitem__(self, index):
+        """Generates one sample of data"""
+        data = self.dataset[index]
+        data = np.delete(data, self.exclude)
+
+        return data
+
+
 class MRIDataModule(pl.LightningDataModule):
     def __init__(
         self,
@@ -71,6 +112,7 @@ class MRIDataModule(pl.LightningDataModule):
         batch_size: int = 265,
         subject_list_train: list[int] = [11, 12, 13, 14],
         subject_list_val: list[int] = [15],
+        in_memory: bool = False,
     ):
         """Collection of train and validation data sets.
 
@@ -83,15 +125,19 @@ class MRIDataModule(pl.LightningDataModule):
             training. Defaults to [11, 12, 13, 14].
             subject_list_val (list[int], optional): subject(s) to include in
             validation. Defaults to [15].
+            in_memory (bool): Whether to load the entire dataset in memory.
+            Defaults to False.
         """
         super(MRIDataModule, self).__init__()
-        self.save_hyperparameters()
 
         self.data_file = data_file
         self.header_file = header_file
         self.batch_size = batch_size
         self.subject_list_train = np.array(subject_list_train)
         self.subject_list_val = np.array(subject_list_val)
+        self.in_memory = in_memory
+
+        self.num_workers = 0 if self.in_memory else os.cpu_count()
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -131,15 +177,26 @@ class MRIDataModule(pl.LightningDataModule):
             metavar="N",
             help="input batch size for training (default: 64)",
         )
+        parser.add_argument(
+            "--in_memory",
+            action="store_true",
+            help="load the entire dataset into memory",
+        )
 
         return parent_parser
 
     def setup(self, stage: Optional[str]) -> None:
-        self.train_set = MRISelectorSubjDataset(
-            self.data_file, self.header_file, self.subject_list_train
+        DatasetClass = MRIMemoryDataset if self.in_memory else MRIDataset
+
+        self.train_set = DatasetClass(
+            self.data_file,
+            self.header_file,
+            self.subject_list_train,
         )
-        self.val_set = MRISelectorSubjDataset(
-            self.data_file, self.header_file, self.subject_list_val
+        self.val_set = DatasetClass(
+            self.data_file,
+            self.header_file,
+            self.subject_list_val,
         )
 
     def train_dataloader(self) -> DataLoader:
@@ -147,7 +204,7 @@ class MRIDataModule(pl.LightningDataModule):
             self.train_set,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=0,
+            num_workers=self.num_workers,
             pin_memory=True,
             drop_last=True,
         )
@@ -157,7 +214,7 @@ class MRIDataModule(pl.LightningDataModule):
             self.val_set,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=0,
+            num_workers=self.num_workers,
             pin_memory=True,
             drop_last=True,
         )

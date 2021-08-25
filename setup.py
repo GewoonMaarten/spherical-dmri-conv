@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as file:
 
 setuptools.setup(
     name="mudi",
-    version="21.07.dev0",
+    version="21.08.dev0",
     author="Maarten de Klerk",
     license="MIT",
     description="Concrete autoencoder for sub-sampling multi-dimensional dMRI",
@@ -26,4 +26,29 @@ setuptools.setup(
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.9",
+    install_requires=[
+        "GPy",
+        "h5py",
+        "mlflow",
+        "nibabel",
+        "nilearn",
+        "numpy",
+        "pandas",
+        "psutil",
+        "pytorch-lightning",
+        "ray[default]",
+        "ray[tune]",
+        "sklearn",
+        "torch",
+    ],
+    extras_require={
+        "notebook": [
+            "bokeh",
+            "jupyter_bokeh",
+            "jupyterlab",
+            "matplotlib",
+            "seaborn",
+        ]
+    },
+    tests_require=["pytest"],
 )

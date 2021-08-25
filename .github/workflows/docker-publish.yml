@@ -7,11 +7,9 @@ name: Docker
 
 on:
   push:
-    branches: [ main ]
-    # Publish semver tags as releases.
-    tags: [ 'v*.*.*' ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -19,10 +17,8 @@ env:
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
 
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -46,8 +42,10 @@ jobs:
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        uses: docker/metadata-action@3a3bb3a81753dc99f090d24ee7e5343838b73a96
         with:
+          tags: |
+            type=raw,enable=true,value={{date 'YY'}}.{{date 'MM'}}.dev{{sha}}
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       # Build and push Docker image with Buildx (don't push on PR)

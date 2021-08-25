@@ -137,7 +137,7 @@ class MRIDataModule(pl.LightningDataModule):
         self.subject_list_val = np.array(subject_list_val)
         self.in_memory = in_memory
 
-        self.num_workers = 0 if self.in_memory else os.cpu_count()
+        self.num_workers = os.cpu_count()
 
     @staticmethod
     def add_model_specific_args(parent_parser):

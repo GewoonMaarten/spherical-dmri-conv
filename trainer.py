@@ -4,6 +4,8 @@ import mlflow
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.plugins import DDPPlugin
+
 import utils.logger as logger
 from autoencoder.concrete_autoencoder import ConcreteAutoencoder
 from autoencoder.dataset import MRIDataModule
@@ -51,6 +53,10 @@ def trainer(args: Namespace) -> None:
         ],
         checkpoint_callback=True,
         logger=TensorBoardLogger("logs", name=experiment_name),
+        plugins=DDPPlugin(
+            find_unused_parameters=False,
+            gradient_as_bucket_view=True,
+        ),
     )
 
     mlflow.set_experiment(experiment_name)

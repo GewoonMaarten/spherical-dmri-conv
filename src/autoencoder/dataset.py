@@ -80,7 +80,7 @@ class MRIDataset(Dataset):
             exclude (list[int], optional): list of features to exclude from
             training. Defaults to [].
         """
-
+        self.data_file_path = data_file_path
         self.exclude = exclude
 
         # load the header
@@ -89,16 +89,15 @@ class MRIDataset(Dataset):
         # indexes of the data we want to load
         self.indexes = header["0"].to_numpy(dtype=np.uint32)
 
-        archive = h5py.File(data_file_path, "r")
-        self.dataset = archive.get("data1")
-
     def __len__(self):
         """Denotes the total number of samples"""
         return len(self.indexes)
 
     def __getitem__(self, index):
         """Generates one sample of data"""
-        data = self.dataset[index]
+        with h5py.File(self.data_file_path, "r") as archive:
+            dataset = archive.get("data1")
+            data = dataset[index]
         data = np.delete(data, self.exclude)
 
         return data

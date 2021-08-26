@@ -35,9 +35,9 @@ class Encoder(pl.LightningModule):
         """
         super(Encoder, self).__init__()
 
-        self.temp = torch.tensor(max_temp, device=self.device)
-        self.min_temp = torch.tensor(min_temp, device=self.device)
-        self.alpha = torch.tensor(alpha, device=self.device)
+        self.register_buffer("temp", torch.tensor(max_temp))
+        self.register_buffer("min_temp", torch.tensor(min_temp))
+        self.register_buffer("alpha", torch.tensor(alpha))
 
         logits = nn.init.xavier_normal_(torch.empty(output_size, input_size))
         self.logits = nn.parameter.Parameter(logits, requires_grad=True)
@@ -225,6 +225,11 @@ class ConcreteAutoencoder(pl.LightningModule):
         Returns:
             torch.Tensor: calculated loss
         """
+        mean_max = torch.mean(
+            torch.max(F.softmax(self.encoder.logits, dim=1), 1).values
+        )
+        self.log("mean_max", mean_max, prog_bar=True, sync_dist=True)
+
         return self._shared_eval(batch, batch_idx, "train")
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
@@ -235,14 +240,6 @@ class ConcreteAutoencoder(pl.LightningModule):
             batch_idx (int): batch id.
         """
         return self._shared_eval(batch, batch_idx, "val")
-
-    def on_epoch_start(self) -> None:
-        """Each epoch the mean max of probabilities of the feature selector of the encoder is calculated. This is
-        tracked for early stopping under the name `mean_max`."""
-        mean_max = torch.mean(
-            torch.max(F.softmax(self.encoder.logits, dim=1), 1).values
-        )
-        self.log("mean_max", mean_max, prog_bar=True)
 
     def on_train_start(self) -> None:
         """At the beginning of training the `alpha` for the encoder is calculated."""
@@ -273,6 +270,6 @@ class ConcreteAutoencoder(pl.LightningModule):
         decoded = self.decoder(encoded)
         loss = F.mse_loss(decoded, batch)
 
-        self.log(f"{prefix}_loss", loss)
+        self.log(f"{prefix}_loss", loss, prog_bar=True, sync_dist=True)
 
         return loss

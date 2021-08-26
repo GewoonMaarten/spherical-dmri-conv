@@ -2,12 +2,8 @@ from argparse import ArgumentParser, Namespace
 
 import mlflow
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import (
-    EarlyStopping,
-    LearningRateMonitor,
-    ModelCheckpoint,
-)
-
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from pytorch_lightning.loggers import TensorBoardLogger
 import utils.logger as logger
 from autoencoder.concrete_autoencoder import ConcreteAutoencoder
 from autoencoder.dataset import MRIDataModule
@@ -19,26 +15,10 @@ def trainer(args: Namespace) -> None:
     Args:
         args (Namespace): arguments from argparse
     """
-    mlflow.pytorch.autolog()
-    mlflow.log_params(vars(args))
+    experiment_name = "concrete_autoencoder"
 
     logger.init_logger(logger.LOGGER_NAME, args.verbose)
     is_verbose = args.verbose < 30
-
-    early_stopping = EarlyStopping(
-        monitor="mean_max",
-        mode="max",
-        patience=float("inf"),
-        stopping_threshold=0.998,
-        verbose=is_verbose,
-    )
-    checkpoint_callback = ModelCheckpoint(
-        monitor="val_loss",
-        mode="min",
-        save_top_k=1,
-        verbose=is_verbose,
-    )
-    lr_logger = LearningRateMonitor()
 
     model = ConcreteAutoencoder(
         args.input_output_size,
@@ -54,9 +34,29 @@ def trainer(args: Namespace) -> None:
 
     trainer = pl.Trainer.from_argparse_args(
         args,
-        callbacks=[lr_logger, early_stopping, checkpoint_callback],
+        callbacks=[
+            EarlyStopping(
+                monitor="mean_max",
+                mode="max",
+                patience=float("inf"),
+                stopping_threshold=0.998,
+                verbose=is_verbose,
+            ),
+            ModelCheckpoint(
+                monitor="mean_max",
+                mode="max",
+                save_top_k=1,
+                verbose=is_verbose,
+            ),
+        ],
         checkpoint_callback=True,
+        logger=TensorBoardLogger("logs", name=experiment_name),
     )
+
+    mlflow.set_experiment(experiment_name)
+
+    mlflow.pytorch.autolog()
+    mlflow.log_params(vars(args))
 
     trainer.fit(model, dm)
 

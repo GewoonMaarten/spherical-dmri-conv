@@ -29,17 +29,18 @@ setuptools.setup(
     install_requires=[
         "GPy",
         "h5py",
-        "mlflow",
+        "mlflow~=1.20.0",
         "nibabel",
         "nilearn",
         "numpy",
         "pandas",
         "psutil",
-        "pytorch-lightning",
+        "pytorch-lightning~=1.4.4",
         "ray[default]",
         "ray[tune]",
         "sklearn",
-        "torch",
+        "torch~=1.9.0",
+        "torchvision",
     ],
     extras_require={
         "notebook": [

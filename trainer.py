@@ -26,13 +26,20 @@ def trainer(args: Namespace) -> None:
         args.input_output_size,
         args.latent_size,
         args.decoder_hidden_layers,
-        args.learning_rate,
+        learning_rate=args.learning_rate,
     )
     dm = MRIDataModule(
         data_file=args.data_file,
         header_file=args.header_file,
         batch_size=args.batch_size,
+        in_memory=args.in_memory,
     )
+
+    plugins = []
+    if args.accelerator == "ddp":
+        plugins = [
+            DDPPlugin(find_unused_parameters=False, gradient_as_bucket_view=True)
+        ]
 
     trainer = pl.Trainer.from_argparse_args(
         args,
@@ -53,10 +60,7 @@ def trainer(args: Namespace) -> None:
         ],
         checkpoint_callback=True,
         logger=TensorBoardLogger("logs", name=experiment_name),
-        plugins=DDPPlugin(
-            find_unused_parameters=False,
-            gradient_as_bucket_view=True,
-        ),
+        plugins=plugins,
     )
 
     mlflow.set_experiment(experiment_name)

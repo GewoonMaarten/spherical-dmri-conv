@@ -108,7 +108,7 @@ class MRIDataModule(pl.LightningDataModule):
         self,
         data_file: Path,
         header_file: Path,
-        batch_size: int = 265,
+        batch_size: int = 256,
         subject_list_train: list[int] = [11, 12, 13, 14],
         subject_list_val: list[int] = [15],
         in_memory: bool = False,
@@ -206,6 +206,7 @@ class MRIDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=True,
             drop_last=True,
+            persistent_workers=True,
         )
 
     def val_dataloader(self) -> DataLoader:
@@ -216,4 +217,5 @@ class MRIDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=True,
             drop_last=True,
+            persistent_workers=True,
         )

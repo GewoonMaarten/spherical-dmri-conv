@@ -1,4 +1,3 @@
-import math
 from collections import OrderedDict
 
 import numpy as np
@@ -9,7 +8,7 @@ from torch import nn
 from utils.logger import logger
 
 
-class Encoder(pl.LightningModule):
+class Encoder(nn.Module):
     def __init__(
         self,
         input_size: int,
@@ -40,7 +39,7 @@ class Encoder(pl.LightningModule):
         self.register_buffer("alpha", torch.tensor(alpha))
 
         logits = nn.init.xavier_normal_(torch.empty(output_size, input_size))
-        self.logits = nn.parameter.Parameter(logits, requires_grad=True)
+        self.logits = nn.Parameter(logits, requires_grad=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Uses the trained encoder to make inferences.
@@ -53,27 +52,40 @@ class Encoder(pl.LightningModule):
         """
         logits_size = self.logits.size()
 
-        self.temp = torch.maximum(self.min_temp, self.temp * self.alpha)
-
         selections: torch.Tensor = None
         if self.training:
-            uniform = torch.rand(logits_size, device=self.device)
+            uniform = torch.rand(logits_size)
+            uniform = uniform.type_as(x)
             gumbel = -torch.log(-torch.log(uniform))
             noisy_logits = (self.logits + gumbel) / self.temp
             samples = F.softmax(noisy_logits, dim=1)
+
             selections = samples
         else:
-            dim_argmax = len(self.logits.size()) - 1
-            discrete_logits = F.one_hot(
-                torch.argmax(self.logits, dim_argmax), num_classes=logits_size[1]
-            )
+            dim_argmax = len(logits_size) - 1
+            logits_argmax = torch.argmax(self.logits, dim_argmax)
+            discrete_logits = F.one_hot(logits_argmax, num_classes=logits_size[1])
+
             selections = discrete_logits
 
         encoded = torch.matmul(x, torch.transpose(selections.float(), 0, 1))
         return encoded
 
+    def update_temp(self) -> torch.Tensor:
+        self.temp = torch.maximum(self.min_temp, self.temp * self.alpha)
+        return self.temp
 
-class Decoder(pl.LightningModule):
+    def calc_mean_max(self) -> torch.Tensor:
+        logits_softmax = F.softmax(self.logits, dim=1)
+        logits_max = torch.max(logits_softmax, 1).values
+        mean_max = torch.mean(logits_max)
+
+        logger.debug("mean max: %0.8f", mean_max.item())
+
+        return mean_max
+
+
+class Decoder(nn.Module):
     def __init__(
         self,
         input_size: int,
@@ -133,7 +145,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         input_output_size: int,
         latent_size: int,
         decoder_hidden_layers: int = 2,
-        learning_rate: float = 1e-2,
+        learning_rate: float = 1e-3,
         max_temp: float = 10.0,
         min_temp: float = 0.1,
     ) -> None:
@@ -225,33 +237,40 @@ class ConcreteAutoencoder(pl.LightningModule):
         Returns:
             torch.Tensor: calculated loss
         """
-        mean_max = torch.mean(
-            torch.max(F.softmax(self.encoder.logits, dim=1), 1).values
-        )
-        self.log("mean_max", mean_max, prog_bar=True, sync_dist=True)
-
         return self._shared_eval(batch, batch_idx, "train")
 
-    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> None:
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         """Validateds one batch of data.
 
         Args:
             batch (torch.Tensor): batch data.
             batch_idx (int): batch id.
         """
-        return self._shared_eval(batch, batch_idx, "val")
+        self._shared_eval(batch, batch_idx, "val")
+
+    def on_epoch_end(self) -> None:
+        temp = self.encoder.update_temp()
+        mean_max = self.encoder.calc_mean_max()
+
+        self.log("mean_max", mean_max, prog_bar=True)
+        self.log("temp", temp, prog_bar=True)
 
     def on_train_start(self) -> None:
         """At the beginning of training the `alpha` for the encoder is calculated."""
+        num_epochs = self.trainer.max_epochs
+        if num_epochs is None:
+            logger.error("max epochs not set.")
+            raise
+
         dataset = self.train_dataloader()
         batch_size = dataset.batch_size
 
-        num_epochs = self.trainer.max_epochs
         min_temp = self.encoder.min_temp
         temp = self.encoder.temp
 
-        alpha = math.exp(math.log(min_temp / temp) / (num_epochs * batch_size))
-        self.encoder.alpha = torch.tensor(alpha, device=self.device)
+        steps_per_epoch = (len(dataset) + batch_size - 1) // batch_size
+        alpha = torch.exp(torch.log(min_temp / temp) / (num_epochs * steps_per_epoch))
+        self.encoder.alpha = alpha
 
     def _shared_eval(
         self, batch: torch.Tensor, batch_idx: int, prefix: str
@@ -266,10 +285,9 @@ class ConcreteAutoencoder(pl.LightningModule):
         Returns:
             torch.Tensor: calculated loss.
         """
-        encoded = self.encoder(batch)
-        decoded = self.decoder(encoded)
+        _, decoded = self.forward(batch)
         loss = F.mse_loss(decoded, batch)
 
-        self.log(f"{prefix}_loss", loss, prog_bar=True, sync_dist=True)
+        self.log(f"{prefix}_loss", loss, on_step=True)
 
         return loss

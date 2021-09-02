@@ -15,7 +15,6 @@ class Encoder(nn.Module):
         output_size: int,
         max_temp: float = 10.0,
         min_temp: float = 0.1,
-        alpha: float = 0.99999,
     ) -> None:
         """Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
@@ -35,8 +34,8 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
 
         self.register_buffer("temp", torch.tensor(max_temp))
+        self.register_buffer("max_temp", torch.tensor(max_temp))
         self.register_buffer("min_temp", torch.tensor(min_temp))
-        self.register_buffer("alpha", torch.tensor(alpha))
 
         logits = nn.init.xavier_normal_(torch.empty(output_size, input_size))
         self.logits = nn.Parameter(logits, requires_grad=True)
@@ -71,16 +70,17 @@ class Encoder(nn.Module):
         encoded = torch.matmul(x, torch.transpose(selections.float(), 0, 1))
         return encoded
 
-    def update_temp(self) -> torch.Tensor:
-        self.temp = torch.maximum(self.min_temp, self.temp * self.alpha)
+    def update_temp(self, current_epoch, max_epochs) -> torch.Tensor:
+        self.temp = torch.pow(
+            self.max_temp * (self.min_temp / self.max_temp),
+            (current_epoch / max_epochs),
+        )
         return self.temp
 
     def calc_mean_max(self) -> torch.Tensor:
         logits_softmax = F.softmax(self.logits, dim=1)
         logits_max = torch.max(logits_softmax, 1).values
         mean_max = torch.mean(logits_max)
-
-        logger.debug("mean max: %0.8f", mean_max.item())
 
         return mean_max
 
@@ -248,29 +248,13 @@ class ConcreteAutoencoder(pl.LightningModule):
         """
         self._shared_eval(batch, batch_idx, "val")
 
-    def on_epoch_end(self) -> None:
-        temp = self.encoder.update_temp()
-        mean_max = self.encoder.calc_mean_max()
-
-        self.log("mean_max", mean_max, prog_bar=True)
+    def on_train_epoch_start(self) -> None:
+        temp = self.encoder.update_temp(self.current_epoch, self.trainer.max_epochs)
         self.log("temp", temp, prog_bar=True)
 
-    def on_train_start(self) -> None:
-        """At the beginning of training the `alpha` for the encoder is calculated."""
-        num_epochs = self.trainer.max_epochs
-        if num_epochs is None:
-            logger.error("max epochs not set.")
-            raise
-
-        dataset = self.train_dataloader()
-        batch_size = dataset.batch_size
-
-        min_temp = self.encoder.min_temp
-        temp = self.encoder.temp
-
-        steps_per_epoch = (len(dataset) + batch_size - 1) // batch_size
-        alpha = torch.exp(torch.log(min_temp / temp) / (num_epochs * steps_per_epoch))
-        self.encoder.alpha = alpha
+    def on_epoch_end(self) -> None:
+        mean_max = self.encoder.calc_mean_max()
+        self.log("mean_max", mean_max, prog_bar=True)
 
     def _shared_eval(
         self, batch: torch.Tensor, batch_idx: int, prefix: str

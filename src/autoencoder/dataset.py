@@ -1,4 +1,5 @@
 import os
+from argparse import ArgumentParser
 from pathlib import Path
 from typing import Optional
 
@@ -8,8 +9,8 @@ import pandas as pd
 import psutil
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
-from utils.logger import logger
 from utils.argparse import file_path
+from utils.logger import logger
 
 
 class MRIMemoryDataset(Dataset):
@@ -139,7 +140,15 @@ class MRIDataModule(pl.LightningDataModule):
         self.num_workers = os.cpu_count()
 
     @staticmethod
-    def add_model_specific_args(parent_parser):
+    def add_model_specific_args(parent_parser: ArgumentParser) -> ArgumentParser:
+        """Add model specific arguments to argparse.
+
+        Args:
+            parent_parser (ArgumentParser): parent argparse to add the new arguments to.
+
+        Returns:
+            ArgumentParser: parent argparse.
+        """
         parser = parent_parser.add_argument_group("autoencoder.MRIDataModule")
         parser.add_argument(
             "--data_file",

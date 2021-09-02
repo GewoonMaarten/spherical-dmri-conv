@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from collections import OrderedDict
 
 import numpy as np
@@ -171,7 +172,15 @@ class ConcreteAutoencoder(pl.LightningModule):
         self.learning_rate = learning_rate
 
     @staticmethod
-    def add_model_specific_args(parent_parser):
+    def add_model_specific_args(parent_parser: ArgumentParser) -> ArgumentParser:
+        """Add model specific arguments to argparse.
+
+        Args:
+            parent_parser (ArgumentParser): parent argparse to add the new arguments to.
+
+        Returns:
+            ArgumentParser: parent argparse.
+        """
         parser = parent_parser.add_argument_group("autoencoder.ConcreteAutoencoder")
         parser.add_argument(
             "--input_output_size",
@@ -218,33 +227,13 @@ class ConcreteAutoencoder(pl.LightningModule):
         return encoded, decoded
 
     def configure_optimizers(self) -> torch.optim.Adam:
-        """Initializes the Adam optimizer.
-
-        Returns:
-            torch.optim.Adam: the created optimizer.
-        """
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        """Trains one batch of data.
-
-        Args:
-            batch (torch.Tensor): batch data
-            batch_idx (int): batch index
-
-        Returns:
-            torch.Tensor: calculated loss
-        """
         return self._shared_eval(batch, batch_idx, "train")
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        """Validateds one batch of data.
-
-        Args:
-            batch (torch.Tensor): batch data.
-            batch_idx (int): batch id.
-        """
         return self._shared_eval(batch, batch_idx, "val")
 
     def on_train_epoch_start(self) -> None:

@@ -245,7 +245,7 @@ class ConcreteAutoencoder(pl.LightningModule):
             batch (torch.Tensor): batch data.
             batch_idx (int): batch id.
         """
-        self._shared_eval(batch, batch_idx, "val")
+        return self._shared_eval(batch, batch_idx, "val")
 
     def on_train_epoch_start(self) -> None:
         temp = self.encoder.update_temp(self.current_epoch, self.trainer.max_epochs)

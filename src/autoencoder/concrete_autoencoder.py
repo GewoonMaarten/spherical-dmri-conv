@@ -71,9 +71,8 @@ class Encoder(nn.Module):
         return encoded
 
     def update_temp(self, current_epoch, max_epochs) -> torch.Tensor:
-        self.temp = torch.pow(
-            self.max_temp * (self.min_temp / self.max_temp),
-            (current_epoch / max_epochs),
+        self.temp = self.max_temp * torch.pow(
+            (self.min_temp / self.max_temp), (current_epoch / max_epochs)
         )
         return self.temp
 

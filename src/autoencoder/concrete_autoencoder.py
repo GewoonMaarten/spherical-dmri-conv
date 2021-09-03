@@ -108,19 +108,23 @@ class Decoder(nn.Module):
         """
         super(Decoder, self).__init__()
 
-        step_size = abs(output_size - input_size) // (n_hidden_layers + 1)
-        layer_sizes = np.arange(input_size, output_size, step_size)
+        indices = np.arange(2 + n_hidden_layers)
+        data_indices = np.array([indices[0], indices[-1]])
+        data = np.array([input_size, output_size])
+
+        layer_sizes = np.interp(indices, data_indices, data).astype(int)
         n_layers = len(layer_sizes)
 
         # Construct the network
         layers = OrderedDict()
-        for i in range(n_layers):
-            if i + 1 == n_layers:  # Last layer
-                layers[f"linear_{i}"] = nn.Linear(layer_sizes[i], output_size)
-                layers[f"sigmoid_{i}"] = nn.Sigmoid()
+        for i in range(1, n_layers):
+            n = i - 1
+            if i == n_layers - 1:  # Last layer
+                layers[f"linear_{n}"] = nn.Linear(layer_sizes[i - 1], layer_sizes[i])
+                layers[f"sigmoid_{n}"] = nn.Sigmoid()
             else:
-                layers[f"linear_{i}"] = nn.Linear(layer_sizes[i], layer_sizes[i + 1])
-                layers[f"relu_{i}"] = nn.LeakyReLU(negative_slope)
+                layers[f"linear_{n}"] = nn.Linear(layer_sizes[i - 1], layer_sizes[i])
+                layers[f"relu_{n}"] = nn.LeakyReLU(negative_slope)
 
         logger.debug("decoder layers: %s", layers)
 

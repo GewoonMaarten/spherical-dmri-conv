@@ -27,6 +27,7 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.9",
     install_requires=[
+        "boto3",
         "GPy",
         "h5py",
         "mlflow~=1.20.0",

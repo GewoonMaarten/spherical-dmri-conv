@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from collections import OrderedDict
+from typing import Optional
 
 import numpy as np
 import pytorch_lightning as pl
@@ -84,6 +85,13 @@ class Encoder(nn.Module):
 
         return mean_max
 
+    def regularization(self) -> float:
+        """Regularization term according to https://homes.esat.kuleuven.be/~abertran/reports/TS_JNE_2021.pdf"""
+        eps = 1e-10
+        threshold = 3.0
+        selection = torch.clamp(F.softmax(self.logits, dim=0), eps, 1)
+        return torch.sum(F.relu(torch.norm(selection, 1, dim=1) - threshold))
+
 
 class Decoder(nn.Module):
     def __init__(
@@ -152,6 +160,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         learning_rate: float = 1e-3,
         max_temp: float = 10.0,
         min_temp: float = 0.1,
+        lambda_reg: Optional[float] = None,
     ) -> None:
         """Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
@@ -166,6 +175,9 @@ class ConcreteAutoencoder(pl.LightningModule):
             Defaults to 10.0.
             min_temp (float, optional): minimum temperature for Gumble Softmax.
             Defaults to 0.1.
+            lambda_reg(float, optional): how much weight to apply to the
+            regularization term. If `None` then no regularization will be
+            applied. Defaults to None.
         """
         super(ConcreteAutoencoder, self).__init__()
         self.save_hyperparameters()
@@ -215,6 +227,14 @@ class ConcreteAutoencoder(pl.LightningModule):
             help="learning rate for the optimizer (default: 1e-2)",
         )
 
+        parser.add_argument(
+            "--lambda_reg",
+            type=float,
+            default=None,
+            metavar="N",
+            help="how much weight to apply to the regularization term. If `None` then no regularization will be applied. (default: None)",
+        )
+
         return parent_parser
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -235,7 +255,12 @@ class ConcreteAutoencoder(pl.LightningModule):
         return optimizer
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        return self._shared_eval(batch, batch_idx, "train")
+        loss = self._shared_eval(batch, batch_idx, "train")
+
+        if self.lambda_reg is None:
+            return loss
+
+        return loss + (self.lambda_reg * self.encoder.regularization())
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "val")

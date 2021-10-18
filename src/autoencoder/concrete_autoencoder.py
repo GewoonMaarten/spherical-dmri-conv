@@ -154,8 +154,8 @@ class Decoder(nn.Module):
 class ConcreteAutoencoder(pl.LightningModule):
     def __init__(
         self,
-        input_output_size: int,
-        latent_size: int,
+        input_output_size: int = 1344,
+        latent_size: int = 500,
         decoder_hidden_layers: int = 2,
         learning_rate: float = 1e-3,
         max_temp: float = 10.0,
@@ -170,7 +170,7 @@ class ConcreteAutoencoder(pl.LightningModule):
             decoder_hidden_layers (int, optional): number of hidden layers for
             the decoder. Defaults to 2.
             learning_rate (float, optional): learning rate for the optimizer.
-            Defaults to 1e-2.
+            Defaults to 1e-3.
             max_temp (float, optional): maximum temperature for Gumble Softmax.
             Defaults to 10.0.
             min_temp (float, optional): minimum temperature for Gumble Softmax.
@@ -186,6 +186,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         self.decoder = Decoder(latent_size, input_output_size, decoder_hidden_layers)
 
         self.learning_rate = learning_rate
+        self.lambda_reg = lambda_reg
 
     @staticmethod
     def add_model_specific_args(parent_parser: ArgumentParser) -> ArgumentParser:
@@ -200,29 +201,27 @@ class ConcreteAutoencoder(pl.LightningModule):
         parser = parent_parser.add_argument_group("autoencoder.ConcreteAutoencoder")
         parser.add_argument(
             "--input_output_size",
+            "-s",
             type=int,
-            required=True,
             metavar="N",
             help="size of the input and output layer",
         )
         parser.add_argument(
             "--latent_size",
+            "-l",
             type=int,
-            required=True,
             metavar="N",
             help="size of latent layer",
         )
         parser.add_argument(
             "--decoder_hidden_layers",
             type=int,
-            default=2,
             metavar="N",
             help="number of hidden layers for the decoder (default: 2)",
         )
         parser.add_argument(
             "--learning_rate",
             type=float,
-            default=1e-2,
             metavar="N",
             help="learning rate for the optimizer (default: 1e-2)",
         )
@@ -230,7 +229,6 @@ class ConcreteAutoencoder(pl.LightningModule):
         parser.add_argument(
             "--lambda_reg",
             type=float,
-            default=None,
             metavar="N",
             help="how much weight to apply to the regularization term. If `None` then no regularization will be applied. (default: None)",
         )

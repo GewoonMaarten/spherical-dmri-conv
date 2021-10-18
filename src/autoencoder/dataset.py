@@ -169,20 +169,17 @@ class MRIDataModule(pl.LightningDataModule):
             "--subject_train",
             nargs="+",
             type=int,
-            default=[11, 12, 13, 14],
             help="subjects to include in training (default: [11, 12, 13, 14])",
         )
         parser.add_argument(
             "--subject_val",
             nargs="+",
             type=int,
-            default=[15],
             help="subjects to include in validation (default: [15])",
         )
         parser.add_argument(
             "--batch_size",
             type=int,
-            default=64,
             metavar="N",
             help="input batch size for training (default: 64)",
         )
@@ -220,6 +217,17 @@ class MRIDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.val_set,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=True,
+            drop_last=True,
+            persistent_workers=True,
+        )
+
+    def test_dataloader(self) -> DataLoader:
         return DataLoader(
             self.val_set,
             batch_size=self.batch_size,

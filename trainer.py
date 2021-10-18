@@ -17,6 +17,7 @@ def trainer(args: Namespace) -> None:
     Args:
         args (Namespace): arguments from argparse
     """
+    mlflow.set_tracking_uri("http://localhost:5000")
     experiment_name = "concrete_autoencoder"
 
     logger.init_logger(logger.LOGGER_NAME, args.verbose)
@@ -27,6 +28,7 @@ def trainer(args: Namespace) -> None:
         args.latent_size,
         args.decoder_hidden_layers,
         learning_rate=args.learning_rate,
+        lambda_reg=args.lambda_reg,
     )
     dm = MRIDataModule(
         data_file=args.data_file,
@@ -64,7 +66,6 @@ def trainer(args: Namespace) -> None:
     )
 
     mlflow.set_experiment(experiment_name)
-
     mlflow.pytorch.autolog()
     mlflow.log_params(vars(args))
 

@@ -17,7 +17,6 @@ def trainer(args: Namespace) -> None:
     Args:
         args (Namespace): arguments from argparse
     """
-    mlflow.set_tracking_uri(args.mlflow)
     experiment_name = "concrete_autoencoder"
 
     logger.init_logger(logger.LOGGER_NAME, args.verbose)
@@ -65,6 +64,9 @@ def trainer(args: Namespace) -> None:
         plugins=plugins,
     )
 
+    if args.mlflow is not None:
+        mlflow.set_tracking_uri(args.mlflow)
+
     mlflow.set_experiment(experiment_name)
     mlflow.pytorch.autolog()
     mlflow.log_params(vars(args))
@@ -80,7 +82,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mlflow",
         type=str,
-        default="http://localhost:5000",
+        default=None,
         help="Address of the Mlflow tracking server",
     )
 

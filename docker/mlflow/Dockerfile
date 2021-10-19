@@ -6,7 +6,7 @@ RUN apt-get update && apt-get -y install --no-install-recommends build-essential
 
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install mlflow psycopg2 mysqlclient pysftp boto3
+RUN pip install mlflow==1.20.0 psycopg2 mysqlclient pysftp boto3==1.18.35 
 
 FROM python:3.7-slim
 COPY --from=build /opt/venv /opt/venv

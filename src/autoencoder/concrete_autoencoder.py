@@ -202,6 +202,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         parser.add_argument(
             "--input_output_size",
             "-s",
+            default=1344,
             type=int,
             metavar="N",
             help="size of the input and output layer",
@@ -209,12 +210,14 @@ class ConcreteAutoencoder(pl.LightningModule):
         parser.add_argument(
             "--latent_size",
             "-l",
+            default=500,
             type=int,
             metavar="N",
             help="size of latent layer",
         )
         parser.add_argument(
             "--decoder_hidden_layers",
+            default=2,
             type=int,
             metavar="N",
             help="number of hidden layers for the decoder (default: 2)",
@@ -222,12 +225,14 @@ class ConcreteAutoencoder(pl.LightningModule):
         parser.add_argument(
             "--learning_rate",
             type=float,
+            default=1e-3,
             metavar="N",
             help="learning rate for the optimizer (default: 1e-2)",
         )
 
         parser.add_argument(
             "--lambda_reg",
+            default=None,
             type=float,
             metavar="N",
             help="how much weight to apply to the regularization term. If `None` then no regularization will be applied. (default: None)",

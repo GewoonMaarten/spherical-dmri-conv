@@ -179,6 +179,7 @@ class MRIDataModule(pl.LightningDataModule):
         )
         parser.add_argument(
             "--batch_size",
+            default=256,
             type=int,
             metavar="N",
             help="input batch size for training (default: 64)",

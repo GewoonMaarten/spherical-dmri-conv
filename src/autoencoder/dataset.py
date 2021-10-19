@@ -63,6 +63,14 @@ class MRIMemoryDataset(Dataset):
         """Generates one sample of data"""
         return self.data[index]
 
+    def __getstate__(self):
+        """Return state values to be pickled."""
+        return None
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state values."""
+        pass
+
 
 class MRIDataset(Dataset):
     def __init__(
@@ -102,6 +110,14 @@ class MRIDataset(Dataset):
         data = np.delete(data, self.exclude)
 
         return data
+
+    def __getstate__(self):
+        """Return state values to be pickled."""
+        return None
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state values."""
+        pass
 
 
 class MRIDataModule(pl.LightningDataModule):

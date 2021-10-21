@@ -66,7 +66,7 @@ def get_logger() -> None:
     if not logger.hasHandlers():  # only do this once.
         log_level = logger.getEffectiveLevel()
 
-        path = Path(Path(__file__).parent.parent, "logs", f"{LOGGER_NAME}.log")
+        path = Path(Path(__file__).cwd(), "logs", f"{LOGGER_NAME}.log")
         path.parent.mkdir(parents=True, exist_ok=True)
 
         streamHandler = logging.StreamHandler(stream=sys.stdout)

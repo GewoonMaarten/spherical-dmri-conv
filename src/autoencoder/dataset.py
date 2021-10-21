@@ -17,7 +17,6 @@ class MRIMemoryDataset(Dataset):
     def __init__(
         self,
         data_file_path: Path,
-        header_file_path: Path,
         subject_list: np.ndarray,
         exclude: list[int] = [],
     ):
@@ -25,19 +24,17 @@ class MRIMemoryDataset(Dataset):
 
         Args:
             data_file_path (Path): Data h5 file path.
-            header_file_path (Path): Header csv file path.
             subject_list (np.ndarray): ist of all the subjects to include.
             exclude (list[int], optional): list of features to exclude from
             training. Defaults to [].
         """
+        archive = h5py.File(data_file_path, "r")
+        indexes = archive.get["index"][()]
 
-        # load the header
-        header = pd.read_csv(header_file_path, index_col=0)
-        header = header[header["1"].isin(subject_list)]
         # indexes of the data we want to load
-        indexes = header["0"].to_numpy(dtype=np.uint32)
+        selection = np.isin(indexes, subject_list)
 
-        # load the data in memory. The total file is *only* 3GB so it should be
+        # load the data in memory. The total file is *only* 3.1GB so it should be
         # doable on most systems. Lets check anyway...
         file_size = os.path.getsize(data_file_path)
         available_memory = psutil.virtual_memory().available
@@ -48,12 +45,11 @@ class MRIMemoryDataset(Dataset):
                 format(available_memory, ","),
             )
 
-        archive = h5py.File(data_file_path, "r")
-        self.data = archive.get("data1")[
-            indexes,
-        ]
+        self.data = archive.get("data")[selection]
         # delete excluded features
         self.data = np.delete(self.data, exclude, axis=1)
+
+        archive.close()
 
     def __len__(self):
         """Denotes the total number of samples"""
@@ -76,7 +72,6 @@ class MRIDataset(Dataset):
     def __init__(
         self,
         data_file_path: Path,
-        header_file_path: Path,
         subject_list: np.ndarray,
         exclude: list[int] = [],
     ):
@@ -84,7 +79,6 @@ class MRIDataset(Dataset):
 
         Args:
             data_file_path (Path): Data h5 file path.
-            header_file_path (Path): Header csv file path.
             subject_list (np.ndarray): ist of all the subjects to include.
             exclude (list[int], optional): list of features to exclude from
             training. Defaults to [].
@@ -92,21 +86,19 @@ class MRIDataset(Dataset):
         self.data_file_path = data_file_path
         self.exclude = exclude
 
-        # load the header
-        header = pd.read_csv(header_file_path, index_col=0)
-        header = header[header["1"].isin(subject_list)]
+        with h5py.File(self.data_file_path, "r") as archive:
+            indexes = archive.get["index"][()]
         # indexes of the data we want to load
-        self.indexes = header["0"].to_numpy(dtype=np.uint32)
+        self.selection = np.where(np.isin(indexes, subject_list))
 
     def __len__(self):
         """Denotes the total number of samples"""
-        return len(self.indexes)
+        return len(self.selection)
 
     def __getitem__(self, index):
         """Generates one sample of data"""
         with h5py.File(self.data_file_path, "r") as archive:
-            dataset = archive.get("data1")
-            data = dataset[index]
+            data = archive.get("data")[self.selection[index]]
         data = np.delete(data, self.exclude)
 
         return data
@@ -147,7 +139,6 @@ class MRIDataModule(pl.LightningDataModule):
         super(MRIDataModule, self).__init__()
 
         self.data_file = data_file
-        self.header_file = header_file
         self.batch_size = batch_size
         self.subject_list_train = np.array(subject_list_train)
         self.subject_list_val = np.array(subject_list_val)
@@ -173,13 +164,6 @@ class MRIDataModule(pl.LightningDataModule):
             required=True,
             metavar="PATH",
             help="file name of the H5 file",
-        )
-        parser.add_argument(
-            "--header_file",
-            type=file_path,
-            required=True,
-            metavar="PATH",
-            help="file name of the CSV file",
         )
         parser.add_argument(
             "--subject_train",
@@ -213,12 +197,10 @@ class MRIDataModule(pl.LightningDataModule):
 
         self.train_set = DatasetClass(
             self.data_file,
-            self.header_file,
             self.subject_list_train,
         )
         self.val_set = DatasetClass(
             self.data_file,
-            self.header_file,
             self.subject_list_val,
         )
 

@@ -6,7 +6,7 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.plugins import DDPPlugin
 
-import utils.logger as logger
+from utils.logger import set_log_level
 from autoencoder.concrete_autoencoder import ConcreteAutoencoder
 from autoencoder.dataset import MRIDataModule
 
@@ -19,7 +19,7 @@ def trainer(args: Namespace) -> None:
     """
     experiment_name = "concrete_autoencoder"
 
-    logger.init_logger(logger.LOGGER_NAME, args.verbose)
+    set_log_level(args.verbose)
     is_verbose = args.verbose < 30
 
     model = ConcreteAutoencoder(

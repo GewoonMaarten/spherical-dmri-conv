@@ -5,7 +5,6 @@ from typing import Optional
 
 import h5py
 import numpy as np
-import pandas as pd
 import psutil
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
@@ -84,8 +83,8 @@ class MRIDataset(Dataset):
             training. Defaults to [].
         """
         logger.warning(
-            "This dataset is very slow compared to MRIMemoryDataset, only use this if you don't have enough memory. "
-            + "You can enable MRIMemoryDataset by using --in_memory in the console"
+            "MRIDataset is very slow compared to MRIMemoryDataset, only use MRIDataset if you don't have enough memory. "
+            + "You can enable the use of MRIMemoryDataset by setting --in_memory in the console"
         )
 
         self.data_file_path = data_file_path

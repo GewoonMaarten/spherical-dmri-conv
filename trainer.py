@@ -31,7 +31,6 @@ def trainer(args: Namespace) -> None:
     )
     dm = MRIDataModule(
         data_file=args.data_file,
-        header_file=args.header_file,
         batch_size=args.batch_size,
         in_memory=args.in_memory,
     )

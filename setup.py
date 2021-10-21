@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as file:
 
 setuptools.setup(
     name="mudi",
-    version="21.08.dev0",
+    version="21.10.dev0",
     author="Maarten de Klerk",
     license="MIT",
     description="Concrete autoencoder for sub-sampling multi-dimensional dMRI",

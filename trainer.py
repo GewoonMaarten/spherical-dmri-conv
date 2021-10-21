@@ -6,9 +6,9 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.plugins import DDPPlugin
 
-from autoencoder.logger import set_log_level
 from autoencoder.concrete_autoencoder import ConcreteAutoencoder
 from autoencoder.dataset import MRIDataModule
+from autoencoder.logger import set_log_level, logger
 
 
 def trainer(args: Namespace) -> None:
@@ -22,6 +22,8 @@ def trainer(args: Namespace) -> None:
     set_log_level(args.verbose)
     is_verbose = args.verbose < 30
 
+    logger.info("Start training with params: %s", str(args.__dict__))
+
     model = ConcreteAutoencoder(
         args.input_output_size,
         args.latent_size,
@@ -29,6 +31,13 @@ def trainer(args: Namespace) -> None:
         learning_rate=args.learning_rate,
         lambda_reg=args.lambda_reg,
     )
+
+    if args.checkpoint is not None:
+        logger.info("Loading from checkpoint")
+        model = model.load_from_checkpoint(
+            str(args.checkpoint), hparams_file=str(args.hparams)
+        )
+
     dm = MRIDataModule(
         data_file=args.data_file,
         batch_size=args.batch_size,

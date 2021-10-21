@@ -7,6 +7,8 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from torch import nn
+
+from autoencoder.argparse import file_path
 from autoencoder.logger import logger
 
 
@@ -199,6 +201,22 @@ class ConcreteAutoencoder(pl.LightningModule):
             ArgumentParser: parent argparse.
         """
         parser = parent_parser.add_argument_group("autoencoder.ConcreteAutoencoder")
+        parser.add_argument(
+            "--checkpoint",
+            default=None,
+            type=file_path,
+            required=True,
+            metavar="PATH",
+            help="Checkpoint file path to restore from.",
+        )
+        parser.add_argument(
+            "--hparams",
+            default=None,
+            type=file_path,
+            required=True,
+            metavar="PATH",
+            help="hyper parameter file path to restore from.",
+        )
         parser.add_argument(
             "--input_output_size",
             "-s",

@@ -29,10 +29,10 @@ class MRIMemoryDataset(Dataset):
             training. Defaults to [].
         """
         archive = h5py.File(data_file_path, "r")
-        indexes = archive.get["index"][()]
+        indexes = archive.get("index")[()]
 
         # indexes of the data we want to load
-        selection = np.isin(indexes, subject_list)
+        (selection, *_) = np.where(np.isin(indexes, subject_list))
 
         # load the data in memory. The total file is *only* 3.1GB so it should be
         # doable on most systems. Lets check anyway...
@@ -87,9 +87,9 @@ class MRIDataset(Dataset):
         self.exclude = exclude
 
         with h5py.File(self.data_file_path, "r") as archive:
-            indexes = archive.get["index"][()]
+            indexes = archive.get("index")[()]
         # indexes of the data we want to load
-        self.selection = np.where(np.isin(indexes, subject_list))
+        (self.selection, *_) = np.where(np.isin(indexes, subject_list))
 
     def __len__(self):
         """Denotes the total number of samples"""
@@ -116,7 +116,6 @@ class MRIDataModule(pl.LightningDataModule):
     def __init__(
         self,
         data_file: Path,
-        header_file: Path,
         batch_size: int = 256,
         subject_list_train: list[int] = [11, 12, 13, 14],
         subject_list_val: list[int] = [15],
@@ -160,6 +159,7 @@ class MRIDataModule(pl.LightningDataModule):
         parser = parent_parser.add_argument_group("autoencoder.MRIDataModule")
         parser.add_argument(
             "--data_file",
+            "-i",
             type=file_path,
             required=True,
             metavar="PATH",

@@ -13,7 +13,7 @@ import sys
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
-LOGGER_NAME = "geometric-dl"
+LOGGER_NAME = "MUDI"
 FORMATTER = (
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
 )
@@ -60,13 +60,13 @@ class ColorFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def init_logger(name: str, log_level: int = 10) -> None:
+def get_logger() -> None:
     """Create a logger with a stream handler and a file handler"""
+    logger = logging.getLogger(LOGGER_NAME)
+    if not logger.hasHandlers():  # only do this once.
+        log_level = logger.getEffectiveLevel()
 
-    logger = logging.getLogger(name)
-    logger.setLevel(log_level)
-    if not logger.hasHandlers():
-        path = Path(Path(__file__).parent.parent, "logs", f"{name}.log")
+        path = Path(Path(__file__).parent.parent, "logs", f"{LOGGER_NAME}.log")
         path.parent.mkdir(parents=True, exist_ok=True)
 
         streamHandler = logging.StreamHandler(stream=sys.stdout)
@@ -75,13 +75,21 @@ def init_logger(name: str, log_level: int = 10) -> None:
 
         fileHandler = TimedRotatingFileHandler(path, when="h", interval=1)
         fileHandler.setLevel(log_level)
-        formatter = logging.Formatter(FORMATTER)
-        fileHandler.setFormatter(formatter)
+        fileHandler.setFormatter(logging.Formatter(FORMATTER))
 
         logger.addHandler(streamHandler)
         logger.addHandler(fileHandler)
 
-    return StyleAdapter(logger)
+        logger = StyleAdapter(logger)
+
+    return logger
 
 
-logger = StyleAdapter(logging.getLogger(LOGGER_NAME))
+def set_log_level(log_level: int) -> None:
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(log_level)
+    logger.handlers = []
+    get_logger()
+
+
+logger = get_logger()

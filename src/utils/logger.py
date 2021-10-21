@@ -60,7 +60,7 @@ class ColorFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def init_logger(name: str, log_level: int = 30) -> None:
+def init_logger(name: str, log_level: int = 10) -> None:
     """Create a logger with a stream handler and a file handler"""
 
     logger = logging.getLogger(name)
@@ -80,6 +80,8 @@ def init_logger(name: str, log_level: int = 30) -> None:
 
         logger.addHandler(streamHandler)
         logger.addHandler(fileHandler)
+
+    return StyleAdapter(logger)
 
 
 logger = StyleAdapter(logging.getLogger(LOGGER_NAME))

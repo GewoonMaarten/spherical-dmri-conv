@@ -6,7 +6,7 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.plugins import DDPPlugin
 
-from utils.logger import set_log_level
+from autoencoder.logger import set_log_level
 from autoencoder.concrete_autoencoder import ConcreteAutoencoder
 from autoencoder.dataset import MRIDataModule
 

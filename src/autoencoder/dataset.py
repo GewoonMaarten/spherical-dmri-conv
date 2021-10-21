@@ -8,8 +8,8 @@ import numpy as np
 import psutil
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
-from utils.argparse import file_path
-from utils.logger import logger
+from autoencoder.argparse import file_path
+from autoencoder.logger import logger
 
 
 class MRIMemoryDataset(Dataset):

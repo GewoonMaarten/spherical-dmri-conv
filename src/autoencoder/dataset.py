@@ -29,8 +29,8 @@ class MRIMemoryDataset(Dataset):
             training. Defaults to [].
         """
         archive = h5py.File(data_file_path, "r")
-        indexes = archive.get("index")[()]
 
+        indexes = archive.get("index")[()]
         # indexes of the data we want to load
         (selection, *_) = np.where(np.isin(indexes, subject_list))
 
@@ -83,6 +83,11 @@ class MRIDataset(Dataset):
             exclude (list[int], optional): list of features to exclude from
             training. Defaults to [].
         """
+        logger.warning(
+            "This dataset is very slow compared to MRIMemoryDataset, only use this if you don't have enough memory. "
+            + "You can enable MRIMemoryDataset by using --in_memory in the console"
+        )
+
         self.data_file_path = data_file_path
         self.exclude = exclude
 

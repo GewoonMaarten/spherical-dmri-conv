@@ -205,7 +205,6 @@ class ConcreteAutoencoder(pl.LightningModule):
             "--checkpoint",
             default=None,
             type=file_path,
-            required=True,
             metavar="PATH",
             help="Checkpoint file path to restore from.",
         )
@@ -213,7 +212,6 @@ class ConcreteAutoencoder(pl.LightningModule):
             "--hparams",
             default=None,
             type=file_path,
-            required=True,
             metavar="PATH",
             help="hyper parameter file path to restore from.",
         )

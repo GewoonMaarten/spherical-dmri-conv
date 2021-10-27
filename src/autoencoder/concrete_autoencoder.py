@@ -10,6 +10,7 @@ from torch import nn
 
 from autoencoder.argparse import file_path
 from autoencoder.logger import logger
+from pytorch_lightning.profiler import PassThroughProfiler
 
 
 class Encoder(nn.Module):
@@ -19,6 +20,7 @@ class Encoder(nn.Module):
         output_size: int,
         max_temp: float = 10.0,
         min_temp: float = 0.1,
+        profiler=None,
     ) -> None:
         """Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
@@ -37,6 +39,8 @@ class Encoder(nn.Module):
         """
         super(Encoder, self).__init__()
 
+        self.profiler = profiler or PassThroughProfiler()
+
         self.register_buffer("temp", torch.tensor(max_temp))
         self.register_buffer("max_temp", torch.tensor(max_temp))
         self.register_buffer("min_temp", torch.tensor(min_temp))
@@ -53,25 +57,26 @@ class Encoder(nn.Module):
         Returns:
             torch.Tensor: encoder output of size `output_size`.
         """
-        logits_size = self.logits.size()
+        with self.profiler.profile("encoder"):
+            logits_size = self.logits.size()
 
-        selections: torch.Tensor = None
-        if self.training:
-            uniform = torch.rand(logits_size)
-            uniform = uniform.type_as(x)
-            gumbel = -torch.log(-torch.log(uniform))
-            noisy_logits = (self.logits + gumbel) / self.temp
-            samples = F.softmax(noisy_logits, dim=1)
+            selections: torch.Tensor = None
+            if self.training:
+                uniform = torch.rand(logits_size)
+                uniform = uniform.type_as(x)
+                gumbel = -torch.log(-torch.log(uniform))
+                noisy_logits = (self.logits + gumbel) / self.temp
+                samples = F.softmax(noisy_logits, dim=1)
 
-            selections = samples
-        else:
-            dim_argmax = len(logits_size) - 1
-            logits_argmax = torch.argmax(self.logits, dim_argmax)
-            discrete_logits = F.one_hot(logits_argmax, num_classes=logits_size[1])
+                selections = samples
+            else:
+                dim_argmax = len(logits_size) - 1
+                logits_argmax = torch.argmax(self.logits, dim_argmax)
+                discrete_logits = F.one_hot(logits_argmax, num_classes=logits_size[1])
 
-            selections = discrete_logits
+                selections = discrete_logits
 
-        encoded = torch.matmul(x, torch.transpose(selections.float(), 0, 1))
+            encoded = torch.matmul(x, torch.transpose(selections.float(), 0, 1))
         return encoded
 
     def update_temp(self, current_epoch, max_epochs) -> torch.Tensor:
@@ -163,6 +168,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         max_temp: float = 10.0,
         min_temp: float = 0.1,
         lambda_reg: Optional[float] = None,
+        profiler=None,
     ) -> None:
         """Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
@@ -184,7 +190,13 @@ class ConcreteAutoencoder(pl.LightningModule):
         super(ConcreteAutoencoder, self).__init__()
         self.save_hyperparameters()
 
-        self.encoder = Encoder(input_output_size, latent_size, max_temp, min_temp)
+        self.encoder = Encoder(
+            input_output_size,
+            latent_size,
+            max_temp,
+            min_temp,
+            profiler=profiler,
+        )
         self.decoder = Decoder(latent_size, input_output_size, decoder_hidden_layers)
 
         self.learning_rate = learning_rate
@@ -308,6 +320,6 @@ class ConcreteAutoencoder(pl.LightningModule):
         _, decoded = self.forward(batch)
         loss = F.mse_loss(decoded, batch)
 
-        self.log(f"{prefix}_loss", loss, on_step=True)
+        self.log(f"{prefix}_loss", loss, on_step=True, prog_bar=True)
 
         return loss

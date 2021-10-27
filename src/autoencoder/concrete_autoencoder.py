@@ -62,8 +62,7 @@ class Encoder(nn.Module):
 
             selections: torch.Tensor = None
             if self.training:
-                uniform = torch.rand(logits_size)
-                uniform = uniform.type_as(x)
+                uniform = torch.rand(logits_size, device=x.device)
                 gumbel = -torch.log(-torch.log(uniform))
                 noisy_logits = (self.logits + gumbel) / self.temp
                 samples = F.softmax(noisy_logits, dim=1)

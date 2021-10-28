@@ -1,45 +1,80 @@
 version: "3"
 services:
-  mlflow_server:
+  trainer:
+    restart: always
+    build:
+      context: ../
+      dockerfile: docker/trainer/Dockerfile
+    container_name: trainer
+    volumes:
+      - trainer_data:/data
+    environment:
+      MLFLOW_ENDPOINT_URL: http://mlflow-server:5000
+      MLFLOW_S3_ENDPOINT_URL: http://minio-server:9000
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio123
+    depends_on:
+      - mlflow-server
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    shm_size: 8gb
+    tty: true
+
+  mlflow-server:
+    restart: always
     build:
       context: mlflow/
       dockerfile: Dockerfile
-    volumes:
-      - "/mnt/d/mlruns:/mlruns"
+    container_name: mlflow-server
     ports:
       - 5000:5000
     environment:
-      - "MLFLOW_S3_ENDPOINT_URL=http://172.20.128.3:9000"
-      - "AWS_ACCESS_KEY_ID=minio"
-      - "AWS_SECRET_ACCESS_KEY=minio123"
-      - "ARTIFACT_ROOT=s3://mlflow-artifacts/"
-    user: root
+      MLFLOW_S3_ENDPOINT_URL: http://minio-server:9000
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: minio123
     depends_on:
-      - minio_server
-    container_name: mlflow_server
-    networks:
-      mlfs-network:
-        ipv4_address: 172.20.128.2
+      - minio-server
+      - mysql-server
+    command: >
+      mlflow server 
+        --default-artifact-root s3://mlflow/ 
+        --host 0.0.0.0 
+        --backend-store-uri mysql+pymysql://mlflow_user:mlflow@mysql-server:3306/mlflow_database
 
-  minio_server:
-    image: minio/minio:latest
+  minio-server:
+    restart: always
+    image: minio/minio:RELEASE.2021-10-13T00-23-17Z
+    container_name: minio-server
     volumes:
-      - "/mnt/d/data:/data"
+      - minio_data:/data
     ports:
       - 9001:9001
       - 9000:9000
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: minio123
-    entrypoint: sh
-    command: -c 'mkdir -p /data/mlflow-artifacts && /usr/bin/minio server /data --console-address ":9001"'
-    container_name: minio_server
-    networks:
-      mlfs-network:
-        ipv4_address: 172.20.128.3
+    command: server /data --console-address ':9001' --address ':9000'
 
-networks:
-  mlfs-network:
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+  mysql-server:
+    restart: always
+    image: mysql/mysql-server:5.7.28
+    container_name: mysql-server
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: mlflow_database
+      MYSQL_USER: mlflow_user
+      MYSQL_PASSWORD: mlflow
+      MYSQL_ROOT_PASSWORD: mysql
+    volumes:
+      - dbdata:/var/lib/mysql
+
+volumes:
+  minio_data:
+  dbdata:
+  trainer_data:
+    external: true

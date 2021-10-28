@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser, Namespace
 
 import mlflow
@@ -8,7 +9,7 @@ from pytorch_lightning.plugins import DDPPlugin
 
 from autoencoder.concrete_autoencoder import ConcreteAutoencoder
 from autoencoder.dataset import MRIDataModule
-from autoencoder.logger import set_log_level, logger
+from autoencoder.logger import logger, set_log_level
 
 
 def trainer(args: Namespace) -> None:
@@ -72,9 +73,7 @@ def trainer(args: Namespace) -> None:
         plugins=plugins,
     )
 
-    if args.mlflow is not None:
-        mlflow.set_tracking_uri(args.mlflow)
-
+    mlflow.set_tracking_uri(os.environ["MLFLOW_ENDPOINT_URL"])
     mlflow.set_experiment(experiment_name)
     mlflow.pytorch.autolog()
     mlflow.log_params(vars(args))
@@ -85,13 +84,6 @@ def trainer(args: Namespace) -> None:
 if __name__ == "__main__":
     parser = ArgumentParser(
         description="Concrete Autoencoder trainer", usage="%(prog)s [options]"
-    )
-
-    parser.add_argument(
-        "--mlflow",
-        type=str,
-        default=None,
-        help="Address of the Mlflow tracking server",
     )
 
     parser.add_argument(

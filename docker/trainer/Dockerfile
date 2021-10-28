@@ -23,4 +23,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install the project.
-RUN git clone ${GIT_URL} . && pip install -e .
+COPY . .
+RUN pip install -e .
+
+ENTRYPOINT ["python"]

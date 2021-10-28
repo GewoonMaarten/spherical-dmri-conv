@@ -6,7 +6,7 @@ RUN apt-get update && apt-get -y install --no-install-recommends build-essential
 
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install mlflow==1.20.0 psycopg2 mysqlclient pysftp boto3==1.18.35 
+RUN pip install mlflow boto3 pymysql
 
 FROM python:3.7-slim
 COPY --from=build /opt/venv /opt/venv
@@ -17,8 +17,3 @@ RUN apt-get autoremove -y \
 
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
-
-CMD mlflow server \
-    --host 0.0.0.0 \
-    --backend-store-uri file:////mlruns/ \
-    --default-artifact-root ${ARTIFACT_ROOT}

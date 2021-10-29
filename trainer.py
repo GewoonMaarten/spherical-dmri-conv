@@ -73,7 +73,9 @@ def trainer(args: Namespace) -> None:
         plugins=plugins,
     )
 
-    mlflow.set_tracking_uri(os.environ["MLFLOW_ENDPOINT_URL"])
+    if "MLFLOW_ENDPOINT_URL" in os.environ:
+        mlflow.set_tracking_uri(os.environ["MLFLOW_ENDPOINT_URL"])
+
     mlflow.set_experiment(experiment_name)
     mlflow.pytorch.autolog()
     mlflow.log_params(vars(args))

@@ -1,16 +1,15 @@
 from argparse import ArgumentParser
 from collections import OrderedDict
-from typing import Optional
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from pytorch_lightning.profiler import PassThroughProfiler
 from torch import nn
 
 from autoencoder.argparse import file_path
 from autoencoder.logger import logger
-from pytorch_lightning.profiler import PassThroughProfiler
 
 
 class Encoder(nn.Module):
@@ -20,22 +19,21 @@ class Encoder(nn.Module):
         output_size: int,
         max_temp: float = 10.0,
         min_temp: float = 0.1,
+        reg_threshold: float = 3.0,
+        reg_eps: float = 1e-10,
         profiler=None,
     ) -> None:
         """Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
         Args:
-            input_size (int): size of the input layer. Should be the same as
-            the `output_size` of the decoder.
-            output_size (int): size of the latent layer. Should be the same as
-            the `input_size` of the decoder.
-            max_temp (float, optional): maximum temperature for Gumble Softmax.
-            Defaults to 10.0.
-            min_temp (float, optional): minimum temperature for Gumble Softmax.
-            Defaults to 0.1.
-            alpha (float, optional): amount to multiply with current `temp` to
-            decrease it. Should be `< 1.0`. Defaults
-            to 0.99999.
+            input_size (int): size of the input layer. Should be the same as the `output_size` of the decoder.
+            output_size (int): size of the latent layer. Should be the same as the `input_size` of the decoder.
+            max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
+            min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
+            reg_threshold (float, optional): regularization threshold. The encoder will be penalized when the sum of
+            probabilities for a selection neuron exceed this threshold. Defaults to 0.3.
+            reg_eps (float, optional): regularization epsilon. Minimum value for the clamped softmax function in
+            regularization term. Defaults to 1e-10.
         """
         super(Encoder, self).__init__()
 
@@ -44,6 +42,8 @@ class Encoder(nn.Module):
         self.register_buffer("temp", torch.tensor(max_temp))
         self.register_buffer("max_temp", torch.tensor(max_temp))
         self.register_buffer("min_temp", torch.tensor(min_temp))
+        self.register_buffer("reg_threshold", torch.tensor(reg_threshold))
+        self.register_buffer("reg_eps", torch.tensor(reg_eps))
 
         logits = nn.init.xavier_normal_(torch.empty(output_size, input_size))
         self.logits = nn.Parameter(logits, requires_grad=True)
@@ -92,11 +92,11 @@ class Encoder(nn.Module):
         return mean_max
 
     def regularization(self) -> float:
-        """Regularization term according to https://homes.esat.kuleuven.be/~abertran/reports/TS_JNE_2021.pdf"""
-        eps = 1e-10
-        threshold = 3.0
-        selection = torch.clamp(F.softmax(self.logits, dim=0), eps, 1)
-        return torch.sum(F.relu(torch.norm(selection, 1, dim=1) - threshold))
+        """Regularization term according to https://homes.esat.kuleuven.be/~abertran/reports/TS_JNE_2021.pdf. The sum of
+        probabilities for a selection neuron is penalized if its larger than the threshold value. The returned value is
+        summed with the loss function."""
+        selection = torch.clamp(F.softmax(self.logits, dim=1), self.reg_eps, 1)
+        return torch.sum(F.relu(torch.norm(selection, 1, dim=0) - self.reg_threshold))
 
 
 class Decoder(nn.Module):
@@ -107,7 +107,8 @@ class Decoder(nn.Module):
         n_hidden_layers: int,
         negative_slope: float = 0.2,
     ) -> None:
-        """Standard decoder. It generates a network from `input_size` to `output_size`. The layers are generates as follows:
+        """Standard decoder. It generates a network from `input_size` to `output_size`. The layers are generates as
+        follows:
         ```python
         import numpy as np
         step_size = abs(output_size - input_size) // n_hidden_layers
@@ -117,7 +118,8 @@ class Decoder(nn.Module):
         Args:
             input_size (int): size of the latent layer. Should be the same as the `output_size` of the encoder.
             output_size (int): size of the output layer. Should be the same as `input_size` of the encoder.
-            n_hidden_layers (int): number of hidden layers. If 0 then the input will be directly connected to the output.
+            n_hidden_layers (int): number of hidden layers. If 0 then the input will be directly connected to the
+            output.
             negative_slope (float, optional): negative slope for the Leaky ReLu activation layer. Defaults to 0.2.
         """
         super(Decoder, self).__init__()
@@ -166,25 +168,19 @@ class ConcreteAutoencoder(pl.LightningModule):
         learning_rate: float = 1e-3,
         max_temp: float = 10.0,
         min_temp: float = 0.1,
-        lambda_reg: Optional[float] = None,
+        lambda_reg: float = 0.0,
         profiler=None,
     ) -> None:
         """Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
         Args:
-            input_output_size (int): size of the input and output layer.
-            latent_size (int): size of the latent layer.
-            decoder_hidden_layers (int, optional): number of hidden layers for
-            the decoder. Defaults to 2.
-            learning_rate (float, optional): learning rate for the optimizer.
-            Defaults to 1e-3.
-            max_temp (float, optional): maximum temperature for Gumble Softmax.
-            Defaults to 10.0.
-            min_temp (float, optional): minimum temperature for Gumble Softmax.
-            Defaults to 0.1.
-            lambda_reg(float, optional): how much weight to apply to the
-            regularization term. If `None` then no regularization will be
-            applied. Defaults to None.
+            input_output_size (int): size of the input and output layer. latent_size (int): size of the latent layer.
+            decoder_hidden_layers (int, optional): number of hidden layers for the decoder. Defaults to 2.
+            learning_rate (float, optional): learning rate for the optimizer. Defaults to 1e-3.
+            max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
+            min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
+            lambda_reg(float, optional): how much weight to apply to the regularization term. If the value is 0.0 then
+            no regularization will be applied. Defaults to 0.0.
         """
         super(ConcreteAutoencoder, self).__init__()
         self.save_hyperparameters()
@@ -259,7 +255,7 @@ class ConcreteAutoencoder(pl.LightningModule):
 
         parser.add_argument(
             "--lambda_reg",
-            default=None,
+            default=0.0,
             type=float,
             metavar="N",
             help="how much weight to apply to the regularization term. If `None` then no regularization will be applied. (default: None)",
@@ -286,11 +282,11 @@ class ConcreteAutoencoder(pl.LightningModule):
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         loss = self._shared_eval(batch, batch_idx, "train")
+        reg_term = self.encoder.regularization()
 
-        if self.lambda_reg is None:
-            return loss
+        self.log("regularization_term", reg_term)
 
-        return loss + (self.lambda_reg * self.encoder.regularization())
+        return loss + (self.lambda_reg * reg_term)
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "val")

@@ -137,7 +137,6 @@ class Decoder(nn.Module):
             n = i - 1
             if i == n_layers - 1:  # Last layer
                 layers[f"linear_{n}"] = nn.Linear(layer_sizes[i - 1], layer_sizes[i])
-                layers[f"sigmoid_{n}"] = nn.Sigmoid()
             else:
                 layers[f"linear_{n}"] = nn.Linear(layer_sizes[i - 1], layer_sizes[i])
                 layers[f"relu_{n}"] = nn.LeakyReLU(negative_slope)
@@ -284,9 +283,12 @@ class ConcreteAutoencoder(pl.LightningModule):
         loss = self._shared_eval(batch, batch_idx, "train")
         reg_term = self.encoder.regularization()
 
-        self.log("regularization_term", reg_term)
+        loss = loss + (self.lambda_reg * reg_term)
 
-        return loss + (self.lambda_reg * reg_term)
+        self.log("regularization_term", reg_term)
+        self.log("regularized_train_loss", loss)
+
+        return loss
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "val")

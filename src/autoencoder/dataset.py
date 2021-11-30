@@ -1,3 +1,4 @@
+import itertools
 import os
 from argparse import ArgumentParser
 from pathlib import Path
@@ -8,8 +9,74 @@ import numpy as np
 import psutil
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
+
 from autoencoder.argparse import file_path
 from autoencoder.logger import logger
+
+
+class MRIMemorySHDataset(Dataset):
+    def __init__(
+        self,
+        data_file_path: Path,
+        subject_list: np.ndarray,
+    ):
+        """Create a dataset from the selected subjects in the subject list with matching spherical harmonics.
+
+        Args:
+            data_file_path (Path): Data h5 file path.
+            subject_list (np.ndarray): ist of all the subjects to include.
+        """
+        self._data_file_path = data_file_path
+        self._subject_list = subject_list
+
+        # load the data in memory. The total file is *only* 3.1GB so it should be
+        # doable on most systems. Lets check anyway...
+        file_size = os.path.getsize(data_file_path)
+        available_memory = psutil.virtual_memory().available
+        if available_memory - file_size < 0:
+            logger.warning(
+                "Data file requires %s bytes of memory but %s was available",
+                format(file_size, ","),
+                format(available_memory, ","),
+            )
+
+        with h5py.File(data_file_path, "r") as archive:
+            indexes = archive.get("index")[()]
+            # indexes of the data we want to load
+            (selection, *_) = np.where(np.isin(indexes, subject_list))
+
+            self.data = archive.get("data")[selection]
+            self.scheme = archive.get("scheme")[()]
+            self.Y_inv = self._load_Y_inv(archive, self.scheme)
+
+    def _load_Y_inv(self, archive: h5py.File, scheme: np.ndarray) -> list[np.ndarray]:
+        Y_invs = list()
+
+        b_s = np.unique(scheme[:, 3])  # 5 unique values
+        ti_s = np.unique(scheme[:, 4])  # 28 unique values
+        te_s = np.unique(scheme[:, 5])  # 3 unique values
+
+        for ti, te, b in itertools.product(ti_s, te_s, b_s):
+            Y_inv = archive.get(f"SH/{str(ti)}_{str(te)}_{str(b)}")[()]
+            Y_invs.append(Y_inv)
+
+        return Y_invs
+
+    def __len__(self):
+        """Denotes the total number of samples"""
+        return len(self.data)
+
+    def __getitem__(self, index):
+        """Generates one sample of data"""
+        return self.data[index], self.scheme, self.Y_inv
+
+    def __getstate__(self):
+        """Return state values to be pickled."""
+        return None
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state values."""
+        pass
 
 
 class MRIMemoryDataset(Dataset):

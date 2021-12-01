@@ -8,6 +8,7 @@ import h5py
 import numpy as np
 import psutil
 import pytorch_lightning as pl
+import torch
 from torch.utils.data import DataLoader, Dataset
 
 from autoencoder.argparse import file_path
@@ -18,57 +19,119 @@ class MRIMemorySHDataset(Dataset):
     def __init__(
         self,
         data_file_path: Path,
-        subject_list: np.ndarray,
+        subject_list: list[int],
+        exclude: Optional[list[int]] = None,
+        include: Optional[list[int]] = None,
+        l_bandwidth: list[int] = [0, 0, 0, 0, 2],
+        symmetric: bool = True,
     ):
         """Create a dataset from the selected subjects in the subject list with matching spherical harmonics.
 
         Args:
             data_file_path (Path): Data h5 file path.
-            subject_list (np.ndarray): ist of all the subjects to include.
+            subject_list (list[int]): ist of all the subjects to include.
         """
         self._data_file_path = data_file_path
         self._subject_list = subject_list
+        self._l_bandwidth = l_bandwidth
+        self._l_max = np.max(self._l_bandwidth)
+        self._symmetric = 2 if symmetric else 1
+
+        assert (
+            exclude is None or include is None
+        ), "Only specify include or exclude, not both."
 
         # load the data in memory. The total file is *only* 3.1GB so it should be
         # doable on most systems. Lets check anyway...
         file_size = os.path.getsize(data_file_path)
         available_memory = psutil.virtual_memory().available
-        if available_memory - file_size < 0:
-            logger.warning(
-                "Data file requires %s bytes of memory but %s was available",
-                format(file_size, ","),
-                format(available_memory, ","),
-            )
+
+        assert (
+            available_memory - file_size >= 0
+        ), f"Data file requires {file_size:,} bytes of memory but {available_memory:,} was available"
 
         with h5py.File(data_file_path, "r") as archive:
+            scheme = archive.get("scheme")[()]
+
+            assert np.unique(scheme[:, 3]).shape != len(
+                self._l_bandwidth
+            ), "Length of l_bandwidth should be equal to the number of unique b values."
+
             indexes = archive.get("index")[()]
             # indexes of the data we want to load
             (selection, *_) = np.where(np.isin(indexes, subject_list))
 
-            self.data = archive.get("data")[selection]
-            self.scheme = archive.get("scheme")[()]
-            self.Y_inv = self._load_Y_inv(archive, self.scheme)
+            data = archive.get("data")[selection]
 
-    def _load_Y_inv(self, archive: h5py.File, scheme: np.ndarray) -> list[np.ndarray]:
-        Y_invs = list()
+            if include is not None:
+                scheme = scheme[include]
+                data = data[:, include]
+            elif exclude is not None:
+                scheme = np.delete(scheme, exclude, axis=0)
+                data = np.delete(data, exclude, axis=1)
 
+            self.sh_coefficients = self._load_sh_coefficients(archive, data, scheme)
+
+    def _load_sh_coefficients(
+        self, archive: h5py.File, data, scheme
+    ) -> list[np.ndarray]:
         b_s = np.unique(scheme[:, 3])  # 5 unique values
         ti_s = np.unique(scheme[:, 4])  # 28 unique values
         te_s = np.unique(scheme[:, 5])  # 3 unique values
 
-        for ti, te, b in itertools.product(ti_s, te_s, b_s):
-            Y_inv = archive.get(f"SH/{str(ti)}_{str(te)}_{str(b)}")[()]
-            Y_invs.append(Y_inv)
+        ti_n = ti_s.shape[0]
+        te_n = te_s.shape[0]
+        b_n = b_s.shape[0]
 
-        return Y_invs
+        prev_b = b_s[0]
+        sh_coefficients_b_idx = {0: 0, 2: 0}
+        sh_coefficients = {
+            0: torch.empty((ti_n, te_n, data.shape[0], b_n, 1)),
+            2: torch.empty((ti_n, te_n, data.shape[0], 1, 5)),
+        }
+        for (ti_idx, ti), (te_idx, te), (b_idx, b) in itertools.product(
+            enumerate(ti_s),
+            enumerate(te_s),
+            enumerate(b_s),
+        ):
+            l = self._l_bandwidth[b_idx]
+
+            # If we've visited all b values, we reset the counter
+            if prev_b == b:
+                sh_coefficients_b_idx = {0: 0, 2: 0}
+                prev_b = b
+
+            y_inv = archive.get(f"SH/{str(ti)}_{str(te)}_{str(b)}")[()]
+            y_inv = torch.from_numpy(y_inv)
+
+            data_filtered = data[
+                :, (scheme[:, 3] == b) & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
+            ]
+            data_filtered = torch.from_numpy(data_filtered).unsqueeze(2)
+
+            sh_coefficient = torch.einsum("npc,clp->ncl", data_filtered, y_inv)
+
+            # extract even covariants
+            s = 0
+            for l in range(0, l + 1, self._symmetric):
+                o = 2 * l + 1
+
+                sh_coefficients[l][
+                    ti_idx, te_idx, :, sh_coefficients_b_idx[l]
+                ] = sh_coefficient[:, 0, torch.arange(s, s + o)]
+
+                s += o
+                sh_coefficients_b_idx[l] += 1
+
+        return sh_coefficients
 
     def __len__(self):
         """Denotes the total number of samples"""
-        return len(self.data)
+        return self.sh_coefficients[0].shape[2]
 
     def __getitem__(self, index):
         """Generates one sample of data"""
-        return self.data[index], self.scheme, self.Y_inv
+        return {k: v[:, :, index] for (k, v) in self.sh_coefficients.items()}
 
     def __getstate__(self):
         """Return state values to be pickled."""

@@ -169,28 +169,17 @@ class MRIMemoryDataset(Dataset):
             exclude (list[int], optional): list of features to exclude from
             training. Defaults to [].
         """
-        archive = h5py.File(data_file_path, "r")
 
-        indexes = archive.get("index")[()]
-        # indexes of the data we want to load
-        (selection, *_) = np.where(np.isin(indexes, subject_list))
+        with h5py.File(data_file_path, "r") as archive:
+            indexes = archive.get("index")[()]
+            # indexes of the data we want to load
+            (selection, *_) = np.where(np.isin(indexes, subject_list))
+            self.data = archive.get("data")[selection]
 
-        # load the data in memory. The total file is *only* 3.1GB so it should be
-        # doable on most systems. Lets check anyway...
-        file_size = os.path.getsize(data_file_path)
-        available_memory = psutil.virtual_memory().available
-        if available_memory - file_size < 0:
-            logger.warning(
-                "Data file requires %s bytes of memory but %s was available",
-                format(file_size, ","),
-                format(available_memory, ","),
-            )
-
-        self.data = archive.get("data")[selection]
         # delete excluded features
         self.data = np.delete(self.data, exclude, axis=1)
 
-        archive.close()
+        self.data = torch.from_numpy(self.data).to("cuda")
 
     def __len__(self):
         """Denotes the total number of samples"""
@@ -351,34 +340,43 @@ class MRIDataModule(pl.LightningDataModule):
         )
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.train_set,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            # pin_memory=True,
-            drop_last=True,
-            persistent_workers=True,
-        )
+        if self.in_memory:
+            return DataLoader(
+                self.train_set, batch_size=self.batch_size, shuffle=True, drop_last=True
+            )
+        else:
+            return DataLoader(
+                self.train_set,
+                batch_size=self.batch_size,
+                shuffle=True,
+                num_workers=self.num_workers,
+                pin_memory=True,
+                drop_last=True,
+                persistent_workers=True,
+            )
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.val_set,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            # pin_memory=True,
-            drop_last=True,
-            persistent_workers=True,
-        )
+        if self.in_memory:
+            return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
+        else:
+            return DataLoader(
+                self.train_set,
+                batch_size=self.batch_size,
+                shuffle=False,
+                num_workers=self.num_workers,
+                pin_memory=True,
+                persistent_workers=True,
+            )
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self.val_set,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            # pin_memory=True,
-            drop_last=True,
-            persistent_workers=True,
-        )
+        if self.in_memory:
+            return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
+        else:
+            return DataLoader(
+                self.train_set,
+                batch_size=self.batch_size,
+                shuffle=False,
+                num_workers=self.num_workers,
+                pin_memory=True,
+                persistent_workers=True,
+            )

@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from autoencoder.argparse import file_path
 from autoencoder.logger import logger
+from autoencoder.sh_utils import convert_cart_to_s2, gram_schmidt_sh_inv, sh_basis_real
 
 
 class MRIMemorySHDataset(Dataset):
@@ -24,6 +25,7 @@ class MRIMemorySHDataset(Dataset):
         include: Optional[list[int]] = None,
         l_bandwidth: list[int] = [0, 0, 0, 0, 2],
         symmetric: bool = True,
+        gram_schmidt_n_iters: int = 1000,
     ):
         """Create a dataset from the selected subjects in the subject list with matching spherical harmonics.
 
@@ -36,6 +38,7 @@ class MRIMemorySHDataset(Dataset):
         self._l_bandwidth = l_bandwidth
         self._l_max = np.max(self._l_bandwidth)
         self._symmetric = 2 if symmetric else 1
+        self._gram_schmidt_n_iters = gram_schmidt_n_iters
 
         assert (
             exclude is None or include is None
@@ -101,13 +104,22 @@ class MRIMemorySHDataset(Dataset):
                 sh_coefficients_b_idx = {0: 0, 2: 0}
                 prev_b = b
 
-            y_inv = archive.get(f"SH/{str(ti)}_{str(te)}_{str(b)}")[()]
-            y_inv = torch.from_numpy(y_inv)
+            filter_scheme = (
+                (scheme[:, 3] == b) & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
+            )
 
-            data_filtered = data[
-                :, (scheme[:, 3] == b) & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
-            ]
+            data_filtered = data[:, filter_scheme]
+            if not data_filtered.any():
+                continue
             data_filtered = torch.from_numpy(data_filtered).unsqueeze(2)
+
+            gradients_xyz = scheme[filter_scheme][:, :3]
+            gradients_s2 = convert_cart_to_s2(gradients_xyz)
+
+            y = sh_basis_real(gradients_s2, l)
+            y_inv = gram_schmidt_sh_inv(y, l, n_iters=self._gram_schmidt_n_iters)
+            y_inv = y_inv[np.newaxis, :, :]
+            y_inv = torch.from_numpy(y_inv)
 
             sh_coefficient = torch.einsum("npc,clp->ncl", data_filtered, y_inv)
 
@@ -344,7 +356,7 @@ class MRIDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            pin_memory=True,
+            # pin_memory=True,
             drop_last=True,
             persistent_workers=True,
         )
@@ -355,7 +367,7 @@ class MRIDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-            pin_memory=True,
+            # pin_memory=True,
             drop_last=True,
             persistent_workers=True,
         )
@@ -366,7 +378,7 @@ class MRIDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
-            pin_memory=True,
+            # pin_memory=True,
             drop_last=True,
             persistent_workers=True,
         )

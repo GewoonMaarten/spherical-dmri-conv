@@ -167,7 +167,8 @@ class ConcreteAutoencoder(pl.LightningModule):
         learning_rate: float = 1e-3,
         max_temp: float = 10.0,
         min_temp: float = 0.1,
-        lambda_reg: float = 0.0,
+        reg_lambda: float = 0.0,
+        reg_threshold: float = 1.0,
         profiler=None,
     ) -> None:
         """Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
@@ -178,8 +179,10 @@ class ConcreteAutoencoder(pl.LightningModule):
             learning_rate (float, optional): learning rate for the optimizer. Defaults to 1e-3.
             max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
             min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
-            lambda_reg(float, optional): how much weight to apply to the regularization term. If the value is 0.0 then
+            reg_lambda(float, optional): how much weight to apply to the regularization term. If the value is 0.0 then
             no regularization will be applied. Defaults to 0.0.
+            reg_threshold (float, optional): regularization threshold. The encoder will be penalized when the sum of
+            probabilities for a selection neuron exceed this threshold. Defaults to 1.0.
         """
         super(ConcreteAutoencoder, self).__init__()
         self.save_hyperparameters()
@@ -190,11 +193,12 @@ class ConcreteAutoencoder(pl.LightningModule):
             max_temp,
             min_temp,
             profiler=profiler,
+            reg_threshold=reg_threshold,
         )
         self.decoder = Decoder(latent_size, input_output_size, decoder_hidden_layers)
 
         self.learning_rate = learning_rate
-        self.lambda_reg = lambda_reg
+        self.reg_lambda = reg_lambda
 
     @staticmethod
     def add_model_specific_args(parent_parser: ArgumentParser) -> ArgumentParser:
@@ -253,11 +257,19 @@ class ConcreteAutoencoder(pl.LightningModule):
         )
 
         parser.add_argument(
-            "--lambda_reg",
+            "--reg_lambda",
             default=0.0,
             type=float,
             metavar="N",
-            help="how much weight to apply to the regularization term. If `None` then no regularization will be applied. (default: None)",
+            help="how much weight to apply to the regularization term. If `0` then no regularization will be applied. (default: 0.0)",
+        )
+
+        parser.add_argument(
+            "--reg_threshold",
+            default=1.0,
+            type=float,
+            metavar="N",
+            help="how many duplicates in the latent space are allowed before applying the penalty. (default: None)",
         )
 
         return parent_parser
@@ -282,9 +294,9 @@ class ConcreteAutoencoder(pl.LightningModule):
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         loss = self._shared_eval(batch, batch_idx, "train")
 
-        if self.lambda_reg > 0:
+        if self.reg_lambda > 0:
             reg_term = self.encoder.regularization()
-            loss = loss + (self.lambda_reg * reg_term)
+            loss = loss + (self.reg_lambda * reg_term)
 
             self.log("regularization_term", reg_term, on_step=False)
             self.log("regularized_train_loss", loss, on_step=False)

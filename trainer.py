@@ -30,7 +30,8 @@ def trainer(args: Namespace) -> None:
         args.latent_size,
         args.decoder_hidden_layers,
         learning_rate=args.learning_rate,
-        lambda_reg=args.lambda_reg,
+        reg_lambda=args.reg_lambda,
+        reg_threshold=args.reg_threshold,
     )
 
     if args.checkpoint is not None:

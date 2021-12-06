@@ -13,7 +13,11 @@ from torch.utils.data import DataLoader, Dataset
 
 from autoencoder.argparse import file_path
 from autoencoder.logger import logger
-from autoencoder.sh_utils import convert_cart_to_s2, gram_schmidt_sh_inv, sh_basis_real
+from autoencoder.spherical.harmonics import (
+    convert_cart_to_s2,
+    gram_schmidt_sh_inv,
+    sh_basis_real,
+)
 
 
 class MRIMemorySHDataset(Dataset):

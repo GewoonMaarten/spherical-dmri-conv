@@ -33,12 +33,12 @@ def quadratic_non_linearity(rh, L_in, L_out, CG_r, CG_l, symmetric: int = 2):
     return rh_n
 
 
-class S2Conv(torch.nn.Module):
+class S2Convolution(torch.nn.Module):
     def __init__(
         self, ti_n, te_n, l_in, l_out, b_in, b_out, cg_r, cg_l, *, symmetric=2
     ):
         """Convolution between spherical signals and kernels in spectral domain."""
-        super(S2Conv, self).__init__()
+        super(S2Convolution, self).__init__()
 
         self.l_in = l_in
         self.l_out = l_out
@@ -85,12 +85,12 @@ class S2Conv(torch.nn.Module):
         return rh_n, feats
 
 
-class SO3Conv(torch.nn.Module):
+class SO3Convolution(torch.nn.Module):
     def __init__(
         self, ti_n, te_n, l_in, l_out, b_in, b_out, cg_r, cg_l, *, symmetric=2
     ):
         """Convolution between SO(3) signals and kernels in spectral domain."""
-        super(SO3Conv, self).__init__()
+        super(SO3Convolution, self).__init__()
 
         self.l_in = l_in
         self.l_out = l_out

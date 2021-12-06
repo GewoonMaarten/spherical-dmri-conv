@@ -281,12 +281,13 @@ class ConcreteAutoencoder(pl.LightningModule):
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         loss = self._shared_eval(batch, batch_idx, "train")
-        reg_term = self.encoder.regularization()
 
-        loss = loss + (self.lambda_reg * reg_term)
+        if self.lambda_reg > 0:
+            reg_term = self.encoder.regularization()
+            loss = loss + (self.lambda_reg * reg_term)
 
-        self.log("regularization_term", reg_term)
-        self.log("regularized_train_loss", loss)
+            self.log("regularization_term", reg_term, on_step=False)
+            self.log("regularized_train_loss", loss, on_step=False)
 
         return loss
 
@@ -295,11 +296,11 @@ class ConcreteAutoencoder(pl.LightningModule):
 
     def on_train_epoch_start(self) -> None:
         temp = self.encoder.update_temp(self.current_epoch, self.trainer.max_epochs)
-        self.log("temp", temp, prog_bar=True)
+        self.log("temp", temp, on_step=False, prog_bar=True)
 
     def on_epoch_end(self) -> None:
         mean_max = self.encoder.calc_mean_max()
-        self.log("mean_max", mean_max, prog_bar=True)
+        self.log("mean_max", mean_max, on_step=False, prog_bar=True)
 
     def _shared_eval(
         self, batch: torch.Tensor, batch_idx: int, prefix: str
@@ -317,6 +318,6 @@ class ConcreteAutoencoder(pl.LightningModule):
         _, decoded = self.forward(batch)
         loss = F.mse_loss(decoded, batch)
 
-        self.log(f"{prefix}_loss", loss, on_step=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
 
         return loss

@@ -2,6 +2,7 @@ import os
 from argparse import ArgumentParser, Namespace
 
 import mlflow
+import numpy as np
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -82,6 +83,14 @@ def trainer(args: Namespace) -> None:
     mlflow.log_params(vars(args))
 
     trainer.fit(model, dm)
+
+    latent_features_file_path = "logs/latent_features.txt"
+    np.savetxt(
+        latent_features_file_path,
+        np.array(model.encoder.latent_features, dtype=int),
+        fmt="%d",
+    )
+    mlflow.log_artifact(latent_features_file_path)
 
 
 if __name__ == "__main__":

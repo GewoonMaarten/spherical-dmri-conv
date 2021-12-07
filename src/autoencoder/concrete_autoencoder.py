@@ -48,6 +48,10 @@ class Encoder(nn.Module):
         logits = nn.init.xavier_normal_(torch.empty(output_size, input_size))
         self.logits = nn.Parameter(logits, requires_grad=True)
 
+    @property
+    def latent_features(self):
+        return torch.argmax(self.logits, 1)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Uses the trained encoder to make inferences.
 

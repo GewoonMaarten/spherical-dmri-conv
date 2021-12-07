@@ -51,14 +51,19 @@ class S2Convolution(torch.nn.Module):
             n_sh_l = 2 * l + 1
             # TODO: derived this from the input data, instead of hard coding it
             l_size = 5 if l == 0 else 2
-            self.weights[l] = torch.rand(ti_n, te_n, l_size, b_out, n_sh_l) * 0.1
-        self.bias = torch.zeros(ti_n, te_n, 1, b_out, 1, 1)
+            self.weights[l] = torch.nn.Parameter(
+                torch.rand(ti_n, te_n, l_size, b_out, n_sh_l) * 0.1
+            )
+            # Manually register parameters
+            self.register_parameter(f"weights_{l}", self.weights[l])
+
+        self.bias = torch.nn.Parameter(torch.zeros(ti_n, te_n, 1, b_out, 1, 1))
 
     def forward(self, x):
         # convolution
         rh = dict()
         for l in range(0, self.l_in + 1, self.symmetric):
-            rh[l] = torch.einsum("abnil, abiok->abnolk", x[l], self.weights[l])
+            rh[l] = torch.einsum("nabil, abiok->abnolk", x[l], self.weights[l])
             rh[l] += self.bias if l == 0 else 0
 
         # activation function
@@ -101,8 +106,13 @@ class SO3Convolution(torch.nn.Module):
         self.weights = dict()
         for l in range(0, self.l_in + 1, self.symmetric):
             n_sh_l = 2 * l + 1
-            self.weights[l] = torch.rand(ti_n, te_n, b_in, b_out, n_sh_l, n_sh_l) * 0.1
-        self.bias = torch.zeros(ti_n, te_n, 1, b_out, 1, 1)
+            self.weights[l] = torch.nn.Parameter(
+                torch.rand(ti_n, te_n, b_in, b_out, n_sh_l, n_sh_l) * 0.1
+            )
+            # Manually register parameters
+            self.register_parameter(f"weights_{l}", self.weights[l])
+
+        self.bias = torch.nn.Parameter(torch.zeros(ti_n, te_n, 1, b_out, 1, 1))
 
     def forward(self, x):
         # convolution

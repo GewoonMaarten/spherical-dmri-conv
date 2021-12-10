@@ -68,20 +68,20 @@ class MRIMemorySHDataset(Dataset):
             # indexes of the data we want to load
             (selection, *_) = np.where(np.isin(indexes, subject_list))
 
-            data = archive.get("data")[selection]
+            self.data = archive.get("data")[selection]
 
             if include is not None:
                 scheme = scheme[include]
-                data = data[:, include]
+                self.data_filtered = self.data[:, include]
             elif exclude is not None:
                 scheme = np.delete(scheme, exclude, axis=0)
-                data = np.delete(data, exclude, axis=1)
+                self.data_filtered = np.delete(self.data, exclude, axis=1)
 
-            self.sh_coefficients = self._load_sh_coefficients(archive, data, scheme)
+            self.sh_coefficients = self._load_sh_coefficients(
+                self.data_filtered, scheme
+            )
 
-    def _load_sh_coefficients(
-        self, archive: h5py.File, data, scheme
-    ) -> list[np.ndarray]:
+    def _load_sh_coefficients(self, data, scheme) -> list[np.ndarray]:
         b_s = np.unique(scheme[:, 3])  # 5 unique values
         ti_s = np.unique(scheme[:, 4])  # 28 unique values
         te_s = np.unique(scheme[:, 5])  # 3 unique values
@@ -147,7 +147,10 @@ class MRIMemorySHDataset(Dataset):
 
     def __getitem__(self, index):
         """Generates one sample of data"""
-        return {k: v[:, :, index] for (k, v) in self.sh_coefficients.items()}
+        return {
+            "data": {k: v[:, :, index] for (k, v) in self.sh_coefficients.items()},
+            "target": self.data[index],
+        }
 
     def __getstate__(self):
         """Return state values to be pickled."""

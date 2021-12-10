@@ -51,7 +51,7 @@ def clebsch_gordan_matrix_R(L1, L2, L):
         return np.imag(np.dot(M.conj().T, np.dot(CG_M.T, np.kron(M1, M2))))
 
 
-def real_clebsch_gordan_all(L, L_max):
+def real_clebsch_gordan_all(L, L_max, *, device="cpu"):
     """Create a dictionary with Clebsch-Gordan matrices.
 
     Arguments:
@@ -75,6 +75,7 @@ def real_clebsch_gordan_all(L, L_max):
                     continue
                 if np.abs(l2 - l1) <= l <= (l1 + l2):
                     cg_ = torch.from_numpy(clebsch_gordan_matrix_R(l1, l2, l)).float()
+                    cg_ = cg_.to(device)
 
                     cg_r = torch.reshape(cg_, (2 * l + 1, 2 * l1 + 1, 2 * l2 + 1))
                     cg_l = torch.transpose(cg_r, 1, 2)

@@ -70,7 +70,7 @@ def gram_schmidt_sh_inv(Y, L, n_iters=1000, even=True):
     s = 2 if even else 1
     Y_inv_final = np.zeros_like(Y.T)
 
-    for k in range(n_iters):
+    for _ in range(n_iters):
         order = []
         count_h = 0
 

@@ -63,10 +63,8 @@ class S2Convolution(torch.nn.Module):
         self.weights = dict()
         for l in range(0, self.l_in + 1, self.symmetric):
             n_sh_l = 2 * l + 1
-            # TODO: derived this from the input data, instead of hard coding it
-            l_size = 5 if l == 0 else 2
             self.weights[l] = torch.nn.Parameter(
-                torch.rand(ti_n, te_n, l_size, b_out, n_sh_l) * 0.1
+                torch.rand(ti_n, te_n, b_in, b_out, n_sh_l) * 0.1
             )
             # Manually register parameters
             self.register_parameter(f"weights_{l}", self.weights[l])

@@ -27,7 +27,7 @@ class MRIMemorySHDataset(Dataset):
         subject_list: list[int],
         exclude: Optional[list[int]] = None,
         include: Optional[list[int]] = None,
-        l_bandwidth: list[int] = [0, 0, 0, 0, 2],
+        l_max: int = 0,
         symmetric: bool = True,
         gram_schmidt_n_iters: int = 1000,
     ):
@@ -39,8 +39,7 @@ class MRIMemorySHDataset(Dataset):
         """
         self._data_file_path = data_file_path
         self._subject_list = subject_list
-        self._l_bandwidth = l_bandwidth
-        self._l_max = np.max(self._l_bandwidth)
+        self._l_max = l_max
         self._symmetric = 2 if symmetric else 1
         self._gram_schmidt_n_iters = gram_schmidt_n_iters
 
@@ -59,12 +58,8 @@ class MRIMemorySHDataset(Dataset):
 
         with h5py.File(data_file_path, "r") as archive:
             scheme = archive.get("scheme")[()]
-
-            assert np.unique(scheme[:, 3]).shape != len(
-                self._l_bandwidth
-            ), "Length of l_bandwidth should be equal to the number of unique b values."
-
             indexes = archive.get("index")[()]
+
             # indexes of the data we want to load
             (selection, *_) = np.where(np.isin(indexes, subject_list))
 
@@ -91,43 +86,52 @@ class MRIMemorySHDataset(Dataset):
         b_n = b_s.shape[0]
 
         prev_b = b_s[0]
-        sh_coefficients_b_idx = {0: 0, 2: 0}
-        sh_coefficients = {
-            0: torch.empty((ti_n, te_n, data.shape[0], b_n, 1)),
-            2: torch.empty((ti_n, te_n, data.shape[0], 1, 5)),
-        }
-        for (ti_idx, ti), (te_idx, te), (b_idx, b) in itertools.product(
+
+        # Fit the spherical harmonics on the gradients.
+        gradients_xyz = scheme[:, :3]
+        gradients_s2 = convert_cart_to_s2(gradients_xyz)
+
+        y = sh_basis_real(gradients_s2, self._l_max)
+        y_inv = gram_schmidt_sh_inv(y, self._l_max, n_iters=self._gram_schmidt_n_iters)
+        y_inv = torch.from_numpy(y_inv)[np.newaxis, :, :]
+
+        sh_coefficients_b_idx = dict()
+        sh_coefficients = dict()
+        l_sizes = dict()
+        for l in range(0, self._l_max + 1, self._symmetric):
+            o = 2 * l + 1
+            sh_coefficients_b_idx[l] = 0
+            sh_coefficients[l] = torch.zeros((ti_n, te_n, data.shape[0], b_n, o))
+            l_sizes[l] = o
+
+        for (ti_idx, ti), (te_idx, te), b in itertools.product(
             enumerate(ti_s),
             enumerate(te_s),
-            enumerate(b_s),
+            b_s,
         ):
-            l = self._l_bandwidth[b_idx]
-
             # If we've visited all b values, we reset the counter
             if prev_b == b:
-                sh_coefficients_b_idx = {0: 0, 2: 0}
+                sh_coefficients_b_idx = {k: 0 for k in sh_coefficients_b_idx}
                 prev_b = b
 
             filter_scheme = (
                 (scheme[:, 3] == b) & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
             )
 
-            data_filtered = data[:, filter_scheme]
-            if not data_filtered.any():
+            if not np.any(filter_scheme):
                 continue
+
+            data_filtered = data[:, filter_scheme]
             data_filtered = torch.from_numpy(data_filtered).unsqueeze(2)
 
-            gradients_xyz = scheme[filter_scheme][:, :3]
-            gradients_s2 = convert_cart_to_s2(gradients_xyz)
+            # Get the maximum l where the amount of coefficients is smaller or equal to the amount of voxels.
+            l = [l for l, o in l_sizes.items() if o <= data_filtered.shape[1]][-1]
+            l_size = np.sum([2 * s + 1 for s in range(0, l + 1, 2)])
+            y_inv_filtered = y_inv[:, :l_size, filter_scheme]
 
-            y = sh_basis_real(gradients_s2, l)
-            y_inv = gram_schmidt_sh_inv(y, l, n_iters=self._gram_schmidt_n_iters)
-            y_inv = y_inv[np.newaxis, :, :]
-            y_inv = torch.from_numpy(y_inv)
+            sh_coefficient = torch.einsum("npc,clp->ncl", data_filtered, y_inv_filtered)
 
-            sh_coefficient = torch.einsum("npc,clp->ncl", data_filtered, y_inv)
-
-            # extract even covariants
+            # Extract even covariants.
             s = 0
             for l in range(0, l + 1, self._symmetric):
                 o = 2 * l + 1

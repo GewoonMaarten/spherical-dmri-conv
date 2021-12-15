@@ -30,7 +30,7 @@ setuptools.setup(
         "boto3",
         "GPy",
         "h5py",
-        "mlflow==1.20.0",
+        "mlflow==1.22.0",
         "nibabel",
         "nilearn",
         "numpy",

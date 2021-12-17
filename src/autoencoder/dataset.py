@@ -169,17 +169,27 @@ class MRIMemoryDataset(Dataset):
     def __init__(
         self,
         data_file_path: Path,
-        subject_list: np.ndarray,
-        exclude: list[int] = [],
+        subject_list: list[int],
+        exclude: Optional[list[int]] = None,
+        include: Optional[list[int]] = None,
+        do_store_in_gpu: bool = True,
     ):
         """Create a dataset from the selected subjects in the subject list
 
         Args:
             data_file_path (Path): Data h5 file path.
             subject_list (np.ndarray): ist of all the subjects to include.
-            exclude (list[int], optional): list of features to exclude from
-            training. Defaults to [].
+            exclude (list[int], optional): list of features to exclude from training. Cannot be used together with include. Defaults to None.
+            include (list[int], optional): list of features to only include for training. Cannot be used together with exclude. Defaults to None.
+            do_store_in_gpu (bool, optional): store all data in GPU memory. Defaults to True.
         """
+
+        assert (
+            exclude is None or include is None
+        ), "Only specify include or exclude, not both."
+
+        self._exclude = exclude
+        self._include = include
 
         with h5py.File(data_file_path, "r") as archive:
             indexes = archive.get("index")[()]
@@ -187,10 +197,8 @@ class MRIMemoryDataset(Dataset):
             (selection, *_) = np.where(np.isin(indexes, subject_list))
             self.data = archive.get("data")[selection]
 
-        # delete excluded features
-        self.data = np.delete(self.data, exclude, axis=1)
-
-        self.data = torch.from_numpy(self.data).to("cuda")
+        if do_store_in_gpu:
+            self.data = torch.from_numpy(self.data).to("cuda")
 
     def __len__(self):
         """Denotes the total number of samples"""
@@ -198,7 +206,13 @@ class MRIMemoryDataset(Dataset):
 
     def __getitem__(self, index):
         """Generates one sample of data"""
-        return self.data[index]
+        data = self.data[index]
+        if self._include is not None:
+            return data, data[self._include]
+        elif self._exclude is not None:
+            return data, np.delete(data, self._exclude)
+        else:
+            return data
 
     def __getstate__(self):
         """Return state values to be pickled."""
@@ -213,24 +227,30 @@ class MRIDataset(Dataset):
     def __init__(
         self,
         data_file_path: Path,
-        subject_list: np.ndarray,
-        exclude: list[int] = [],
+        subject_list: list[int],
+        exclude: Optional[list[int]] = None,
+        include: Optional[list[int]] = None,
     ):
         """Create a dataset from the selected subjects in the subject list
 
         Args:
             data_file_path (Path): Data h5 file path.
             subject_list (np.ndarray): ist of all the subjects to include.
-            exclude (list[int], optional): list of features to exclude from
-            training. Defaults to [].
+            exclude (list[int], optional): list of features to exclude from training. Cannot be used together with include. Defaults to None.
+            include (list[int], optional): list of features to only include for training. Cannot be used together with exclude. Defaults to None.
         """
+        assert (
+            exclude is None or include is None
+        ), "Only specify include or exclude, not both."
+
         logger.warning(
             "MRIDataset is very slow compared to MRIMemoryDataset, only use MRIDataset if you don't have enough memory. "
             + "You can enable the use of MRIMemoryDataset by setting --in_memory in the console"
         )
 
-        self.data_file_path = data_file_path
-        self.exclude = exclude
+        self._exclude = exclude
+        self._include = include
+        self._data_file_path = data_file_path
 
         with h5py.File(self.data_file_path, "r") as archive:
             indexes = archive.get("index")[()]
@@ -245,9 +265,13 @@ class MRIDataset(Dataset):
         """Generates one sample of data"""
         with h5py.File(self.data_file_path, "r") as archive:
             data = archive.get("data")[self.selection[index]]
-        data = np.delete(data, self.exclude)
 
-        return data
+        if self._include is not None:
+            return data, data[self._include]
+        elif self._exclude is not None:
+            return data, np.delete(data, self._exclude)
+        else:
+            return data
 
     def __getstate__(self):
         """Return state values to be pickled."""
@@ -266,6 +290,7 @@ class MRIDataModule(pl.LightningDataModule):
         subject_list_train: list[int] = [11, 12, 13, 14],
         subject_list_val: list[int] = [15],
         in_memory: bool = False,
+        num_workers: int = 0,
     ):
         """Collection of train and validation data sets.
 
@@ -274,23 +299,19 @@ class MRIDataModule(pl.LightningDataModule):
             data_file_name (str): file name of the H5 file.
             header_file_name (str): file name of the CSV file.
             batch_size (int, optional): training batch size. Defaults to 265.
-            subject_list_train (list[int], optional): subjects to include in
-            training. Defaults to [11, 12, 13, 14].
-            subject_list_val (list[int], optional): subject(s) to include in
-            validation. Defaults to [15].
-            in_memory (bool): Whether to load the entire dataset in memory.
-            Defaults to False.
+            subject_list_train (list[int], optional): subjects to include in training. Defaults to [11, 12, 13, 14].
+            subject_list_val (list[int], optional): subject(s) to include in validation. Defaults to [15].
+            in_memory (bool, optional): Whether to load the entire dataset in memory. Defaults to False.
+            num_workers (bool, optional): Amount of threads to use when loading data from disk. Defaults to 0.
         """
         super(MRIDataModule, self).__init__()
 
-        self.data_file = data_file
-        self.batch_size = batch_size
-        self.subject_list_train = np.array(subject_list_train)
-        self.subject_list_val = np.array(subject_list_val)
-        self.in_memory = in_memory
-
-        # Only assign 2 workers if Python is running on Windows (nt).
-        self.num_workers = 2 if os.name == "nt" else os.cpu_count()
+        self._data_file = data_file
+        self._batch_size = batch_size
+        self._subject_list_train = np.array(subject_list_train)
+        self._subject_list_val = np.array(subject_list_val)
+        self._in_memory = in_memory
+        self._num_workers = num_workers
 
     @staticmethod
     def add_model_specific_args(parent_parser: ArgumentParser) -> ArgumentParser:
@@ -328,7 +349,7 @@ class MRIDataModule(pl.LightningDataModule):
             default=256,
             type=int,
             metavar="N",
-            help="input batch size for training (default: 64)",
+            help="input batch size for training (default: 256)",
         )
         parser.add_argument(
             "--in_memory",
@@ -339,55 +360,51 @@ class MRIDataModule(pl.LightningDataModule):
         return parent_parser
 
     def setup(self, stage: Optional[str]) -> None:
-        DatasetClass = MRIMemoryDataset if self.in_memory else MRIDataset
+        print("stage:", stage)
+        DatasetClass = MRIMemoryDataset if self._in_memory else MRIDataset
 
         self.train_set = DatasetClass(
-            self.data_file,
-            self.subject_list_train,
+            self._data_file,
+            self._subject_list_train,
         )
         self.val_set = DatasetClass(
-            self.data_file,
-            self.subject_list_val,
+            self._data_file,
+            self._subject_list_val,
         )
 
     def train_dataloader(self) -> DataLoader:
-        if self.in_memory:
-            return DataLoader(
-                self.train_set, batch_size=self.batch_size, shuffle=True, drop_last=True
-            )
-        else:
-            return DataLoader(
-                self.train_set,
-                batch_size=self.batch_size,
-                shuffle=True,
-                num_workers=self.num_workers,
-                pin_memory=True,
-                drop_last=True,
-                persistent_workers=True,
-            )
+        args = dict(
+            batch_size=self._batch_size,
+            shuffle=True,
+            pin_memory=True,
+            num_workers=0 if self._in_memory else self._num_workers,
+            peristent_workers=not self._in_memory,
+            drop_last=True,
+        )
+
+        return DataLoader(self.train_set, **args)
 
     def val_dataloader(self) -> DataLoader:
-        if self.in_memory:
-            return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
-        else:
-            return DataLoader(
-                self.train_set,
-                batch_size=self.batch_size,
-                shuffle=False,
-                num_workers=self.num_workers,
-                pin_memory=True,
-                persistent_workers=True,
-            )
+        args = dict(
+            batch_size=self._batch_size,
+            shuffle=False,
+            pin_memory=True,
+            num_workers=0 if self._in_memory else self._num_workers,
+            peristent_workers=not self._in_memory,
+            drop_last=True,
+        )
 
-    def test_dataloader(self) -> DataLoader:
-        if self.in_memory:
-            return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
-        else:
-            return DataLoader(
-                self.train_set,
-                batch_size=self.batch_size,
-                shuffle=False,
-                num_workers=self.num_workers,
-                pin_memory=True,
-                persistent_workers=True,
-            )
+        return DataLoader(self.val_set, **args)
+
+    # def test_dataloader(self) -> DataLoader:
+    #     if self.in_memory:
+    #         return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
+    #     else:
+    #         return DataLoader(
+    #             self.train_set,
+    #             batch_size=self.batch_size,
+    #             shuffle=False,
+    #             num_workers=self.num_workers,
+    #             pin_memory=True,
+    #             persistent_workers=True,
+    #         )

@@ -17,15 +17,15 @@ def quadratic_non_linearity(rh, L_in, L_out, CG_r, CG_l, symmetric: int = 2):
                     cg_r = CG_r[l][l1, l2]
                     cg_l = CG_l[l][l1, l2]
 
-                    a, b, n, c, _, _ = rh[l1].shape
+                    n, a, b, c, _, _ = rh[l1].shape
 
-                    x = torch.einsum("abncij,klj->abnckli", rh[l2], cg_r)
-                    x = torch.reshape(x, [a, b, n, c, 2 * l + 1, -1])
+                    x = torch.einsum("nabcij,klj->nabckli", rh[l2], cg_r)
+                    x = torch.reshape(x, [n, a, b, c, 2 * l + 1, -1])
 
-                    y = torch.einsum("abncji,klj->abnckil", rh[l1], cg_l)
-                    y = torch.reshape(y, [a, b, n, c, 2 * l + 1, -1])
+                    y = torch.einsum("nabcji,klj->nabckil", rh[l1], cg_l)
+                    y = torch.reshape(y, [n, a, b, c, 2 * l + 1, -1])
 
-                    z = torch.einsum("abncki,abncji->abnckj", y, x)
+                    z = torch.einsum("nabcki,nabcji->nabckj", y, x)
 
                     if l not in rh_n:
                         rh_n[l] = z
@@ -69,14 +69,14 @@ class S2Convolution(torch.nn.Module):
             # Manually register parameters
             self.register_parameter(f"weights_{l}", self.weights[l])
 
-        self.bias = torch.nn.Parameter(torch.zeros(ti_n, te_n, 1, b_out, 1, 1))
+        self.bias = torch.nn.Parameter(torch.zeros(1, ti_n, te_n, b_out, 1, 1))
 
     def forward(self, x):
         with self.profiler.profile("S2Convolution"):
             # convolution
             rh = dict()
             for l in range(0, self.l_in + 1, self.symmetric):
-                rh[l] = torch.einsum("nabil, abiok->abnolk", x[l], self.weights[l])
+                rh[l] = torch.einsum("nabil, abiok->nabolk", x[l], self.weights[l])
                 rh[l] += self.bias if l == 0 else 0
 
             # activation function
@@ -93,9 +93,7 @@ class S2Convolution(torch.nn.Module):
             for l in range(0, self.l_out + 1, self.symmetric):
                 n_l = 8 * (np.pi ** 2) / (2 * l + 1)
 
-                rh_n_l_t = torch.transpose(rh_n[l], 2, 0)
-                rh_n_l_p = torch.pow(rh_n_l_t, 2)
-                rh_n_l_s = torch.sum(rh_n_l_p, (5, 4))
+                rh_n_l_s = torch.sum(torch.pow(rh_n[l], 2), (5, 4))
                 feats_l = torch.flatten(rh_n_l_s, start_dim=1)
 
                 if l == 0:
@@ -141,7 +139,7 @@ class SO3Convolution(torch.nn.Module):
             # Manually register parameters
             self.register_parameter(f"weights_{l}", self.weights[l])
 
-        self.bias = torch.nn.Parameter(torch.zeros(ti_n, te_n, 1, b_out, 1, 1))
+        self.bias = torch.nn.Parameter(torch.zeros(1, ti_n, te_n, b_out, 1, 1))
 
     def forward(self, x):
         with self.profiler.profile("SO3Convolution"):
@@ -149,7 +147,7 @@ class SO3Convolution(torch.nn.Module):
             rh = dict()
             for l in range(0, self.l_in + 1, self.symmetric):
                 rh[l] = (2 * l + 1) * torch.einsum(
-                    "abnilk, abiokj->abnolj", x[l], self.weights[l]
+                    "nabilk, abiokj->nabolj", x[l], self.weights[l]
                 )
                 rh[l] += self.bias if l == 0 else 0
 
@@ -167,9 +165,7 @@ class SO3Convolution(torch.nn.Module):
             for l in range(0, self.l_out + 1, self.symmetric):
                 n_l = 8 * (np.pi ** 2) / (2 * l + 1)
 
-                rh_n_l_t = torch.transpose(rh_n[l], 2, 0)
-                rh_n_l_p = torch.pow(rh_n_l_t, 2)
-                rh_n_l_s = torch.sum(rh_n_l_p, (5, 4))
+                rh_n_l_s = torch.sum(torch.pow(rh_n[l], 2), (5, 4))
                 feats_l = torch.flatten(rh_n_l_s, start_dim=1)
 
                 if l == 0:

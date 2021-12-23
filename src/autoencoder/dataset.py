@@ -13,11 +13,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from autoencoder.argparse import file_path
 from autoencoder.logger import logger
-from autoencoder.spherical.harmonics import (
-    convert_cart_to_s2,
-    gram_schmidt_sh_inv,
-    sh_basis_real,
-)
+from autoencoder.spherical.harmonics import gram_schmidt_sh_inv, sh_basis_real
 
 
 class MRIMemorySHDataset(Dataset):
@@ -88,12 +84,8 @@ class MRIMemorySHDataset(Dataset):
         prev_b = b_s[0]
 
         # Fit the spherical harmonics on the gradients.
-        gradients_xyz = scheme[:, :3]
-        gradients_s2 = convert_cart_to_s2(gradients_xyz)
-
-        y = sh_basis_real(gradients_s2, self._l_max)
+        y = sh_basis_real(torch.from_numpy(scheme[:, :3]), self._l_max)
         y_inv = gram_schmidt_sh_inv(y, self._l_max, n_iters=self._gram_schmidt_n_iters)
-        y_inv = torch.from_numpy(y_inv)[np.newaxis, :, :]
 
         sh_coefficients_b_idx = dict()
         sh_coefficients = dict()
@@ -121,15 +113,14 @@ class MRIMemorySHDataset(Dataset):
             if not np.any(filter_scheme):
                 continue
 
-            data_filtered = data[:, filter_scheme]
-            data_filtered = torch.from_numpy(data_filtered).unsqueeze(2)
+            data_filtered = torch.from_numpy(data[:, filter_scheme])
 
             # Get the maximum l where the amount of coefficients is smaller or equal to the amount of voxels.
             l = [l for l, o in l_sizes.items() if o <= data_filtered.shape[1]][-1]
             l_size = np.sum([2 * s + 1 for s in range(0, l + 1, 2)])
-            y_inv_filtered = y_inv[:, :l_size, filter_scheme]
+            y_inv_filtered = y_inv[:l_size, filter_scheme]
 
-            sh_coefficient = torch.einsum("npc,clp->ncl", data_filtered, y_inv_filtered)
+            sh_coefficient = torch.einsum("np,lp->nl", data_filtered, y_inv_filtered)
 
             # Extract even covariants.
             s = 0
@@ -138,7 +129,7 @@ class MRIMemorySHDataset(Dataset):
 
                 sh_coefficients[l][
                     ti_idx, te_idx, :, sh_coefficients_b_idx[l]
-                ] = sh_coefficient[:, 0, torch.arange(s, s + o)]
+                ] = sh_coefficient[:, torch.arange(s, s + o)]
 
                 s += o
                 sh_coefficients_b_idx[l] += 1

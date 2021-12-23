@@ -2,18 +2,16 @@ from typing import Optional
 
 import numpy as np
 import torch
+from e3nn import o3
 
 
 class QuadraticNonLinearity(torch.nn.Module):
-    def __init__(self, l_in, l_out, cg_r, cg_l, symmetric: bool = True) -> None:
+    def __init__(self, l_in, l_out, symmetric: bool = True) -> None:
         super(QuadraticNonLinearity, self).__init__()
 
         self.register_buffer("_l_in", torch.tensor(l_in))
         self.register_buffer("_l_out", torch.tensor(l_out))
         self.register_buffer("_symmetric", torch.tensor(2 if symmetric else 1))
-
-        self._cg_r = cg_r
-        self._cg_l = cg_l
 
     def forward(
         self, x: tuple[dict[int, torch.Tensor], Optional[torch.Tensor]]
@@ -28,25 +26,27 @@ class QuadraticNonLinearity(torch.nn.Module):
                         continue
                     if l2 < l1:
                         continue
-                    if np.abs(l2 - l1) <= l <= (l1 + l2):
+                    if np.abs(l2 - l1) > l or l > (l1 + l2):
+                        continue
 
-                        cg_r = self._cg_r[l][l1, l2]
-                        cg_l = self._cg_l[l][l1, l2]
+                    cg_ = o3.wigner_3j(l1, l2, l, device=rh[0].device).T
+                    cg_r = torch.reshape(cg_, (2 * l + 1, 2 * l1 + 1, 2 * l2 + 1))
+                    cg_l = torch.transpose(cg_r, 1, 2)
 
-                        n, a, b, c, _, _ = rh[l1].shape
+                    n, a, b, c, _, _ = rh[l1].shape
 
-                        x = torch.einsum("nabcij,klj->nabckli", rh[l2], cg_r)
-                        x = torch.reshape(x, [n, a, b, c, 2 * l + 1, -1])
+                    x = torch.einsum("nabcij,klj->nabckli", rh[l2], cg_r)
+                    x = torch.reshape(x, [n, a, b, c, 2 * l + 1, -1])
 
-                        y = torch.einsum("nabcji,klj->nabckil", rh[l1], cg_l)
-                        y = torch.reshape(y, [n, a, b, c, 2 * l + 1, -1])
+                    y = torch.einsum("nabcji,klj->nabckil", rh[l1], cg_l)
+                    y = torch.reshape(y, [n, a, b, c, 2 * l + 1, -1])
 
-                        z = torch.einsum("nabcki,nabcji->nabckj", y, x)
+                    z = torch.einsum("nabcki,nabcji->nabckj", y, x)
 
-                        if l not in rh_n:
-                            rh_n[l] = z
-                        else:
-                            rh_n[l] += z
+                    if l not in rh_n:
+                        rh_n[l] = z
+                    else:
+                        rh_n[l] += z
 
         return rh_n, self._extract_features(rh_n, feats)
 

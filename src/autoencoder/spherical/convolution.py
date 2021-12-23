@@ -2,18 +2,18 @@ from typing import Optional
 
 import numpy as np
 import torch
-from pytorch_lightning.profiler import PassThroughProfiler
 
 
 class QuadraticNonLinearity(torch.nn.Module):
     def __init__(self, l_in, l_out, cg_r, cg_l, symmetric: bool = True) -> None:
         super(QuadraticNonLinearity, self).__init__()
 
-        self._l_in = l_in
-        self._l_out = l_out
+        self.register_buffer("_l_in", torch.tensor(l_in))
+        self.register_buffer("_l_out", torch.tensor(l_out))
+        self.register_buffer("_symmetric", torch.tensor(2 if symmetric else 1))
+
         self._cg_r = cg_r
         self._cg_l = cg_l
-        self._symmetric = 2 if symmetric else 1
 
     def forward(
         self, x: tuple[dict[int, torch.Tensor], Optional[torch.Tensor]]
@@ -74,15 +74,12 @@ class QuadraticNonLinearity(torch.nn.Module):
 
 
 class S2Convolution(torch.nn.Module):
-    def __init__(
-        self, ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True, profiler=None
-    ):
+    def __init__(self, ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True):
         """Convolution between spherical signals and kernels in spectral domain."""
         super(S2Convolution, self).__init__()
 
-        self._l_in = l_in
-        self._symmetric = 2 if symmetric else 1
-        self._profiler = profiler or PassThroughProfiler()
+        self.register_buffer("_l_in", torch.tensor(l_in))
+        self.register_buffer("_symmetric", torch.tensor(2 if symmetric else 1))
 
         self.weights = dict()
         for l in range(0, self._l_in + 1, self._symmetric):
@@ -98,26 +95,21 @@ class S2Convolution(torch.nn.Module):
     def forward(
         self, x: dict[int, torch.Tensor]
     ) -> tuple[dict[int, torch.Tensor], Optional[torch.Tensor]]:
-        with self._profiler.profile("S2Convolution"):
-            # convolution
-            rh = dict()
-            for l in range(0, self._l_in + 1, self._symmetric):
-                rh[l] = torch.einsum("nabil, abiok->nabolk", x[l], self.weights[l])
-                rh[l] += self.bias if l == 0 else 0
+        rh = dict()
+        for l in range(0, self._l_in + 1, self._symmetric):
+            rh[l] = torch.einsum("nabil, abiok->nabolk", x[l], self.weights[l])
+            rh[l] += self.bias if l == 0 else 0
 
         return rh, None
 
 
 class SO3Convolution(torch.nn.Module):
-    def __init__(
-        self, ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True, profiler=None
-    ):
+    def __init__(self, ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True):
         """Convolution between SO(3) signals and kernels in spectral domain."""
         super(SO3Convolution, self).__init__()
 
-        self._l_in = l_in
-        self._symmetric = 2 if symmetric else 1
-        self._profiler = profiler or PassThroughProfiler()
+        self.register_buffer("_l_in", torch.tensor(l_in))
+        self.register_buffer("_symmetric", torch.tensor(2 if symmetric else 1))
 
         self.weights = dict()
         for l in range(0, self._l_in + 1, self._symmetric):
@@ -134,13 +126,11 @@ class SO3Convolution(torch.nn.Module):
         self, x: tuple[dict[int, torch.Tensor], Optional[torch.Tensor]]
     ) -> tuple[dict[int, torch.Tensor], Optional[torch.Tensor]]:
         data, feats = x
-        with self._profiler.profile("SO3Convolution"):
-            # convolution
-            rh = dict()
-            for l in range(0, self._l_in + 1, self._symmetric):
-                rh[l] = (2 * l + 1) * torch.einsum(
-                    "nabilk, abiokj->nabolj", data[l], self.weights[l]
-                )
-                rh[l] += self.bias if l == 0 else 0
+        rh = dict()
+        for l in range(0, self._l_in + 1, self._symmetric):
+            rh[l] = (2 * l + 1) * torch.einsum(
+                "nabilk, abiokj->nabolj", data[l], self.weights[l]
+            )
+            rh[l] += self.bias if l == 0 else 0
 
         return rh, feats

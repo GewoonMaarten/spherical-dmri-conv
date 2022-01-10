@@ -33,6 +33,10 @@ class QuadraticNonLinearity(torch.nn.Module):
                     cg_r = torch.reshape(cg_, (2 * l + 1, 2 * l1 + 1, 2 * l2 + 1))
                     cg_l = torch.transpose(cg_r, 1, 2)
 
+                    if l2 != l1:
+                        cg_r = np.sqrt(2) * cg_r
+                        cg_l = np.sqrt(2) * cg_l
+
                     n, a, b, c, _, _ = rh[l1].shape
 
                     x = torch.einsum("nabcij,klj->nabckli", rh[l2], cg_r)

@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from e3nn import o3
 
@@ -19,13 +18,13 @@ def sh_basis_real(cart_coord: torch.Tensor, L: int, symmetric: bool = True):
     )
     Y = torch.zeros((cart_coord.shape[0], n_sph), dtype=torch.float32)
 
-    # alpha, beta, gamma = o3.rand_angles()
+    alpha, beta, gamma = o3.rand_angles()
     n_sph = 0
     for i in range(0, L + 1, symmetric):
-        Y_n_m = o3.spherical_harmonics(i, cart_coord[:, :3], True)
+        Y_n_m = o3.spherical_harmonics(i, cart_coord[:, :3], True).float()
 
-        # rot = o3.wigner_D(i, alpha, beta, gamma).numpy()
-        # Y_n_m = np.einsum("mn,bn->bm", rot, Y_n_m)
+        rot = o3.wigner_D(i, alpha, beta, gamma).float()
+        Y_n_m = torch.einsum("mn,bn->bm", rot, Y_n_m)
         Y[:, n_sph : n_sph + 2 * i + 1] = Y_n_m
         n_sph += 2 * i + 1
 
@@ -47,7 +46,7 @@ def gram_schmidt_sh_inv(
     """
 
     def project(v, u):
-        return (v * u).sum() / (u * u).sum() * u
+        return (v * u).sum() / ((u * u).sum() + 1.0e-8) * u
 
     symmetric = 2 if symmetric else 1
     Y_inv_final = torch.zeros_like(Y.T, device=Y.device)
@@ -68,9 +67,10 @@ def gram_schmidt_sh_inv(
         for i in range(Y_inv.shape[0]):
             Y_inv[i, :] = Y[:, order[i]]
             for j in range(0, i):
-                Y_inv[i, :] -= project(Y_inv[i, :], Y_inv[j, :])
+                if torch.sum(Y_inv[j, :] ** 2) > 1.0e-8:
+                    Y_inv[i, :] -= project(Y_inv[i, :], Y_inv[j, :])
 
-            Y_inv[i, :] /= torch.sqrt(torch.sum(Y_inv[i, :] ** 2))
+            Y_inv[i, :] /= torch.sqrt((Y_inv[i, :] * Y_inv[i, :]).sum())
         Y_inv_final += Y_inv[deorder, :]
     Y_inv_final /= n_iters
 

@@ -10,6 +10,11 @@ from torch import nn
 
 from autoencoder.argparse import file_path
 from autoencoder.logger import logger
+from autoencoder.spherical.convolution import (
+    QuadraticNonLinearity,
+    S2Convolution,
+    SO3Convolution,
+)
 
 
 class Encoder(nn.Module):
@@ -333,6 +338,108 @@ class ConcreteAutoencoder(pl.LightningModule):
         """
         _, decoded = self.forward(batch)
         loss = F.mse_loss(decoded, batch)
+
+        self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+
+        return loss
+
+
+class FCNDecoder(pl.LightningModule):
+    def __init__(self, input_size, output_size, n_layers=2, learning_rate=1e-3):
+        super(FCNDecoder, self).__init__()
+        self.learning_rate = learning_rate
+        self.decoder = Decoder(input_size, output_size, n_layers)
+
+    def forward(self, x):
+        return self.decoder(x)
+
+    def configure_optimizers(self) -> torch.optim.Adam:
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        return optimizer
+
+    def training_step(
+        self,
+        batch: dict[str, torch.Tensor],
+        batch_idx: int,
+    ) -> torch.Tensor:
+        return self._shared_eval(batch, batch_idx, "train")
+
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
+        return self._shared_eval(batch, batch_idx, "val")
+
+    def _shared_eval(
+        self, batch: torch.Tensor, batch_idx: int, prefix: str
+    ) -> torch.Tensor:
+        """Calculate the loss for a batch.
+
+        Args:
+            batch (torch.Tensor): batch data.
+            batch_idx (int): batch id.
+            prefix (str): prefix for logging.
+
+        Returns:
+            torch.Tensor: calculated loss.
+        """
+        data, target = batch["sample"], batch["target"]
+
+        decoded = self.forward(data)
+        loss = F.mse_loss(decoded, target)
+
+        self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+
+        return loss
+
+
+class SphericalDecoder(pl.LightningModule):
+    def __init__(
+        self, n_ti, n_te, n_shells=[5, 8, 16], L=[2, 2, 0], learning_rate=1e-3
+    ) -> None:
+        super(SphericalDecoder, self).__init__()
+
+        self.learning_rate = learning_rate
+        self.spherical = torch.nn.Sequential(
+            S2Convolution(n_ti, n_te, L[0], n_shells[0], n_shells[1]),
+            QuadraticNonLinearity(L[0], L[1]),
+            SO3Convolution(n_ti, n_te, L[1], n_shells[1], n_shells[2]),
+            QuadraticNonLinearity(L[1], L[2]),
+        )
+        self.linear = torch.nn.Linear(2688, 1344)
+
+    def forward(self, x: dict[int, torch.Tensor]) -> torch.Tensor:
+        _, features = self.spherical(x)
+        return self.linear(features)
+
+    def configure_optimizers(self) -> torch.optim.Adam:
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        return optimizer
+
+    def training_step(
+        self,
+        batch: dict[str, torch.Tensor],
+        batch_idx: int,
+    ) -> torch.Tensor:
+        return self._shared_eval(batch, batch_idx, "train")
+
+    def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
+        return self._shared_eval(batch, batch_idx, "val")
+
+    def _shared_eval(
+        self, batch: torch.Tensor, batch_idx: int, prefix: str
+    ) -> torch.Tensor:
+        """Calculate the loss for a batch.
+
+        Args:
+            batch (torch.Tensor): batch data.
+            batch_idx (int): batch id.
+            prefix (str): prefix for logging.
+
+        Returns:
+            torch.Tensor: calculated loss.
+        """
+        data, target = batch["sample"], batch["target"]
+
+        decoded = self.forward(data)
+        loss = F.mse_loss(decoded, target)
 
         self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
 

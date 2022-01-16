@@ -148,7 +148,13 @@ class MRIMemoryDataset(Dataset):
 
     def __getitem__(self, index):
         """Generates one sample of data"""
-        return self.target[index], self.sample[index]
+        if isinstance(self.sample, dict):
+            return {
+                "target": self.target[index],
+                "sample": {k: v[index] for (k, v) in self.sample.items()},
+            }
+        else:
+            return {"target": self.target[index], "sample": self.sample[index]}
 
     def __getstate__(self):
         """Return state values to be pickled."""
@@ -206,15 +212,21 @@ class MRIDataset(Dataset):
         with h5py.File(self.data_file_path, "r") as archive:
             data = archive.get("data")[self.selection[index]]
 
+        if self._include is not None:
+            data = data[self._include]
+        elif self._exclude is not None:
+            data = np.delete(data, self._exclude)
+
         if self._transform:
             self.sample = self._transform(data=self.sample, scheme=self._scheme)
 
-        if self._include is not None:
-            return data, data[self._include]
-        elif self._exclude is not None:
-            return data, np.delete(data, self._exclude)
+        if isinstance(self.sample, dict):
+            return {
+                "target": data,
+                "sample": {k: v[index] for (k, v) in self.sample.items()},
+            }
         else:
-            return data
+            return {"target": data, "sample": self.sample[index]}
 
     def __getstate__(self):
         """Return state values to be pickled."""

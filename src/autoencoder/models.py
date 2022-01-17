@@ -1,4 +1,3 @@
-from argparse import ArgumentParser
 from collections import OrderedDict
 
 import numpy as np
@@ -9,7 +8,6 @@ from pytorch_lightning.profiler import PassThroughProfiler
 from pytorch_lightning.utilities.cli import MODEL_REGISTRY
 from torch import nn
 
-from autoencoder.argparse import file_path
 from autoencoder.logger import logger
 from autoencoder.spherical.convolution import (
     QuadraticNonLinearity,

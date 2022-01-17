@@ -1,6 +1,5 @@
 import copy
 import itertools
-from argparse import ArgumentParser
 from pathlib import Path
 from typing import Optional
 
@@ -8,9 +7,9 @@ import h5py
 import numpy as np
 import pytorch_lightning as pl
 import torch
+from pytorch_lightning.utilities.cli import DATAMODULE_REGISTRY
 from torch.utils.data import DataLoader, Dataset
 
-from autoencoder.argparse import file_path
 from autoencoder.logger import logger
 from autoencoder.spherical.harmonics import gram_schmidt_sh_inv, sh_basis_real
 
@@ -237,94 +236,69 @@ class MRIDataset(Dataset):
         pass
 
 
+@DATAMODULE_REGISTRY
 class MRIDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        data_file: Path,
+        data_file: str,
         batch_size: int = 256,
         subject_list_train: list[int] = [11, 12, 13, 14],
         subject_list_val: list[int] = [15],
+        exclude_features: str = None,
+        include_features: str = None,
         in_memory: bool = False,
         num_workers: int = 0,
+        spherical_transform: SphericalTransformer = None,
     ):
         """Collection of train and validation data sets.
 
         Args:
-            data_dir (Path): Path to the data directory.
-            data_file_name (str): file name of the H5 file.
-            header_file_name (str): file name of the CSV file.
-            batch_size (int, optional): training batch size. Defaults to 265.
-            subject_list_train (list[int], optional): subjects to include in training. Defaults to [11, 12, 13, 14].
-            subject_list_val (list[int], optional): subject(s) to include in validation. Defaults to [15].
-            in_memory (bool, optional): Whether to load the entire dataset in memory. Defaults to False.
-            num_workers (bool, optional): Amount of threads to use when loading data from disk. Defaults to 0.
+            data_file_name (str): file path of the H5 file
+            batch_size (int, optional): training batch size
+            subject_list_train (list[int], optional): subjects to include in training
+            subject_list_val (list[int], optional): subject(s) to include in validation
+            exclude_features (str, optional): path to file with features to exclude from training
+            include_features (str, optional): path to file with features to include from training, will only use those features
+            in_memory (bool, optional): Whether to load the entire dataset in memory
+            num_workers (bool, optional): Amount of threads to use when loading data from disk
+            spherical_transform (SphericalTransformer, optional): SphericalTransformer used to transform the data for the spherical convolutions
         """
         super(MRIDataModule, self).__init__()
 
-        self._data_file = data_file
+        self._data_file = Path(data_file)
         self._batch_size = batch_size
         self._subject_list_train = np.array(subject_list_train)
         self._subject_list_val = np.array(subject_list_val)
         self._in_memory = in_memory
         self._num_workers = num_workers
+        self._spherical_transform = spherical_transform
 
-    @staticmethod
-    def add_model_specific_args(parent_parser: ArgumentParser) -> ArgumentParser:
-        """Add model specific arguments to argparse.
+        if exclude_features is not None and include_features is not None:
+            raise Exception(
+                "both exclude_features and include_features, only specify one"
+            )
 
-        Args:
-            parent_parser (ArgumentParser): parent argparse to add the new arguments to.
-
-        Returns:
-            ArgumentParser: parent argparse.
-        """
-        parser = parent_parser.add_argument_group("autoencoder.MRIDataModule")
-        parser.add_argument(
-            "--data_file",
-            "-i",
-            type=file_path,
-            required=True,
-            metavar="PATH",
-            help="file name of the H5 file",
-        )
-        parser.add_argument(
-            "--subject_train",
-            nargs="+",
-            type=int,
-            help="subjects to include in training (default: [11, 12, 13, 14])",
-        )
-        parser.add_argument(
-            "--subject_val",
-            nargs="+",
-            type=int,
-            help="subjects to include in validation (default: [15])",
-        )
-        parser.add_argument(
-            "--batch_size",
-            default=256,
-            type=int,
-            metavar="N",
-            help="input batch size for training (default: 256)",
-        )
-        parser.add_argument(
-            "--in_memory",
-            action="store_true",
-            help="load the entire dataset into memory",
-        )
-
-        return parent_parser
+        if exclude_features is not None:
+            self._exclude_features = np.loadtxt(exclude_features, dtype=np.int32)
+        elif include_features is not None:
+            self._include_features = np.loadtxt(include_features, dtype=np.int32)
 
     def setup(self, stage: Optional[str]) -> None:
-        print("stage:", stage)
         DatasetClass = MRIMemoryDataset if self._in_memory else MRIDataset
 
         self.train_set = DatasetClass(
             self._data_file,
             self._subject_list_train,
+            self._exclude_features,
+            self._include_features,
+            transform=self._spherical_transform,
         )
         self.val_set = DatasetClass(
             self._data_file,
             self._subject_list_val,
+            self._exclude_features,
+            self._include_features,
+            transform=self._spherical_transform,
         )
 
     def train_dataloader(self) -> DataLoader:

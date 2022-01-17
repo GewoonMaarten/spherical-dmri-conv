@@ -278,6 +278,8 @@ class MRIDataModule(pl.LightningDataModule):
                 "both exclude_features and include_features, only specify one"
             )
 
+        self._exclude_features = None
+        self._include_features = None
         if exclude_features is not None:
             self._exclude_features = np.loadtxt(exclude_features, dtype=np.int32)
         elif include_features is not None:
@@ -305,9 +307,9 @@ class MRIDataModule(pl.LightningDataModule):
         args = dict(
             batch_size=self._batch_size,
             shuffle=True,
-            pin_memory=True,
+            pin_memory=False,
             num_workers=0 if self._in_memory else self._num_workers,
-            peristent_workers=not self._in_memory,
+            persistent_workers=not self._in_memory,
             drop_last=True,
         )
 
@@ -317,9 +319,9 @@ class MRIDataModule(pl.LightningDataModule):
         args = dict(
             batch_size=self._batch_size,
             shuffle=False,
-            pin_memory=True,
+            pin_memory=False,
             num_workers=0 if self._in_memory else self._num_workers,
-            peristent_workers=not self._in_memory,
+            persistent_workers=not self._in_memory,
             drop_last=True,
         )
 

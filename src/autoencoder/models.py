@@ -259,8 +259,9 @@ class ConcreteAutoencoder(pl.LightningModule):
         Returns:
             torch.Tensor: calculated loss.
         """
-        _, decoded = self.forward(batch)
-        loss = F.mse_loss(decoded, batch)
+        data = batch["target"]
+        _, decoded = self.forward(data)
+        loss = F.mse_loss(decoded, data)
 
         self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
 

@@ -1,0 +1,39 @@
+trainer:
+  max_epochs: 2
+  callbacks:
+    - class_path: pytorch_lightning.callbacks.EarlyStopping
+      init_args:
+        monitor: "mean_max"
+        mode: "max"
+        stopping_threshold: 0.998
+        patience: 10
+    - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+      init_args:
+        monitor: "mean_max"
+        mode: "max"
+        save_top_k: 1
+model:
+  class_path: autoencoder.models.ConcreteAutoencoder
+  init_args:
+    input_output_size: 1344
+    latent_size: 500
+    decoder_hidden_layers: 2
+    learning_rate: 0.001
+    max_temp: 10.0
+    min_temp: 0.1
+    reg_lambda: 0.0
+    reg_threshold: 1.0
+data:
+  class_path: autoencoder.datasets.MRIDataModule
+  init_args:
+    data_file: ./data/data.hdf5
+    batch_size: 256
+    subject_list_train:
+      - 11
+      - 12
+      - 13
+      - 14
+    subject_list_val:
+      - 15
+    in_memory: true
+    num_workers: 0

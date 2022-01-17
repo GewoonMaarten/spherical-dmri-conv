@@ -1,4 +1,4 @@
-seed_everything: null
+seed_everything: 12345678
 trainer:
   logger: true
   checkpoint_callback: true

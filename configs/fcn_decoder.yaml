@@ -1,0 +1,27 @@
+trainer:
+  callbacks:
+    - class_path: pytorch_lightning.callbacks.EarlyStopping
+      init_args:
+        monitor: "val_loss"
+model:
+  class_path: autoencoder.models.FCNDecoder
+  init_args:
+    input_size: 500
+    output_size: 1344
+    hidden_layers: 2
+    learning_rate: 0.001
+data:
+  class_path: autoencoder.datasets.MRIDataModule
+  init_args:
+    data_file: ./data/data.hdf5
+    batch_size: 256
+    subject_list_train:
+      - 11
+      - 12
+      - 13
+      - 14
+    subject_list_val:
+      - 15
+    in_memory: true
+    num_workers: 0
+    include_features: ./data/latent_features.txt

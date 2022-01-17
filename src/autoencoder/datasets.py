@@ -99,7 +99,7 @@ class MRIMemoryDataset(Dataset):
         subject_list: list[int],
         exclude: Optional[list[int]] = None,
         include: Optional[list[int]] = None,
-        do_preload_in_gpu: bool = True,
+        do_preload_in_gpu: bool = False,
         transform=None,
     ):
         """Create a dataset from the selected subjects in the subject list

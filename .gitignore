@@ -1,10 +1,11 @@
 .vscode
 
 # DL training related directories
-runs
-logs
 data
+lightning_logs
+logs
 mlruns
+runs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

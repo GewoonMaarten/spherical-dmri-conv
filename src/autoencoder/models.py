@@ -335,6 +335,7 @@ class SphericalDecoder(pl.LightningModule):
         self,
         n_ti: int,
         n_te: int,
+        linear_layer_input_size: int,
         n_shells: list[int] = [5, 8, 16],
         L: list[int] = [2, 2, 0],
         learning_rate: float = 1e-3,
@@ -343,7 +344,8 @@ class SphericalDecoder(pl.LightningModule):
 
         Args:
             n_ti (int): number of unique TI values
-            n_te (int): number of unique TE valeus
+            n_te (int): number of unique TE values
+            linear_layer_input_size (int): size of the input of the first linear layer.
             n_shells (list[int], optional): number of b-value shells. List should be of size 3. Defaults to [5, 8, 16].
             L (list[int], optional): degree of spherical harmonic. List should be of size 3. Defaults to [2, 2, 0].
             learning_rate (float, optional): learning rate. Defaults to 1e-3.
@@ -357,7 +359,7 @@ class SphericalDecoder(pl.LightningModule):
             SO3Convolution(n_ti, n_te, L[1], n_shells[1], n_shells[2]),
             QuadraticNonLinearity(L[1], L[2]),
         )
-        self.linear = torch.nn.Linear(2688, 1344)
+        self.linear = torch.nn.Linear(linear_layer_input_size, 1344)
 
     def forward(self, x: dict[int, torch.Tensor]) -> torch.Tensor:
         _, features = self.spherical(x)

@@ -124,6 +124,7 @@ class MRIMemoryDataset(Dataset):
             self.target = archive.get("data")[selection]
             self.sample = copy.deepcopy(self.target)
             self._5tt = archive.get("5tt")[selection]
+            self.unnormalize_data = archive.get("unnormalize_data")[selection]
 
         if include is not None:
             self.sample = self.sample[:, include]
@@ -135,6 +136,7 @@ class MRIMemoryDataset(Dataset):
         self.target = torch.from_numpy(self.target)
         self.sample = torch.from_numpy(self.sample)
         self._5tt = torch.from_numpy(self._5tt).bool()
+        self.unnormalize_data = torch.from_numpy(self.unnormalize_data)
 
         if do_preload_in_gpu:
             self.target = self.target.to("cuda")
@@ -154,12 +156,14 @@ class MRIMemoryDataset(Dataset):
                 "target": self.target[index],
                 "sample": {k: v[index] for (k, v) in self.sample.items()},
                 "5tt": self._5tt[index],
+                "unnormalize_data": self.unnormalize_data[index],
             }
         else:
             return {
                 "target": self.target[index],
                 "sample": self.sample[index],
                 "5tt": self._5tt[index],
+                "unnormalize_data": self.unnormalize_data[index],
             }
 
     def __getstate__(self):

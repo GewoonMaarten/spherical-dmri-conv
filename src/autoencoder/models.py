@@ -87,9 +87,7 @@ class Encoder(nn.Module):
         return encoded
 
     def update_temp(self, current_epoch, max_epochs) -> torch.Tensor:
-        self.temp = self.max_temp * torch.pow(
-            (self.min_temp / self.max_temp), (current_epoch / max_epochs)
-        )
+        self.temp = self.max_temp * torch.pow((self.min_temp / self.max_temp), (current_epoch / max_epochs))
         return self.temp
 
     def calc_mean_max(self) -> torch.Tensor:
@@ -272,9 +270,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         mean_max = self.encoder.calc_mean_max()
         self.log("mean_max", mean_max, on_step=False, prog_bar=True)
 
-    def _shared_eval(
-        self, batch: torch.Tensor, batch_idx: int, prefix: str
-    ) -> torch.Tensor:
+    def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str) -> torch.Tensor:
         """Calculate the loss for a batch.
 
         Args:
@@ -333,12 +329,14 @@ class FCNDecoder(pl.LightningModule):
         return self._shared_eval(batch, batch_idx, "val")
 
     def test_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        data = batch["target"]
-        masks = batch["5tt"]
-
-        _, decoded = self.forward(data)
+        def unnormalize(batch, unnormalize_data):
+            return (batch.T / unnormalize_data[:, 0] * unnormalize_data[:, 1]).T
 
         losses = dict()
+        sample, target, masks = batch["sample"], batch["target"], batch["5tt"]
+        unnormalize_data = batch["unnormalize_data"]
+
+        decoded = self(sample)
 
         for idx, tissue in {
             0: "cortical_grey_matter",
@@ -347,20 +345,21 @@ class FCNDecoder(pl.LightningModule):
             3: "csf",
             4: "pathological_tissue",
         }.items():
-            loss = F.mse_loss(decoded[masks[:, idx]], data[masks[:, idx]])
+            loss = F.mse_loss(
+                unnormalize(decoded[masks[:, idx]], unnormalize_data[masks[:, idx]]),
+                unnormalize(target[masks[:, idx]], unnormalize_data[masks[:, idx]]),
+            )
             name = f"test_{tissue}_loss"
             self.log(name, loss)
             losses[name] = loss
 
-        loss = F.mse_loss(decoded, data)
-        self.log("test_loss", loss)
-        losses["test_loss"] = loss
+        loss = F.mse_loss(unnormalize(decoded, unnormalize_data), unnormalize(target, unnormalize_data))
+        self.log("test_whole_brain_loss", loss)
+        losses["test_whole_brain_loss"] = loss
 
         return losses
 
-    def _shared_eval(
-        self, batch: torch.Tensor, batch_idx: int, prefix: str
-    ) -> torch.Tensor:
+    def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str) -> torch.Tensor:
         """Calculate the loss for a batch.
 
         Args:
@@ -371,9 +370,9 @@ class FCNDecoder(pl.LightningModule):
         Returns:
             torch.Tensor: calculated loss.
         """
-        data, target = batch["sample"], batch["target"]
+        sample, target = batch["sample"], batch["target"]
 
-        decoded = self.forward(data)
+        decoded = self(sample)
         loss = F.mse_loss(decoded, target)
 
         self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
@@ -432,12 +431,14 @@ class SphericalDecoder(pl.LightningModule):
         return self._shared_eval(batch, batch_idx, "val")
 
     def test_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        data = batch["target"]
-        masks = batch["5tt"]
-
-        _, decoded = self.forward(data)
+        def unnormalize(batch, unnormalize_data):
+            return (batch.T / unnormalize_data[:, 0] * unnormalize_data[:, 1]).T
 
         losses = dict()
+        sample, target, masks = batch["sample"], batch["target"], batch["5tt"]
+        unnormalize_data = batch["unnormalize_data"]
+
+        decoded = self(sample)
 
         for idx, tissue in {
             0: "cortical_grey_matter",
@@ -446,20 +447,21 @@ class SphericalDecoder(pl.LightningModule):
             3: "csf",
             4: "pathological_tissue",
         }.items():
-            loss = F.mse_loss(decoded[masks[:, idx]], data[masks[:, idx]])
+            loss = F.mse_loss(
+                unnormalize(decoded[masks[:, idx]], unnormalize_data[masks[:, idx]]),
+                unnormalize(target[masks[:, idx]], unnormalize_data[masks[:, idx]]),
+            )
             name = f"test_{tissue}_loss"
             self.log(name, loss)
             losses[name] = loss
 
-        loss = F.mse_loss(decoded, data)
-        self.log("test_loss", loss)
-        losses["test_loss"] = loss
+        loss = F.mse_loss(unnormalize(decoded, unnormalize_data), unnormalize(target, unnormalize_data))
+        self.log("test_whole_brain_loss", loss)
+        losses["test_whole_brain_loss"] = loss
 
         return losses
 
-    def _shared_eval(
-        self, batch: torch.Tensor, batch_idx: int, prefix: str
-    ) -> torch.Tensor:
+    def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str) -> torch.Tensor:
         """Calculate the loss for a batch.
 
         Args:
@@ -470,9 +472,9 @@ class SphericalDecoder(pl.LightningModule):
         Returns:
             torch.Tensor: calculated loss.
         """
-        data, target = batch["sample"], batch["target"]
+        sample, target = batch["sample"], batch["target"]
 
-        decoded = self.forward(data)
+        decoded = self(sample)
         loss = F.mse_loss(decoded, target)
 
         self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)

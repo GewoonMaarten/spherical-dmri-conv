@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from pytorch_lightning.profiler import PassThroughProfiler
+from pytorch_lightning.utilities.cli import MODEL_REGISTRY
 from torch import nn
 
 from autoencoder.argparse import file_path
@@ -167,6 +168,7 @@ class Decoder(nn.Module):
         return decoded
 
 
+@MODEL_REGISTRY
 class ConcreteAutoencoder(pl.LightningModule):
     def __init__(
         self,
@@ -178,20 +180,18 @@ class ConcreteAutoencoder(pl.LightningModule):
         min_temp: float = 0.1,
         reg_lambda: float = 0.0,
         reg_threshold: float = 1.0,
-        profiler=None,
     ) -> None:
         """Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
 
         Args:
-            input_output_size (int): size of the input and output layer. latent_size (int): size of the latent layer.
+            input_output_size (int): size of the input and output layer.
+            latent_size (int): size of the latent layer.
             decoder_hidden_layers (int, optional): number of hidden layers for the decoder. Defaults to 2.
             learning_rate (float, optional): learning rate for the optimizer. Defaults to 1e-3.
             max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
             min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
-            reg_lambda(float, optional): how much weight to apply to the regularization term. If the value is 0.0 then
-            no regularization will be applied. Defaults to 0.0.
-            reg_threshold (float, optional): regularization threshold. The encoder will be penalized when the sum of
-            probabilities for a selection neuron exceed this threshold. Defaults to 1.0.
+            reg_lambda(float, optional): how much weight to apply to the regularization term. If the value is 0.0 then no regularization will be applied. Defaults to 0.0.
+            reg_threshold (float, optional): regularization threshold. The encoder will be penalized when the sum of probabilities for a selection neuron exceed this threshold. Defaults to 1.0.
         """
         super(ConcreteAutoencoder, self).__init__()
         self.save_hyperparameters()
@@ -201,87 +201,12 @@ class ConcreteAutoencoder(pl.LightningModule):
             latent_size,
             max_temp,
             min_temp,
-            profiler=profiler,
             reg_threshold=reg_threshold,
         )
         self.decoder = Decoder(latent_size, input_output_size, decoder_hidden_layers)
 
         self.learning_rate = learning_rate
         self.reg_lambda = reg_lambda
-
-    @staticmethod
-    def add_model_specific_args(parent_parser: ArgumentParser) -> ArgumentParser:
-        """Add model specific arguments to argparse.
-
-        Args:
-            parent_parser (ArgumentParser): parent argparse to add the new arguments to.
-
-        Returns:
-            ArgumentParser: parent argparse.
-        """
-        parser = parent_parser.add_argument_group("autoencoder.ConcreteAutoencoder")
-        parser.add_argument(
-            "--checkpoint",
-            default=None,
-            type=file_path,
-            metavar="PATH",
-            help="Checkpoint file path to restore from.",
-        )
-        parser.add_argument(
-            "--hparams",
-            default=None,
-            type=file_path,
-            metavar="PATH",
-            help="hyper parameter file path to restore from.",
-        )
-        parser.add_argument(
-            "--input_output_size",
-            "-s",
-            default=1344,
-            type=int,
-            metavar="N",
-            help="size of the input and output layer",
-        )
-        parser.add_argument(
-            "--latent_size",
-            "-l",
-            default=500,
-            type=int,
-            metavar="N",
-            help="size of latent layer",
-        )
-        parser.add_argument(
-            "--decoder_hidden_layers",
-            default=2,
-            type=int,
-            metavar="N",
-            help="number of hidden layers for the decoder (default: 2)",
-        )
-        parser.add_argument(
-            "--learning_rate",
-            type=float,
-            default=1e-3,
-            metavar="N",
-            help="learning rate for the optimizer (default: 1e-2)",
-        )
-
-        parser.add_argument(
-            "--reg_lambda",
-            default=0.0,
-            type=float,
-            metavar="N",
-            help="how much weight to apply to the regularization term. If `0` then no regularization will be applied. (default: 0.0)",
-        )
-
-        parser.add_argument(
-            "--reg_threshold",
-            default=1.0,
-            type=float,
-            metavar="N",
-            help="how many duplicates in the latent space are allowed before applying the penalty. (default: None)",
-        )
-
-        return parent_parser
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Uses the trained autoencoder to make inferences.
@@ -344,11 +269,26 @@ class ConcreteAutoencoder(pl.LightningModule):
         return loss
 
 
+@MODEL_REGISTRY
 class FCNDecoder(pl.LightningModule):
-    def __init__(self, input_size, output_size, n_layers=2, learning_rate=1e-3):
+    def __init__(
+        self,
+        input_size: int,
+        output_size: int,
+        hidden_layers: int = 2,
+        learning_rate: float = 1e-3,
+    ):
+        """Fully Connected Network decoder
+
+        Args:
+            input_size (int): input size of the network
+            output_size (int): output size of the network
+            hidden_layers (int, optional): number of hidden layers. Defaults to 2.
+            learning_rate (float, optional): learning rate. Defaults to 1e-3.
+        """
         super(FCNDecoder, self).__init__()
         self.learning_rate = learning_rate
-        self.decoder = Decoder(input_size, output_size, n_layers)
+        self.decoder = Decoder(input_size, output_size, hidden_layers)
 
     def forward(self, x):
         return self.decoder(x)
@@ -390,10 +330,25 @@ class FCNDecoder(pl.LightningModule):
         return loss
 
 
+@MODEL_REGISTRY
 class SphericalDecoder(pl.LightningModule):
     def __init__(
-        self, n_ti, n_te, n_shells=[5, 8, 16], L=[2, 2, 0], learning_rate=1e-3
+        self,
+        n_ti: int,
+        n_te: int,
+        n_shells: list[int] = [5, 8, 16],
+        L: list[int] = [2, 2, 0],
+        learning_rate: float = 1e-3,
     ) -> None:
+        """Spherical decoder based on: "A Spherical Convolutional Neural Network for White Matter Structure Imaging via dMRI" by Sedlar et al.
+
+        Args:
+            n_ti (int): number of unique TI values
+            n_te (int): number of unique TE valeus
+            n_shells (list[int], optional): number of b-value shells. List should be of size 3. Defaults to [5, 8, 16].
+            L (list[int], optional): degree of spherical harmonic. List should be of size 3. Defaults to [2, 2, 0].
+            learning_rate (float, optional): learning rate. Defaults to 1e-3.
+        """
         super(SphericalDecoder, self).__init__()
 
         self.learning_rate = learning_rate

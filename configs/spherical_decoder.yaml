@@ -21,17 +21,6 @@ model:
 data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
-    data_file: ./data/data.hdf5
-    batch_size: 256
-    subject_list_train:
-      - 11
-      - 12
-      - 13
-      - 14
-    subject_list_val:
-      - 15
-    in_memory: true
-    num_workers: 0
     include_features: ./data/latent_features.txt
     spherical_transform:
       class_path: autoencoder.datasets.SphericalTransformer

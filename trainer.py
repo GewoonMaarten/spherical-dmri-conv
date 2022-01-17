@@ -19,7 +19,8 @@ if __name__ == "__main__":
     DATAMODULE_REGISTRY.register_classes(
         autoencoder.datasets, pl.LightningDataModule, override=True
     )
-    cli = LightningCLI(run=False)
+
+    cli = LightningCLI(run=False, save_config_overwrite=True)
 
     experiment_name = cli.model.__class__.__name__
 
@@ -31,7 +32,8 @@ if __name__ == "__main__":
     mlflow.log_params(cli.config["model"]["init_args"])
     mlflow.log_params(cli.config["data"]["init_args"])
 
-    cli.trainer.fit(cli.model, cli.datamodule)
+    cli.trainer.fit(model=cli.model, datamodule=cli.datamodule)
+    cli.trainer.test(ckpt_path="best", datamodule=cli.datamodule)
 
     if experiment_name == "ConcreteAutoencoder":
         latent_features_file_path = "logs/latent_features.txt"

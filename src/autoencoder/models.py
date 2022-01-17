@@ -238,6 +238,32 @@ class ConcreteAutoencoder(pl.LightningModule):
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "val")
 
+    def test_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
+        data = batch["target"]
+        masks = batch["5tt"]
+
+        _, decoded = self.forward(data)
+
+        losses = dict()
+
+        for idx, tissue in {
+            0: "cortical_grey_matter",
+            1: "sub_cortical_grey_matter",
+            2: "white_matter",
+            3: "csf",
+            4: "pathological_tissue",
+        }.items():
+            loss = F.mse_loss(decoded[masks[:, idx]], data[masks[:, idx]])
+            name = f"test_{tissue}_loss"
+            self.log(name, loss)
+            losses[name] = loss
+
+        loss = F.mse_loss(decoded, data)
+        self.log("test_loss", loss)
+        losses["test_loss"] = loss
+
+        return losses
+
     def on_train_epoch_start(self) -> None:
         temp = self.encoder.update_temp(self.current_epoch, self.trainer.max_epochs)
         self.log("temp", temp, on_step=False, prog_bar=True)
@@ -305,6 +331,32 @@ class FCNDecoder(pl.LightningModule):
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "val")
+
+    def test_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
+        data = batch["target"]
+        masks = batch["5tt"]
+
+        _, decoded = self.forward(data)
+
+        losses = dict()
+
+        for idx, tissue in {
+            0: "cortical_grey_matter",
+            1: "sub_cortical_grey_matter",
+            2: "white_matter",
+            3: "csf",
+            4: "pathological_tissue",
+        }.items():
+            loss = F.mse_loss(decoded[masks[:, idx]], data[masks[:, idx]])
+            name = f"test_{tissue}_loss"
+            self.log(name, loss)
+            losses[name] = loss
+
+        loss = F.mse_loss(decoded, data)
+        self.log("test_loss", loss)
+        losses["test_loss"] = loss
+
+        return losses
 
     def _shared_eval(
         self, batch: torch.Tensor, batch_idx: int, prefix: str
@@ -378,6 +430,32 @@ class SphericalDecoder(pl.LightningModule):
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "val")
+
+    def test_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
+        data = batch["target"]
+        masks = batch["5tt"]
+
+        _, decoded = self.forward(data)
+
+        losses = dict()
+
+        for idx, tissue in {
+            0: "cortical_grey_matter",
+            1: "sub_cortical_grey_matter",
+            2: "white_matter",
+            3: "csf",
+            4: "pathological_tissue",
+        }.items():
+            loss = F.mse_loss(decoded[masks[:, idx]], data[masks[:, idx]])
+            name = f"test_{tissue}_loss"
+            self.log(name, loss)
+            losses[name] = loss
+
+        loss = F.mse_loss(decoded, data)
+        self.log("test_loss", loss)
+        losses["test_loss"] = loss
+
+        return losses
 
     def _shared_eval(
         self, batch: torch.Tensor, batch_idx: int, prefix: str

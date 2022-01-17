@@ -123,6 +123,7 @@ class MRIMemoryDataset(Dataset):
             (selection, *_) = np.where(np.isin(indexes, subject_list))
             self.target = archive.get("data")[selection]
             self.sample = copy.deepcopy(self.target)
+            self._5tt = archive.get("5tt")[selection]
 
         if include is not None:
             self.sample = self.sample[:, include]
@@ -133,6 +134,7 @@ class MRIMemoryDataset(Dataset):
 
         self.target = torch.from_numpy(self.target)
         self.sample = torch.from_numpy(self.sample)
+        self._5tt = torch.from_numpy(self._5tt).bool()
 
         if do_preload_in_gpu:
             self.target = self.target.to("cuda")
@@ -151,9 +153,14 @@ class MRIMemoryDataset(Dataset):
             return {
                 "target": self.target[index],
                 "sample": {k: v[index] for (k, v) in self.sample.items()},
+                "5tt": self._5tt[index],
             }
         else:
-            return {"target": self.target[index], "sample": self.sample[index]}
+            return {
+                "target": self.target[index],
+                "sample": self.sample[index],
+                "5tt": self._5tt[index],
+            }
 
     def __getstate__(self):
         """Return state values to be pickled."""
@@ -327,15 +334,14 @@ class MRIDataModule(pl.LightningDataModule):
 
         return DataLoader(self.val_set, **args)
 
-    # def test_dataloader(self) -> DataLoader:
-    #     if self.in_memory:
-    #         return DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
-    #     else:
-    #         return DataLoader(
-    #             self.train_set,
-    #             batch_size=self.batch_size,
-    #             shuffle=False,
-    #             num_workers=self.num_workers,
-    #             pin_memory=True,
-    #             persistent_workers=True,
-    #         )
+    def test_dataloader(self) -> DataLoader:
+        args = dict(
+            batch_size=self._batch_size,
+            shuffle=False,
+            pin_memory=False,
+            num_workers=0 if self._in_memory else self._num_workers,
+            persistent_workers=not self._in_memory,
+            drop_last=True,
+        )
+
+        return DataLoader(self.val_set, **args)

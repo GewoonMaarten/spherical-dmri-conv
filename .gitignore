@@ -6,6 +6,7 @@ lightning_logs
 logs
 mlruns
 runs
+*tmp*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

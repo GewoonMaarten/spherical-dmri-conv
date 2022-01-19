@@ -53,6 +53,9 @@ class DelimitTransformer(object):
             if scheme.shape[1] > 4:
                 filter_scheme = filter_scheme & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
 
+            if not np.any(filter_scheme):
+                continue
+
             data_filtered = data[:, filter_scheme]
             n_data_gradients = data_filtered.shape[1]
             new_data[
@@ -73,14 +76,21 @@ class SphericalTransformer(object):
         scheme = kwargs["scheme"]
 
         b_s = np.unique(scheme[:, 3])
-        ti_s = np.unique(scheme[:, 4])
-        te_s = np.unique(scheme[:, 5])
+        ti_s = list()
+        te_s = list()
 
-        ti_n = ti_s.shape[0]
-        te_n = te_s.shape[0]
         b_n = b_s.shape[0]
+        ti_n = 1
+        te_n = 1
 
         prev_b = b_s[0]
+
+        if scheme.shape[1] > 4:
+            ti_s = np.unique(scheme[:, 4])
+            te_s = np.unique(scheme[:, 5])
+
+            ti_n = ti_s.shape[0]
+            te_n = te_s.shape[0]
 
         # Fit the spherical harmonics on the gradients.
         y = sh_basis_real(torch.from_numpy(scheme[:, :3]), self._l_max).to(data.device)
@@ -105,7 +115,9 @@ class SphericalTransformer(object):
                 sh_coefficients_b_idx = {k: 0 for k in sh_coefficients_b_idx}
                 prev_b = b
 
-            filter_scheme = (scheme[:, 3] == b) & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
+            filter_scheme = scheme[:, 3] == b
+            if scheme.shape[1] > 4:
+                filter_scheme = filter_scheme & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
 
             if not np.any(filter_scheme):
                 continue

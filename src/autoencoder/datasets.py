@@ -1,7 +1,7 @@
 import copy
 import itertools
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import h5py
 import numpy as np
@@ -14,10 +14,56 @@ from autoencoder.logger import logger
 from autoencoder.spherical.harmonics import gram_schmidt_sh_inv, sh_basis_real
 
 
+class DelimitTransformer(object):
+    def __call__(self, **kwargs):
+        data = kwargs["data"]
+        scheme = kwargs["scheme"]
+
+        b0_filter = scheme[:, 3] != 0.0
+
+        scheme = scheme[b0_filter]
+        data = data[:, b0_filter]
+
+        b_s, b_counts = np.unique(scheme[:, 3], return_counts=True)
+        ti_s = list()
+        te_s = list()
+
+        b_n = b_s.shape[0]
+        ti_n = 1
+        te_n = 1
+
+        max_gradients = b_counts[0]
+
+        if scheme.shape[1] > 4:
+            ti_s = np.unique(scheme[:, 4])
+            te_s = np.unique(scheme[:, 5])
+            ti_n = ti_s.shape[0]
+            te_n = te_s.shape[0]
+
+            gradient_filter = (scheme[:, 4] == scheme[:, 4][0]) & (scheme[:, 5] == scheme[:, 5][0])
+            max_gradients = np.max([data[:, (scheme[:, 3] == b) & gradient_filter].shape[1] for b in b_s])
+
+        new_data = torch.zeros(data.shape[0], ti_n, te_n, b_n * max_gradients, 1, 1, 1)
+        for (ti_idx, ti), (te_idx, te), (b_idx, b) in itertools.product(
+            enumerate(ti_s),
+            enumerate(te_s),
+            enumerate(b_s),
+        ):
+            filter_scheme = scheme[:, 3] == b
+            if scheme.shape[1] > 4:
+                filter_scheme = filter_scheme & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
+
+            data_filtered = data[:, filter_scheme]
+            n_data_gradients = data_filtered.shape[1]
+            new_data[
+                :, ti_idx, te_idx, (b_idx * max_gradients) : (b_idx * max_gradients + n_data_gradients), 0, 0, 0
+            ] = data_filtered
+
+        return torch.flatten(new_data, start_dim=1, end_dim=3)
+
+
 class SphericalTransformer(object):
-    def __init__(
-        self, l_max: int = 0, symmetric: bool = True, inversion_n_iters: int = 1000
-    ) -> None:
+    def __init__(self, l_max: int = 0, symmetric: bool = True, inversion_n_iters: int = 1000) -> None:
         self._l_max = l_max
         self._symmetric = 2 if symmetric else 1
         self._inversion_n_iters = inversion_n_iters
@@ -26,9 +72,9 @@ class SphericalTransformer(object):
         data = kwargs["data"]
         scheme = kwargs["scheme"]
 
-        b_s = np.unique(scheme[:, 3])  # 5 unique values
-        ti_s = np.unique(scheme[:, 4])  # 28 unique values
-        te_s = np.unique(scheme[:, 5])  # 3 unique values
+        b_s = np.unique(scheme[:, 3])
+        ti_s = np.unique(scheme[:, 4])
+        te_s = np.unique(scheme[:, 5])
 
         ti_n = ti_s.shape[0]
         te_n = te_s.shape[0]
@@ -46,9 +92,7 @@ class SphericalTransformer(object):
         for l in range(0, self._l_max + 1, self._symmetric):
             o = 2 * l + 1
             sh_coefficients_b_idx[l] = 0
-            sh_coefficients[l] = torch.zeros(
-                (data.shape[0], ti_n, te_n, b_n, o), device=data.device
-            )
+            sh_coefficients[l] = torch.zeros((data.shape[0], ti_n, te_n, b_n, o), device=data.device)
             l_sizes[l] = o
 
         for (ti_idx, ti), (te_idx, te), b in itertools.product(
@@ -61,9 +105,7 @@ class SphericalTransformer(object):
                 sh_coefficients_b_idx = {k: 0 for k in sh_coefficients_b_idx}
                 prev_b = b
 
-            filter_scheme = (
-                (scheme[:, 3] == b) & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
-            )
+            filter_scheme = (scheme[:, 3] == b) & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
 
             if not np.any(filter_scheme):
                 continue
@@ -82,9 +124,9 @@ class SphericalTransformer(object):
             for l in range(0, l + 1, self._symmetric):
                 o = 2 * l + 1
 
-                sh_coefficients[l][
-                    :, ti_idx, te_idx, sh_coefficients_b_idx[l]
-                ] = sh_coefficient[:, torch.arange(s, s + o)]
+                sh_coefficients[l][:, ti_idx, te_idx, sh_coefficients_b_idx[l]] = sh_coefficient[
+                    :, torch.arange(s, s + o)
+                ]
 
                 s += o
                 sh_coefficients_b_idx[l] += 1
@@ -112,9 +154,7 @@ class MRIMemoryDataset(Dataset):
             do_preload_in_gpu (bool, optional): preload all data in GPU memory, instead of for each batch. Defaults to True.
         """
 
-        assert (
-            exclude is None or include is None
-        ), "Only specify include or exclude, not both."
+        assert exclude is None or include is None, "Only specify include or exclude, not both."
 
         with h5py.File(data_file_path, "r") as archive:
             scheme = archive.get("scheme")[()]
@@ -192,9 +232,7 @@ class MRIDataset(Dataset):
             exclude (list[int], optional): list of features to exclude from training. Cannot be used together with include. Defaults to None.
             include (list[int], optional): list of features to only include for training. Cannot be used together with exclude. Defaults to None.
         """
-        assert (
-            exclude is None or include is None
-        ), "Only specify include or exclude, not both."
+        assert exclude is None or include is None, "Only specify include or exclude, not both."
 
         logger.warning(
             "MRIDataset is very slow compared to MRIMemoryDataset, only use MRIDataset if you don't have enough memory. "
@@ -259,7 +297,7 @@ class MRIDataModule(pl.LightningDataModule):
         include_features: str = None,
         in_memory: bool = False,
         num_workers: int = 0,
-        spherical_transform: SphericalTransformer = None,
+        spherical_transform: Union[SphericalTransformer, DelimitTransformer] = None,
     ):
         """Collection of train and validation data sets.
 
@@ -285,9 +323,7 @@ class MRIDataModule(pl.LightningDataModule):
         self._spherical_transform = spherical_transform
 
         if exclude_features is not None and include_features is not None:
-            raise Exception(
-                "both exclude_features and include_features, only specify one"
-            )
+            raise Exception("both exclude_features and include_features, only specify one")
 
         self._exclude_features = None
         self._include_features = None

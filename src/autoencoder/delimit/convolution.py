@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from autoencoder.delimit.transform import SH2Signal, Signal2SH
 from autoencoder.delimit.utils import sph2cart
+from autoencoder.logger import logger
 from pyquaternion import Quaternion
 
 
@@ -63,7 +64,7 @@ class LocalSphericalConvolution(nn.Module):
             bvec_mat[bvec_mat > 0.999] = 0
             angular_distance = np.mean(np.min(np.arccos(bvec_mat), axis=1))
             self.angular_distance = angular_distance
-            print("Setting angular distance to: " + str(angular_distance / np.pi * 180))
+            logger.warning("Setting angular distance to: %s", str(angular_distance / np.pi * 180))
         else:
             self.angular_distance = angular_distance
 

@@ -289,8 +289,13 @@ class ConcreteAutoencoder(pl.LightningModule):
 
 
 class BaseDecoder(pl.LightningModule):
+    def __init__(self, learning_rate, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self._learning_rate = learning_rate
+
     def configure_optimizers(self) -> torch.optim.Adam:
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self._learning_rate)
         return optimizer
 
     def training_step(
@@ -372,8 +377,8 @@ class FCNDecoder(BaseDecoder):
             hidden_layers (int, optional): number of hidden layers. Defaults to 2.
             learning_rate (float, optional): learning rate. Defaults to 1e-3.
         """
-        super(FCNDecoder, self).__init__()
-        self.learning_rate = learning_rate
+        super(FCNDecoder, self).__init__(learning_rate)
+
         self.decoder = Decoder(input_size, output_size, hidden_layers)
 
     def forward(self, x):
@@ -387,83 +392,116 @@ class SphericalDecoder(BaseDecoder):
         n_ti: int,
         n_te: int,
         linear_layer_input_size: int,
-        n_shells: list[int] = [5, 8, 16],
-        L: list[int] = [2, 2, 0],
+        linear_layer_output_size: int,
+        n_shells: list[int],
+        L: list[int],
         learning_rate: float = 1e-3,
     ) -> None:
         """Spherical decoder based on: "A Spherical Convolutional Neural Network for White Matter Structure Imaging via dMRI" by Sedlar et al.
 
+        paper: https://rdcu.be/cFiOY
+
         Args:
-            n_ti (int): number of unique TI values
-            n_te (int): number of unique TE values
-            linear_layer_input_size (int): size of the input of the first linear layer.
-            n_shells (list[int], optional): number of b-value shells. List should be of size 3. Defaults to [5, 8, 16].
-            L (list[int], optional): degree of spherical harmonic. List should be of size 3. Defaults to [2, 2, 0].
+            n_ti (int): number of unique TI values.
+            n_te (int): number of unique TE values.
+            linear_layer_input_size (int): size of the input for the linear layer.
+            linear_layer_output_size (int): size of the output for the linear layer.
+            n_shells (list[int]): number of b-value shells. List size determines number of convolutions. List size
+                                  should be the same as L.
+            L (list[int]): degree of spherical harmonic. List size determines number of convolutions. List size should
+                           be the same as n_shells.
             learning_rate (float, optional): learning rate. Defaults to 1e-3.
         """
-        super(SphericalDecoder, self).__init__()
+        super(SphericalDecoder, self).__init__(learning_rate)
 
-        self.learning_rate = learning_rate
-        self.spherical = torch.nn.Sequential(
-            S2Convolution(n_ti, n_te, L[0], n_shells[0], n_shells[1]),
-            QuadraticNonLinearity(L[0], L[1]),
-            SO3Convolution(n_ti, n_te, L[1], n_shells[1], n_shells[2]),
-            QuadraticNonLinearity(L[1], L[2]),
+        self._n_ti = n_ti
+        self._n_te = n_te
+        self._linear_layer_input_size = linear_layer_input_size
+        self._linear_layer_output_size = linear_layer_output_size
+        self._n_shells = n_shells
+        self._L = L
+
+        sh_layers = list()
+        sh_layers.append(
+            "s2_conv",
+            S2Convolution(
+                self._n_ti,
+                self._n_te,
+                self._L[0],
+                self._n_shells[0],
+                self._n_shells[1],
+            ),
         )
-        self.linear = torch.nn.Linear(linear_layer_input_size, 1344)
+        sh_layers.append("quadratic_1", QuadraticNonLinearity(self._L[0], self._L[1]))
+        for i in range(2, len(n_shells)):
+            sh_layers.append(
+                f"so3_conv_{i-1}",
+                S2Convolution(
+                    self._n_ti,
+                    self._n_te,
+                    self._L[i - 1],
+                    self._n_shells[i - 1],
+                    self._n_shells[i],
+                ),
+            )
+            sh_layers.append(f"quadratic_{i}", QuadraticNonLinearity(self._L[i - 1], self._L[i]))
+
+        self.sh_layers = torch.nn.Sequential(OrderedDict(sh_layers))
+        self.linear = torch.nn.Linear(self._linear_layer_input_size, self._linear_layer_output_size)
 
     def forward(self, x: dict[int, torch.Tensor]) -> torch.Tensor:
-        _, features = self.spherical(x)
-        return self.linear(features)
+        _, x = self.sh_layers(x)
+        x = self.linear(x)
+        return x
 
 
 @MODEL_REGISTRY
 class DelimitDecoder(BaseDecoder):
     def __init__(
         self,
+        linear_layer_input_size: int,
+        linear_layer_output_size: int,
         gradients: list[float],
-        linear_input_size: int,
-        linear_output_size: int,
         n_shells: list[int],
         L: list[int],
         kernel_sizes: list[int] = [5, 5],
-        learning_rate: float = 1e-3,
         lb_lambda: float = 0.006,
         angular_distance: float = 0,
+        learning_rate: float = 1e-3,
     ) -> None:
-        """Decoder based on DELIMIT (https://arxiv.org/pdf/1808.01517v1.pdf).
+        """Decoder based on DELIMIT ("DELIMIT PyTorch - An extension for Deep Learning in Diffusion Imaging" by Koppers and Merhof).
+
+        Paper: https://arxiv.org/pdf/1808.01517v1.pdf
 
         The decoder consists of a signal to SH transform, one or multiple local spherical convolutions, sh to signal
         transform, and a linear layer.
 
         Args:
+            linear_layer_input_size (int): size of the input for the linear layer.
+            linear_layer_output_size (int): size of the output for the linear layer.
             gradients (list[float]): gradient directions, shape: (N, 3).
-            linear_input_size (int): size of the input for the linear layer.
-            linear_output_size (int): size of the output for the linear layer.
             n_shells (list[int]): number of b-value shells. List size should be the same as L.
             L (list[int]): degree of spherical harmonic. List size should be the same as n_shells.
             kernel_sizes (list[int], optional): list of number of sampled points around each sampled gradient point.
                                                 Each entry defines a new angular circle around the gradient.
-            learning_rate (float, optional): learning_rate.
             lb_lambda (float, optional): laplace beltrami regularization during SH fit.
             angular_distance (float, optional): defines the angle between the origin and every other point within the
                                                 kernel. If 0 then an angle will be calculated based on the provided
-                                                gradients
+                                                gradients.
+            learning_rate (float, optional): learning_rate.
         """
-        super(DelimitDecoder, self).__init__()
+        super(DelimitDecoder, self).__init__(learning_rate)
 
         self._gradients = gradients
         self._kernel_sizes = kernel_sizes
-        self._linear_input_size = linear_input_size
-        self._linear_output_size = linear_output_size
+        self._linear_layer_input_size = linear_layer_input_size
+        self._linear_layer_output_size = linear_layer_output_size
         self._n_shells = n_shells
         self._L = L
-        self._learning_rate = learning_rate
         self._lb_lambda = lb_lambda
         self._angular_distance = angular_distance
 
         sh_layers = list()
-
         sh_layers.append(("signal2sh", Signal2SH(gradients=gradients, sh_order=self._L[0], lb_lambda=self._lb_lambda)))
         for i in range(1, len(self._n_shells)):
             sh_layers.append(
@@ -482,7 +520,7 @@ class DelimitDecoder(BaseDecoder):
         sh_layers.append(("sh2signal", SH2Signal(sh_order=self._L[-1], gradients=self._gradients)))
 
         self.sh_layers = torch.nn.Sequential(OrderedDict(sh_layers))
-        self.linear = torch.nn.Linear(self._linear_input_size, self._linear_output_size)
+        self.linear = torch.nn.Linear(self._linear_layer_input_size, self._linear_layer_output_size)
 
     def forward(self, x: torch.Tensor):
         x = self.sh_layers(x)

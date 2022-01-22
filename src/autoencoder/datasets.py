@@ -1,14 +1,15 @@
 import copy
 import itertools
+import math
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import h5py
 import numpy as np
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities.cli import DATAMODULE_REGISTRY
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, IterableDataset, ChainDataset
 
 from autoencoder.logger import logger
 from autoencoder.spherical.harmonics import gram_schmidt_sh_inv, sh_basis_real
@@ -22,7 +23,7 @@ class DelimitTransformer(object):
         b0_filter = scheme[:, 3] != 0.0
 
         scheme = scheme[b0_filter]
-        data = data[:, b0_filter]
+        data = data[b0_filter]
 
         b_s, b_counts = np.unique(scheme[:, 3], return_counts=True)
         ti_s = list()
@@ -41,13 +42,11 @@ class DelimitTransformer(object):
             te_n = te_s.shape[0]
 
             gradient_filter = (scheme[:, 4] == scheme[:, 4][0]) & (scheme[:, 5] == scheme[:, 5][0])
-            max_gradients = np.max([data[:, (scheme[:, 3] == b) & gradient_filter].shape[1] for b in b_s])
+            max_gradients = np.max([data[(scheme[:, 3] == b) & gradient_filter].shape[0] for b in b_s])
 
-        new_data = torch.zeros(data.shape[0], ti_n, te_n, b_n * max_gradients, 1, 1, 1)
+        new_data = torch.zeros(ti_n, te_n, b_n * max_gradients, 1, 1, 1)
         for (ti_idx, ti), (te_idx, te), (b_idx, b) in itertools.product(
-            enumerate(ti_s),
-            enumerate(te_s),
-            enumerate(b_s),
+            enumerate(ti_s), enumerate(te_s), enumerate(b_s),
         ):
             filter_scheme = scheme[:, 3] == b
             if scheme.shape[1] > 4:
@@ -56,10 +55,10 @@ class DelimitTransformer(object):
             if not np.any(filter_scheme):
                 continue
 
-            data_filtered = data[:, filter_scheme]
-            n_data_gradients = data_filtered.shape[1]
+            data_filtered = torch.from_numpy(data[filter_scheme])
+            n_data_gradients = data_filtered.shape[0]
             new_data[
-                :, ti_idx, te_idx, (b_idx * max_gradients) : (b_idx * max_gradients + n_data_gradients), 0, 0, 0
+                ti_idx, te_idx, (b_idx * max_gradients) : (b_idx * max_gradients + n_data_gradients), 0, 0, 0
             ] = data_filtered
 
         return torch.flatten(new_data, start_dim=1, end_dim=3)
@@ -105,11 +104,7 @@ class SphericalTransformer(object):
             sh_coefficients[l] = torch.zeros((data.shape[0], ti_n, te_n, b_n, o), device=data.device)
             l_sizes[l] = o
 
-        for (ti_idx, ti), (te_idx, te), b in itertools.product(
-            enumerate(ti_s),
-            enumerate(te_s),
-            b_s,
-        ):
+        for (ti_idx, ti), (te_idx, te), b in itertools.product(enumerate(ti_s), enumerate(te_s), b_s,):
             # If we've visited all b values, we reset the counter
             if prev_b == b:
                 sh_coefficients_b_idx = {k: 0 for k in sh_coefficients_b_idx}
@@ -146,147 +141,151 @@ class SphericalTransformer(object):
         return sh_coefficients
 
 
-class MRIMemoryDataset(Dataset):
+class DiffusionMRIDataset(IterableDataset):
+    tissues = ("cgm", "scgm", "wm", "csf", "pt")
+
     def __init__(
         self,
-        data_file_path: Path,
-        subject_list: list[int],
-        exclude: Optional[list[int]] = None,
-        include: Optional[list[int]] = None,
-        do_preload_in_gpu: bool = False,
-        transform=None,
-    ):
-        """Create a dataset from the selected subjects in the subject list
+        parameters_file_path: Path,
+        data_file_paths: List[Path],
+        tissue: str,
+        include_parameters: List[int] = None,
+        exclude_parameters: List[int] = None,
+        batch_size: int = 0,
+        return_target: bool = False,
+        transform: Union[SphericalTransformer, DelimitTransformer] = None,
+    ) -> None:
+        """Diffusion MRI dataset. Loads voxel data from HDF5 file fast.
 
         Args:
-            data_file_path (Path): Data h5 file path.
-            subject_list (np.ndarray): ist of all the subjects to include.
-            exclude (list[int], optional): list of features to exclude from training. Cannot be used together with include. Defaults to None.
-            include (list[int], optional): list of features to only include for training. Cannot be used together with exclude. Defaults to None.
-            do_preload_in_gpu (bool, optional): preload all data in GPU memory, instead of for each batch. Defaults to True.
+            parameters_file_path (Path): HDF5 file path that contains all parameters from the MRI data
+            data_file_paths (List[Path]): list of HDF5 file paths containing voxel data
+            tissue (str): The tissue to return. Can be the following values: `cgm`, `scgm`, `wm`, `csf`, and `pt`.
+                where:
+                    - `cgm`  = Cortical Grey Matter
+                    - `scgm` = Sub-Cortical Grey Matter
+                    - `wm`   = White Matter
+                    - `pt`   = Pathological Tissue
+                These tissue types should be created beforehand with MRTrix3 `5ttgen` tool.
+            include_parameters (List[int], optional): parameters to *only* include in the dataset. Defaults to None.
+            exclude_parameters (List[int], optional): parameters to exclude from the dataset. Defaults to None.
+            batch_size (int, optional): batch size. Defaults to 0.
+            return_target (bool, optional): return target data with all parameters included. Useful for loss calculation 
+                when recreating the dataset from a subset of parameters. Defaults to False.
+            transform (Union[SphericalTransformer, DelimitTransformer], optional): Used to transform the data for models 
+                that require different data. Defaults to None.
         """
+        super(DiffusionMRIDataset).__init__()
 
-        assert exclude is None or include is None, "Only specify include or exclude, not both."
+        assert tissue in self.tissues, f"Unknown tissue value: {tissue}"
+        assert include_parameters is None or exclude_parameters is None, "Only specify include or exclude, not both."
 
-        with h5py.File(data_file_path, "r") as archive:
-            scheme = archive.get("scheme")[()]
-            indexes = archive.get("index")[()]
-            # indexes of the data we want to load
-            (selection, *_) = np.where(np.isin(indexes, subject_list))
-            self.target = archive.get("data")[selection]
-            self.sample = copy.deepcopy(self.target)
-            self._5tt = archive.get("5tt")[selection]
-            self.unnormalize_data = archive.get("unnormalize_data")[selection]
-
-        if include is not None:
-            self.sample = self.sample[:, include]
-            scheme = scheme[include]
-        elif exclude is not None:
-            self.sample = np.delete(self.sample, exclude)
-            scheme = np.delete(scheme, exclude)
-
-        self.target = torch.from_numpy(self.target)
-        self.sample = torch.from_numpy(self.sample)
-        self._5tt = torch.from_numpy(self._5tt).bool()
-        self.unnormalize_data = torch.from_numpy(self.unnormalize_data)
-
-        if do_preload_in_gpu:
-            self.target = self.target.to("cuda")
-            self.sample = self.sample.to("cuda")
-
-        if transform:
-            self.sample = transform(data=self.sample, scheme=scheme)
-
-    def __len__(self):
-        """Denotes the total number of samples"""
-        return len(self.target)
-
-    def __getitem__(self, index):
-        """Generates one sample of data"""
-        if isinstance(self.sample, dict):
-            return {
-                "target": self.target[index],
-                "sample": {k: v[index] for (k, v) in self.sample.items()},
-                "5tt": self._5tt[index],
-                "unnormalize_data": self.unnormalize_data[index],
-            }
-        else:
-            return {
-                "target": self.target[index],
-                "sample": self.sample[index],
-                "5tt": self._5tt[index],
-                "unnormalize_data": self.unnormalize_data[index],
-            }
-
-    def __getstate__(self):
-        """Return state values to be pickled."""
-        return None
-
-    def __setstate__(self, state):
-        """Restore state from the unpickled state values."""
-        pass
-
-
-class MRIDataset(Dataset):
-    def __init__(
-        self,
-        data_file_path: Path,
-        subject_list: list[int],
-        exclude: Optional[list[int]] = None,
-        include: Optional[list[int]] = None,
-        transform=None,
-    ):
-        """Create a dataset from the selected subjects in the subject list
-
-        Args:
-            data_file_path (Path): Data h5 file path.
-            subject_list (np.ndarray): ist of all the subjects to include.
-            exclude (list[int], optional): list of features to exclude from training. Cannot be used together with include. Defaults to None.
-            include (list[int], optional): list of features to only include for training. Cannot be used together with exclude. Defaults to None.
-        """
-        assert exclude is None or include is None, "Only specify include or exclude, not both."
-
-        logger.warning(
-            "MRIDataset is very slow compared to MRIMemoryDataset, only use MRIDataset if you don't have enough memory. "
-            + "You can enable the use of MRIMemoryDataset by setting --in_memory in the console"
-        )
-
-        self._exclude = exclude
-        self._include = include
-        self._data_file_path = data_file_path
+        self._parameters_file_path = parameters_file_path
+        self._data_file_paths = data_file_paths
+        self._tissue = tissue
+        self._include_parameters = include_parameters
+        self._exclude_parameters = exclude_parameters
+        self._batch_size = batch_size
+        self._return_target = return_target
         self._transform = transform
 
-        with h5py.File(self.data_file_path, "r") as archive:
-            self._scheme = archive.get("scheme")[()]
-            indexes = archive.get("index")[()]
+        with h5py.File(self._parameters_file_path, "r", libver="latest") as archive:
+            self._parameters = archive["parameters"][...]
 
-        # indexes of the data we want to load
-        (self.selection, *_) = np.where(np.isin(indexes, subject_list))
+        self._selected_parameters = np.arange(self._parameters.shape[0])
+        if self._include_parameters is not None:
+            self._selected_parameters = self._selected_parameters[self._include_parameters]
+        elif self._exclude_parameters is not None:
+            self._selected_parameters = np.delete(self._selected_parameters, self._exclude_parameters)
+
+        self._metadata = list()  # stores metadata for each file
+
+        self._total_batches = 0
+        for p in self._data_file_paths:
+            with h5py.File(p, "r", libver="latest") as archive:
+                num_batches = self._dataset_size(archive, self._tissue)
+                self._total_batches += num_batches
+                self._metadata.append(
+                    (
+                        self._total_batches,
+                        {
+                            "max_data": archive.attrs["max_data"],
+                            "lstq_coefficient": archive.attrs["lstsq_coefficient"],
+                            "id": archive.attrs["id"],
+                        },
+                    )
+                )
+
+    def get_metadata(self, batch_id: int):
+        for batch_range, metadata in self._metadata:
+            if batch_id <= batch_range:
+                return metadata
+
+    def _dataset_size(self, archive: h5py.File, tissue: str) -> int:
+        num_batches = 0
+        dim = archive[tissue].shape[0]
+        if self._batch_size > 0:
+            num_batches += dim // self._batch_size
+            num_batches += 1 if dim % self._batch_size > 0 else 0
+        else:
+            num_batches += dim
+        return num_batches
+
+    def _iter_tissue(self, archive: h5py.File, tissue: str):
+        dim = archive[tissue].shape[0]
+
+        if self._batch_size > 0:
+            num_batches = dim // self._batch_size
+            num_batches += 1 if dim % self._batch_size > 0 else 0
+            for i in range(num_batches):
+                batch_start = self._batch_size * i
+                batch_end = min(batch_start + self._batch_size, dim)
+                batch = archive[tissue][batch_start:batch_end]
+                sample = batch[:, self._selected_parameters]
+
+                if self._transform is not None:
+                    sample = self._transform(data=sample)
+
+                yield {
+                    "sample": sample,
+                    "target": batch if self._return_target else None,
+                }
+        else:
+            for i in range(dim):
+                item = archive[tissue][i]
+                sample = item[None, self._selected_parameters]
+
+                if self._transform is not None:
+                    sample = self._transform(data=sample)
+
+                yield {
+                    "sample": sample,
+                    "target": item[None, :] if self._return_target else None,
+                }
+
+    def _configure_worker(self, worker_info):
+        if worker_info is not None:
+            per_worker = math.ceil(len(self._file_paths) / worker_info.num_workers)
+            worker_id = worker_info.id
+
+            work_start = worker_id * per_worker
+            work_end = min(work_start + per_worker, len(self._file_paths))
+
+            self._file_paths = self._file_paths[work_start:work_end]
 
     def __len__(self):
-        """Denotes the total number of samples"""
-        return len(self.selection)
+        return self._total_batches
 
-    def __getitem__(self, index):
-        """Generates one sample of data"""
-        with h5py.File(self.data_file_path, "r") as archive:
-            data = archive.get("data")[self.selection[index]]
+    def __iter__(self):
+        worker_info = torch.utils.data.get_worker_info()
+        self._configure_worker(worker_info)
 
-        if self._include is not None:
-            data = data[self._include]
-        elif self._exclude is not None:
-            data = np.delete(data, self._exclude)
+        iters = list()
+        for p in self._data_file_paths:
+            archive = h5py.File(p, "r", libver="latest")
+            iters.append(self._iter_tissue(archive, self._tissue))
 
-        if self._transform:
-            self.sample = self._transform(data=self.sample, scheme=self._scheme)
-
-        if isinstance(self.sample, dict):
-            return {
-                "target": data,
-                "sample": {k: v[index] for (k, v) in self.sample.items()},
-            }
-        else:
-            return {"target": data, "sample": self.sample[index]}
+        return itertools.chain.from_iterable(iters)
 
     def __getstate__(self):
         """Return state values to be pickled."""
@@ -301,99 +300,86 @@ class MRIDataset(Dataset):
 class MRIDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        data_file: str,
-        batch_size: int = 256,
-        subject_list_train: list[int] = [11, 12, 13, 14],
-        subject_list_val: list[int] = [15],
-        exclude_features: str = None,
-        include_features: str = None,
-        in_memory: bool = False,
+        parameters_file_path: str,
+        data_file_paths: List[str],
+        include_parameters: List[int] = None,
+        exclude_parameters: List[int] = None,
+        return_target: bool = False,
+        transform: Union[SphericalTransformer, DelimitTransformer] = None,
+        batch_size: int = 0,
         num_workers: int = 0,
-        spherical_transform: Union[SphericalTransformer, DelimitTransformer] = None,
     ):
-        """Collection of train and validation data sets.
-
-        Args:
-            data_file_name (str): file path of the H5 file
-            batch_size (int, optional): training batch size
-            subject_list_train (list[int], optional): subjects to include in training
-            subject_list_val (list[int], optional): subject(s) to include in validation
-            exclude_features (str, optional): path to file with features to exclude from training
-            include_features (str, optional): path to file with features to include from training, will only use those features
-            in_memory (bool, optional): Whether to load the entire dataset in memory
-            num_workers (bool, optional): Amount of threads to use when loading data from disk
-            spherical_transform (SphericalTransformer, optional): SphericalTransformer used to transform the data for the spherical convolutions
-        """
         super(MRIDataModule, self).__init__()
 
-        self._data_file = Path(data_file)
+        self._parameters_file_path = Path(parameters_file_path)
+        self._data_file_paths = [Path(p) for p in data_file_paths]
         self._batch_size = batch_size
-        self._subject_list_train = np.array(subject_list_train)
-        self._subject_list_val = np.array(subject_list_val)
-        self._in_memory = in_memory
+        self._include_parameters = include_parameters
+        self._exclude_parameters = exclude_parameters
+        self._return_target = return_target
         self._num_workers = num_workers
-        self._spherical_transform = spherical_transform
+        self._transform = transform
 
-        if exclude_features is not None and include_features is not None:
-            raise Exception("both exclude_features and include_features, only specify one")
-
-        self._exclude_features = None
-        self._include_features = None
-        if exclude_features is not None:
-            self._exclude_features = np.loadtxt(exclude_features, dtype=np.int32)
-        elif include_features is not None:
-            self._include_features = np.loadtxt(include_features, dtype=np.int32)
+        self._data_loader_args = dict(
+            batch_size=None,
+            batch_sampler=None,
+            num_workers=self._num_workers,
+            persistent_workers=True if self._num_workers > 0 else False,
+            pin_memory=True,
+        )
 
     def setup(self, stage: Optional[str]) -> None:
-        DatasetClass = MRIMemoryDataset if self._in_memory else MRIDataset
+        common_args = dict(
+            include_parameters=self._include_parameters,
+            exclude_parameters=self._exclude_parameters,
+            batch_size=self._batch_size,
+            return_target=self._return_target,
+            transform=self._transform,
+        )
 
-        self.train_set = DatasetClass(
-            self._data_file,
-            self._subject_list_train,
-            self._exclude_features,
-            self._include_features,
-            transform=self._spherical_transform,
-        )
-        self.val_set = DatasetClass(
-            self._data_file,
-            self._subject_list_val,
-            self._exclude_features,
-            self._include_features,
-            transform=self._spherical_transform,
-        )
+        # Train on the whole brain
+        if stage == "fit" or stage is None:
+            self.train_dataset = ChainDataset(
+                [
+                    DiffusionMRIDataset(self._parameters_file_path, self._data_file_paths[:-1], tissue, **common_args)
+                    for tissue in ("csf", "cgm", "scgm", "wm", "pt")
+                ]
+            )
+            self.val_dataset = ChainDataset(
+                [
+                    DiffusionMRIDataset(self._parameters_file_path, self._data_file_paths[-1], tissue, **common_args)
+                    for tissue in ("csf", "cgm", "scgm", "wm", "pt")
+                ]
+            )
+        # Test on individual tissues
+        if stage == "test" or stage is None:
+            self.test_dataset_csf = DiffusionMRIDataset(
+                self._parameters_file_path, self._data_file_paths[-1], "csf", **common_args
+            )
+            self.test_dataset_cgm = DiffusionMRIDataset(
+                self._parameters_file_path, self._data_file_paths[-1], "cgm", **common_args
+            )
+            self.test_dataset_scgm = DiffusionMRIDataset(
+                self._parameters_file_path, self._data_file_paths[-1], "scgm", **common_args
+            )
+            self.test_dataset_wm = DiffusionMRIDataset(
+                self._parameters_file_path, self._data_file_paths[-1], "wm", **common_args
+            )
+            self.test_dataset_pt = DiffusionMRIDataset(
+                self._parameters_file_path, self._data_file_paths[-1], "pt", **common_args
+            )
 
     def train_dataloader(self) -> DataLoader:
-        args = dict(
-            batch_size=self._batch_size,
-            shuffle=True,
-            pin_memory=False,
-            num_workers=0 if self._in_memory else self._num_workers,
-            persistent_workers=not self._in_memory,
-            drop_last=True,
-        )
-
-        return DataLoader(self.train_set, **args)
+        return DataLoader(self.train_dataset, **self._data_loader_args)
 
     def val_dataloader(self) -> DataLoader:
-        args = dict(
-            batch_size=self._batch_size,
-            shuffle=False,
-            pin_memory=False,
-            num_workers=0 if self._in_memory else self._num_workers,
-            persistent_workers=not self._in_memory,
-            drop_last=True,
-        )
-
-        return DataLoader(self.val_set, **args)
+        return DataLoader(self.val_dataset, **self._data_loader_args)
 
     def test_dataloader(self) -> DataLoader:
-        args = dict(
-            batch_size=self._batch_size,
-            shuffle=False,
-            pin_memory=False,
-            num_workers=0 if self._in_memory else self._num_workers,
-            persistent_workers=not self._in_memory,
-            drop_last=True,
-        )
-
-        return DataLoader(self.val_set, **args)
+        return {
+            "csf": DataLoader(self.test_dataset_csf, **self._data_loader_args),
+            "cgm": DataLoader(self.test_dataset_cgm, **self._data_loader_args),
+            "scgm": DataLoader(self.test_dataset_scgm, **self._data_loader_args),
+            "wm": DataLoader(self.test_dataset_wm, **self._data_loader_args),
+            "pt": DataLoader(self.test_dataset_pt, **self._data_loader_args),
+        }

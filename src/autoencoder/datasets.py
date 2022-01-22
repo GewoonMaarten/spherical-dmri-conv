@@ -9,7 +9,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities.cli import DATAMODULE_REGISTRY
-from torch.utils.data import DataLoader, IterableDataset, ChainDataset
+from torch.utils.data import ChainDataset, DataLoader, IterableDataset
 
 from autoencoder.logger import logger
 from autoencoder.spherical.harmonics import gram_schmidt_sh_inv, sh_basis_real
@@ -203,8 +203,7 @@ class DiffusionMRIDataset(IterableDataset):
         self._total_batches = 0
         for p in self._data_file_paths:
             with h5py.File(p, "r", libver="latest") as archive:
-                num_batches = self._dataset_size(archive, self._tissue)
-                self._total_batches += num_batches
+                self._total_batches += self._dataset_size(archive, self._tissue)
                 self._metadata.append(
                     (
                         self._total_batches,
@@ -221,14 +220,17 @@ class DiffusionMRIDataset(IterableDataset):
             if batch_id <= batch_range:
                 return metadata
 
+        # TODO: it should never reach here, but sometimes it does. The self._total_batches is not quite right.
+        return self._metadata[-1][1]
+
     def _dataset_size(self, archive: h5py.File, tissue: str) -> int:
-        num_batches = 0
         dim = archive[tissue].shape[0]
+        num_batches = dim
+
         if self._batch_size > 0:
-            num_batches += dim // self._batch_size
+            num_batches = dim // self._batch_size
             num_batches += 1 if dim % self._batch_size > 0 else 0
-        else:
-            num_batches += dim
+
         return num_batches
 
     def _iter_tissue(self, archive: h5py.File, tissue: str):
@@ -302,8 +304,8 @@ class MRIDataModule(pl.LightningDataModule):
         self,
         parameters_file_path: str,
         data_file_paths: List[str],
-        include_parameters: List[int] = None,
-        exclude_parameters: List[int] = None,
+        include_parameters: str = None,
+        exclude_parameters: str = None,
         return_target: bool = False,
         transform: Union[SphericalTransformer, DelimitTransformer] = None,
         batch_size: int = 0,
@@ -319,6 +321,11 @@ class MRIDataModule(pl.LightningDataModule):
         self._return_target = return_target
         self._num_workers = num_workers
         self._transform = transform
+
+        if self._exclude_parameters is not None:
+            self._exclude_parameters = np.loadtxt(self._exclude_parameters, dtype=np.int32)
+        elif self._include_parameters is not None:
+            self._include_parameters = np.loadtxt(self._include_parameters, dtype=np.int32)
 
         self._data_loader_args = dict(
             batch_size=None,
@@ -347,26 +354,23 @@ class MRIDataModule(pl.LightningDataModule):
             )
             self.val_dataset = ChainDataset(
                 [
-                    DiffusionMRIDataset(self._parameters_file_path, self._data_file_paths[-1], tissue, **common_args)
+                    DiffusionMRIDataset(self._parameters_file_path, self._data_file_paths[-1:], tissue, **common_args)
                     for tissue in ("csf", "cgm", "scgm", "wm", "pt")
                 ]
             )
         # Test on individual tissues
         if stage == "test" or stage is None:
             self.test_dataset_csf = DiffusionMRIDataset(
-                self._parameters_file_path, self._data_file_paths[-1], "csf", **common_args
+                self._parameters_file_path, self._data_file_paths[-1:], "csf", **common_args
             )
             self.test_dataset_cgm = DiffusionMRIDataset(
-                self._parameters_file_path, self._data_file_paths[-1], "cgm", **common_args
+                self._parameters_file_path, self._data_file_paths[-1:], "cgm", **common_args
             )
             self.test_dataset_scgm = DiffusionMRIDataset(
-                self._parameters_file_path, self._data_file_paths[-1], "scgm", **common_args
+                self._parameters_file_path, self._data_file_paths[-1:], "scgm", **common_args
             )
             self.test_dataset_wm = DiffusionMRIDataset(
-                self._parameters_file_path, self._data_file_paths[-1], "wm", **common_args
-            )
-            self.test_dataset_pt = DiffusionMRIDataset(
-                self._parameters_file_path, self._data_file_paths[-1], "pt", **common_args
+                self._parameters_file_path, self._data_file_paths[-1:], "wm", **common_args
             )
 
     def train_dataloader(self) -> DataLoader:
@@ -376,10 +380,10 @@ class MRIDataModule(pl.LightningDataModule):
         return DataLoader(self.val_dataset, **self._data_loader_args)
 
     def test_dataloader(self) -> DataLoader:
-        return {
-            "csf": DataLoader(self.test_dataset_csf, **self._data_loader_args),
-            "cgm": DataLoader(self.test_dataset_cgm, **self._data_loader_args),
-            "scgm": DataLoader(self.test_dataset_scgm, **self._data_loader_args),
-            "wm": DataLoader(self.test_dataset_wm, **self._data_loader_args),
-            "pt": DataLoader(self.test_dataset_pt, **self._data_loader_args),
-        }
+        return [
+            DataLoader(self.test_dataset_csf, **self._data_loader_args),
+            DataLoader(self.test_dataset_scgm, **self._data_loader_args),
+            DataLoader(self.test_dataset_cgm, **self._data_loader_args),
+            DataLoader(self.test_dataset_wm, **self._data_loader_args),
+            DataLoader(self.val_dataset, **self._data_loader_args),
+        ]

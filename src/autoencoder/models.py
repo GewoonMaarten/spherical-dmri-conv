@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pytorch_lightning as pl
@@ -104,13 +105,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(
-        self,
-        input_size: int,
-        output_size: int,
-        n_hidden_layers: int,
-        negative_slope: float = 0.2,
-    ) -> None:
+    def __init__(self, input_size: int, output_size: int, n_hidden_layers: int, negative_slope: float = 0.2,) -> None:
         """Standard decoder. It generates a network from `input_size` to `output_size`. The layers are generates as
         follows:
         ```python
@@ -190,19 +185,13 @@ class ConcreteAutoencoder(pl.LightningModule):
         super(ConcreteAutoencoder, self).__init__()
         self.save_hyperparameters()
 
-        self.encoder = Encoder(
-            input_output_size,
-            latent_size,
-            max_temp,
-            min_temp,
-            reg_threshold=reg_threshold,
-        )
+        self.encoder = Encoder(input_output_size, latent_size, max_temp, min_temp, reg_threshold=reg_threshold,)
         self.decoder = Decoder(latent_size, input_output_size, decoder_hidden_layers)
 
         self.learning_rate = learning_rate
         self.reg_lambda = reg_lambda
 
-    def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Uses the trained autoencoder to make inferences.
 
         Args:
@@ -234,31 +223,27 @@ class ConcreteAutoencoder(pl.LightningModule):
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "val")
 
-    def test_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        data = batch["target"]
-        masks = batch["5tt"]
+    def test_step(self, batch: torch.Tensor, batch_idx: int, dataloader_idx: int) -> torch.Tensor:
+        dataloader = self.trainer.test_dataloaders[dataloader_idx]
+        if hasattr(dataloader.dataset, "get_metadata"):
+            metadata = dataloader.dataset.get_metadata(batch_idx)
+            tissue = dataloader.dataset._tissue
+        elif hasattr(dataloader.dataset.datasets[0], "get_metadata"):
+            metadata = dataloader.dataset.datasets[0].get_metadata(batch_idx)
+            tissue = "wb"
+        else:
+            raise Exception("Unknown dataset type. Could not get metadata")
 
-        _, decoded = self.forward(data)
+        sample = batch["target"]
+        _, decoded = self.forward(sample)
 
-        losses = dict()
+        loss = F.mse_loss(
+            (decoded.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
+            (sample.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
+        )
 
-        for idx, tissue in {
-            0: "cortical_grey_matter",
-            1: "sub_cortical_grey_matter",
-            2: "white_matter",
-            3: "csf",
-            4: "pathological_tissue",
-        }.items():
-            loss = F.mse_loss(decoded[masks[:, idx]], data[masks[:, idx]])
-            name = f"test_{tissue}_loss"
-            self.log(name, loss)
-            losses[name] = loss
-
-        loss = F.mse_loss(decoded, data)
-        self.log("test_loss", loss)
-        losses["test_loss"] = loss
-
-        return losses
+        self.log(f"test_{tissue}_loss", loss)
+        return loss
 
     def on_train_epoch_start(self) -> None:
         temp = self.encoder.update_temp(self.current_epoch, self.trainer.max_epochs)
@@ -298,46 +283,33 @@ class BaseDecoder(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self._learning_rate)
         return optimizer
 
-    def training_step(
-        self,
-        batch: dict[str, torch.Tensor],
-        batch_idx: int,
-    ) -> torch.Tensor:
+    def training_step(self, batch: Dict[str, torch.Tensor], batch_idx: int,) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "train")
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "val")
 
-    def test_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        def unnormalize(batch, unnormalize_data):
-            return (batch.T / unnormalize_data[:, 0] * unnormalize_data[:, 1]).T
+    def test_step(self, batch: torch.Tensor, batch_idx: int, dataloader_idx: int) -> torch.Tensor:
+        dataloader = self.trainer.test_dataloaders[dataloader_idx]
+        if hasattr(dataloader.dataset, "get_metadata"):
+            metadata = dataloader.dataset.get_metadata(batch_idx)
+            tissue = dataloader.dataset._tissue
+        elif hasattr(dataloader.dataset.datasets[0], "get_metadata"):
+            metadata = dataloader.dataset.datasets[0].get_metadata(batch_idx)
+            tissue = "wb"
+        else:
+            raise Exception("Unknown dataset type. Could not get metadata")
 
-        losses = dict()
-        sample, target, masks = batch["sample"], batch["target"], batch["5tt"]
-        unnormalize_data = batch["unnormalize_data"]
-
+        sample, target = batch["sample"], batch["target"]
         decoded = self(sample)
 
-        for idx, tissue in {
-            0: "cortical_grey_matter",
-            1: "sub_cortical_grey_matter",
-            2: "white_matter",
-            3: "csf",
-            4: "pathological_tissue",
-        }.items():
-            loss = F.mse_loss(
-                unnormalize(decoded[masks[:, idx]], unnormalize_data[masks[:, idx]]),
-                unnormalize(target[masks[:, idx]], unnormalize_data[masks[:, idx]]),
-            )
-            name = f"test_{tissue}_loss"
-            self.log(name, loss)
-            losses[name] = loss
+        loss = F.mse_loss(
+            (decoded.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
+            (target.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
+        )
 
-        loss = F.mse_loss(unnormalize(decoded, unnormalize_data), unnormalize(target, unnormalize_data))
-        self.log("test_whole_brain_loss", loss)
-        losses["test_whole_brain_loss"] = loss
-
-        return losses
+        self.log(f"test_{tissue}_loss", loss)
+        return loss
 
     def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str) -> torch.Tensor:
         """Calculate the loss for a batch.
@@ -363,11 +335,7 @@ class BaseDecoder(pl.LightningModule):
 @MODEL_REGISTRY
 class FCNDecoder(BaseDecoder):
     def __init__(
-        self,
-        input_size: int,
-        output_size: int,
-        hidden_layers: int = 2,
-        learning_rate: float = 1e-3,
+        self, input_size: int, output_size: int, hidden_layers: int = 2, learning_rate: float = 1e-3,
     ):
         """Fully Connected Network decoder
 
@@ -393,8 +361,8 @@ class SphericalDecoder(BaseDecoder):
         n_te: int,
         linear_layer_input_size: int,
         linear_layer_output_size: int,
-        n_shells: list[int],
-        L: list[int],
+        n_shells: List[int],
+        L: List[int],
         learning_rate: float = 1e-3,
     ) -> None:
         """Spherical decoder based on: "A Spherical Convolutional Neural Network for White Matter Structure Imaging via dMRI" by Sedlar et al.
@@ -423,33 +391,20 @@ class SphericalDecoder(BaseDecoder):
 
         sh_layers = list()
         sh_layers.append(
-            "s2_conv",
-            S2Convolution(
-                self._n_ti,
-                self._n_te,
-                self._L[0],
-                self._n_shells[0],
-                self._n_shells[1],
-            ),
+            "s2_conv", S2Convolution(self._n_ti, self._n_te, self._L[0], self._n_shells[0], self._n_shells[1],),
         )
         sh_layers.append("quadratic_1", QuadraticNonLinearity(self._L[0], self._L[1]))
         for i in range(2, len(n_shells)):
             sh_layers.append(
                 f"so3_conv_{i-1}",
-                S2Convolution(
-                    self._n_ti,
-                    self._n_te,
-                    self._L[i - 1],
-                    self._n_shells[i - 1],
-                    self._n_shells[i],
-                ),
+                S2Convolution(self._n_ti, self._n_te, self._L[i - 1], self._n_shells[i - 1], self._n_shells[i],),
             )
             sh_layers.append(f"quadratic_{i}", QuadraticNonLinearity(self._L[i - 1], self._L[i]))
 
         self.sh_layers = torch.nn.Sequential(OrderedDict(sh_layers))
         self.linear = torch.nn.Linear(self._linear_layer_input_size, self._linear_layer_output_size)
 
-    def forward(self, x: dict[int, torch.Tensor]) -> torch.Tensor:
+    def forward(self, x: Dict[int, torch.Tensor]) -> torch.Tensor:
         _, x = self.sh_layers(x)
         x = self.linear(x)
         return x
@@ -461,10 +416,10 @@ class DelimitDecoder(BaseDecoder):
         self,
         linear_layer_input_size: int,
         linear_layer_output_size: int,
-        gradients: list[float],
-        n_shells: list[int],
-        L: list[int],
-        kernel_sizes: list[int] = [5, 5],
+        gradients: List[float],
+        n_shells: List[int],
+        L: List[int],
+        kernel_sizes: List[int] = [5, 5],
         lb_lambda: float = 0.006,
         angular_distance: float = 0,
         learning_rate: float = 1e-3,
@@ -517,6 +472,7 @@ class DelimitDecoder(BaseDecoder):
                     angular_distance=self._angular_distance,
                 ),
             )
+            # TODO: activation layer
         sh_layers.append(("sh2signal", SH2Signal(sh_order=self._L[-1], gradients=self._gradients)))
 
         self.sh_layers = torch.nn.Sequential(OrderedDict(sh_layers))

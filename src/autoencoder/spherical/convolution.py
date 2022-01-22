@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import torch
@@ -14,8 +14,8 @@ class QuadraticNonLinearity(torch.nn.Module):
         self.register_buffer("_symmetric", torch.tensor(2 if symmetric else 1))
 
     def forward(
-        self, x: tuple[dict[int, torch.Tensor], Optional[torch.Tensor]]
-    ) -> tuple[dict[int, torch.Tensor], torch.Tensor]:
+        self, x: Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]
+    ) -> Tuple[Dict[int, torch.Tensor], torch.Tensor]:
         rh_n = dict()
         rh, feats = x
 
@@ -54,9 +54,7 @@ class QuadraticNonLinearity(torch.nn.Module):
 
         return rh_n, self._extract_features(rh_n, feats)
 
-    def _extract_features(
-        self, rh_n: dict[int, torch.Tensor], feats: Optional[torch.Tensor]
-    ) -> torch.Tensor:
+    def _extract_features(self, rh_n: Dict[int, torch.Tensor], feats: Optional[torch.Tensor]) -> torch.Tensor:
         """Extract rotation invariant features.
 
         Args:
@@ -65,9 +63,7 @@ class QuadraticNonLinearity(torch.nn.Module):
         for l in range(0, self._l_out + 1, self._symmetric):
             n_l = 8 * (np.pi ** 2) / (2 * l + 1)
 
-            feats_l = torch.flatten(
-                torch.sum(torch.pow(rh_n[l], 2), (5, 4)), start_dim=1
-            )
+            feats_l = torch.flatten(torch.sum(torch.pow(rh_n[l], 2), (5, 4)), start_dim=1)
 
             if feats is None:
                 feats = n_l * feats_l
@@ -88,17 +84,13 @@ class S2Convolution(torch.nn.Module):
         self.weights = dict()
         for l in range(0, self._l_in + 1, self._symmetric):
             n_sh_l = 2 * l + 1
-            self.weights[l] = torch.nn.Parameter(
-                torch.rand(ti_n, te_n, b_in, b_out, n_sh_l) * 0.1
-            )
+            self.weights[l] = torch.nn.Parameter(torch.rand(ti_n, te_n, b_in, b_out, n_sh_l) * 0.1)
             # Manually register parameters
             self.register_parameter(f"weights_{l}", self.weights[l])
 
         self.bias = torch.nn.Parameter(torch.zeros(1, ti_n, te_n, b_out, 1, 1))
 
-    def forward(
-        self, x: dict[int, torch.Tensor]
-    ) -> tuple[dict[int, torch.Tensor], Optional[torch.Tensor]]:
+    def forward(self, x: Dict[int, torch.Tensor]) -> Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]:
         rh = dict()
         for l in range(0, self._l_in + 1, self._symmetric):
             rh[l] = torch.einsum("nabil, abiok->nabolk", x[l], self.weights[l])
@@ -118,23 +110,19 @@ class SO3Convolution(torch.nn.Module):
         self.weights = dict()
         for l in range(0, self._l_in + 1, self._symmetric):
             n_sh_l = 2 * l + 1
-            self.weights[l] = torch.nn.Parameter(
-                torch.rand(ti_n, te_n, b_in, b_out, n_sh_l, n_sh_l) * 0.1
-            )
+            self.weights[l] = torch.nn.Parameter(torch.rand(ti_n, te_n, b_in, b_out, n_sh_l, n_sh_l) * 0.1)
             # Manually register parameters
             self.register_parameter(f"weights_{l}", self.weights[l])
 
         self.bias = torch.nn.Parameter(torch.zeros(1, ti_n, te_n, b_out, 1, 1))
 
     def forward(
-        self, x: tuple[dict[int, torch.Tensor], Optional[torch.Tensor]]
-    ) -> tuple[dict[int, torch.Tensor], Optional[torch.Tensor]]:
+        self, x: Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]
+    ) -> Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]:
         data, feats = x
         rh = dict()
         for l in range(0, self._l_in + 1, self._symmetric):
-            rh[l] = (2 * l + 1) * torch.einsum(
-                "nabilk, abiokj->nabolj", data[l], self.weights[l]
-            )
+            rh[l] = (2 * l + 1) * torch.einsum("nabilk, abiokj->nabolj", data[l], self.weights[l])
             rh[l] += self.bias if l == 0 else 0
 
         return rh, feats

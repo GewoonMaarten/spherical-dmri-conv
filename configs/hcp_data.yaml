@@ -1,14 +1,12 @@
 data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
-    data_file: ./data/data_mudi.hdf5
+    data_file: ./data/data_hcp.hdf5
     batch_size: 256
     subject_list_train:
-      - 11
-      - 12
-      - 13
-      - 14
+      - tbd
     subject_list_val:
-      - 15
+      - tbd
     in_memory: true
     num_workers: 0
+    exclude: "./data/hcp_exclude_b0.txt"

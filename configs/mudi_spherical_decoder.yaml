@@ -3,6 +3,9 @@ trainer:
     - class_path: pytorch_lightning.callbacks.EarlyStopping
       init_args:
         monitor: "val_loss"
+    - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+      init_args:
+        monitor: "val_loss"
 model:
   class_path: autoencoder.models.SphericalDecoder
   init_args:

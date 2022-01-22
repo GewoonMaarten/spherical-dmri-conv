@@ -3,22 +3,17 @@ import os
 import mlflow
 import numpy as np
 import pytorch_lightning as pl
-from pytorch_lightning.utilities.cli import (
-    DATAMODULE_REGISTRY,
-    MODEL_REGISTRY,
-    LightningCLI,
-)
+from pytorch_lightning.utilities.cli import DATAMODULE_REGISTRY, MODEL_REGISTRY, LightningCLI
 
 import autoencoder.datasets
 import autoencoder.models
+from autoencoder.logger import set_log_level
 
 if __name__ == "__main__":
-    MODEL_REGISTRY.register_classes(
-        autoencoder.models, pl.LightningModule, override=True
-    )
-    DATAMODULE_REGISTRY.register_classes(
-        autoencoder.datasets, pl.LightningDataModule, override=True
-    )
+    set_log_level(10)
+
+    MODEL_REGISTRY.register_classes(autoencoder.models, pl.LightningModule, override=True)
+    DATAMODULE_REGISTRY.register_classes(autoencoder.datasets, pl.LightningDataModule, override=True)
 
     cli = LightningCLI(run=False, save_config_overwrite=True)
 

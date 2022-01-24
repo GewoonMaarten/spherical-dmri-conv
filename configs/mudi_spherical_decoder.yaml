@@ -9,11 +9,12 @@ trainer:
 model:
   class_path: autoencoder.models.SphericalDecoder
   init_args:
-    n_ti: 20
+    n_ti: 28
     n_te: 3
-    linear_layer_input_size: 1920
+    linear_layer_input_size: 2688
+    linear_layer_output_size: 1344
     n_shells:
-      - 5
+      - 4
       - 8
       - 16
     L:
@@ -24,8 +25,9 @@ model:
 data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
-    include_features: ./data/latent_features.txt
-    spherical_transform:
+    include_parameters: ./data/mudi_include_latent.txt
+    return_target: True
+    transform:
       class_path: autoencoder.datasets.SphericalTransformer
       init_args:
         l_max: 2

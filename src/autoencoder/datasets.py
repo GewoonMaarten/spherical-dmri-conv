@@ -1,6 +1,7 @@
 import copy
 import itertools
 import math
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -15,7 +16,16 @@ from autoencoder.logger import logger
 from autoencoder.spherical.harmonics import gram_schmidt_sh_inv, sh_basis_real
 
 
-class DelimitTransformer(object):
+class Transformer(ABC, object):
+    @abstractmethod
+    def pre_compute(self, **kwargs):
+        pass
+
+
+class DelimitTransformer(Transformer):
+    def pre_compute(self, **kwargs):
+        self._parameters = kwargs["parameters"]
+
     def __call__(self, **kwargs):
         data = kwargs["data"]
         scheme = kwargs["scheme"]
@@ -64,73 +74,77 @@ class DelimitTransformer(object):
         return torch.flatten(new_data, start_dim=1, end_dim=3)
 
 
-class SphericalTransformer(object):
+class SphericalTransformer(Transformer):
     def __init__(self, l_max: int = 0, symmetric: bool = True, inversion_n_iters: int = 1000) -> None:
         self._l_max = l_max
         self._symmetric = 2 if symmetric else 1
         self._inversion_n_iters = inversion_n_iters
 
-    def __call__(self, **kwargs):
-        data = kwargs["data"]
-        scheme = kwargs["scheme"]
-
-        b_s = np.unique(scheme[:, 3])
-        ti_s = list()
-        te_s = list()
-
-        b_n = b_s.shape[0]
-        ti_n = 1
-        te_n = 1
-
-        prev_b = b_s[0]
-
-        if scheme.shape[1] > 4:
-            ti_s = np.unique(scheme[:, 4])
-            te_s = np.unique(scheme[:, 5])
-
-            ti_n = ti_s.shape[0]
-            te_n = te_s.shape[0]
+    def pre_compute(self, **kwargs):
+        self._parameters = kwargs["parameters"]
 
         # Fit the spherical harmonics on the gradients.
-        y = sh_basis_real(torch.from_numpy(scheme[:, :3]), self._l_max).to(data.device)
-        y_inv = gram_schmidt_sh_inv(y, self._l_max, n_iters=self._inversion_n_iters)
+        y = sh_basis_real(torch.from_numpy(self._parameters[:, :3]), self._l_max)
+        self._y_inv = gram_schmidt_sh_inv(y, self._l_max, n_iters=self._inversion_n_iters)
 
-        sh_coefficients_b_idx = dict()
-        sh_coefficients = dict()
+        self._b_s = np.unique(self._parameters[:, 3])
+        self._ti_s = np.unique(self._parameters[:, 4]) if self._parameters.shape[1] > 4 else [1]
+        self._te_s = np.unique(self._parameters[:, 5]) if self._parameters.shape[1] > 5 else [1]
+
+        self._b_n = self._b_s.shape[0]
+        self._ti_n = self._ti_s.shape[0]
+        self._te_n = self._te_s.shape[0]
+
         l_sizes = dict()
         for l in range(0, self._l_max + 1, self._symmetric):
             o = 2 * l + 1
-            sh_coefficients_b_idx[l] = 0
-            sh_coefficients[l] = torch.zeros((data.shape[0], ti_n, te_n, b_n, o), device=data.device)
             l_sizes[l] = o
 
-        for (ti_idx, ti), (te_idx, te), b in itertools.product(enumerate(ti_s), enumerate(te_s), b_s,):
-            # If we've visited all b values, we reset the counter
-            if prev_b == b:
-                sh_coefficients_b_idx = {k: 0 for k in sh_coefficients_b_idx}
-                prev_b = b
+        self._filters = list()
+        for (ti_idx, ti), (te_idx, te), b in itertools.product(enumerate(self._ti_s), enumerate(self._te_s), self._b_s):
+            filter = self._parameters[:, 3] == b
+            if self._parameters.shape[1] > 4:
+                filter = filter & (self._parameters[:, 4] == ti) & (self._parameters[:, 5] == te)
 
-            filter_scheme = scheme[:, 3] == b
-            if scheme.shape[1] > 4:
-                filter_scheme = filter_scheme & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
-
-            if not np.any(filter_scheme):
+            num_voxels = filter.sum()  # number of voxels left after filtering
+            if num_voxels == 0:
                 continue
 
-            data_filtered = data[:, filter_scheme]
-
             # Get the maximum l where the amount of coefficients is smaller or equal to the amount of voxels.
-            l = [l for l, o in l_sizes.items() if o <= data_filtered.shape[1]][-1]
+            l = [l for l, o in l_sizes.items() if o <= num_voxels][-1]
             l_size = np.sum([2 * s + 1 for s in range(0, l + 1, 2)])
-            y_inv_filtered = y_inv[:l_size, filter_scheme]
+
+            self._filters.append((ti_idx, te_idx, b, l, l_size, filter))
+
+    def __call__(self, **kwargs):
+        data = kwargs["data"]
+
+        sh_coefficients_b_idx = dict()
+        sh_coefficients = dict()
+        for l in range(0, self._l_max + 1, self._symmetric):
+            o = 2 * l + 1
+            sh_coefficients_b_idx[l] = 0
+            sh_coefficients[l] = torch.zeros((data.shape[0], self._ti_n, self._te_n, self._b_n, o))
+
+        prev_b = [self._b_s[0]]
+        for ti_idx, te_idx, b, l, l_size, filter in self._filters:
+            # If we've visited all b values, we reset the counter
+            if b in prev_b:
+                sh_coefficients_b_idx = {k: 0 for k in sh_coefficients_b_idx}
+                prev_b = [b]
+            else:
+                prev_b.append(b)
+
+            data_filtered = torch.from_numpy(data[:, filter])
+            y_inv_filtered = self._y_inv[:l_size, filter]
 
             sh_coefficient = torch.einsum("np,lp->nl", data_filtered, y_inv_filtered)
+            # print(sh_coefficient.shape, sh_coefficients[l].shape)
 
             # Extract even covariants.
             s = 0
             for l in range(0, l + 1, self._symmetric):
                 o = 2 * l + 1
-
                 sh_coefficients[l][:, ti_idx, te_idx, sh_coefficients_b_idx[l]] = sh_coefficient[
                     :, torch.arange(s, s + o)
                 ]
@@ -195,8 +209,12 @@ class DiffusionMRIDataset(IterableDataset):
         self._selected_parameters = np.arange(self._parameters.shape[0])
         if self._include_parameters is not None:
             self._selected_parameters = self._selected_parameters[self._include_parameters]
+            self._parameters = self._parameters[self._selected_parameters]
         elif self._exclude_parameters is not None:
             self._selected_parameters = np.delete(self._selected_parameters, self._exclude_parameters)
+            self._parameters = self._parameters[self._selected_parameters]
+
+        self._transform.pre_compute(parameters=self._parameters, batch_size=self._batch_size)
 
         self._metadata = list()  # stores metadata for each file
 
@@ -246,7 +264,7 @@ class DiffusionMRIDataset(IterableDataset):
                 sample = batch[:, self._selected_parameters]
 
                 if self._transform is not None:
-                    sample = self._transform(data=sample)
+                    sample = self._transform(data=sample, scheme=self._selected_parameters)
 
                 yield {
                     "sample": sample,
@@ -258,7 +276,7 @@ class DiffusionMRIDataset(IterableDataset):
                 sample = item[None, self._selected_parameters]
 
                 if self._transform is not None:
-                    sample = self._transform(data=sample)
+                    sample = self._transform(data=sample, scheme=self._selected_parameters)
 
                 yield {
                     "sample": sample,
@@ -267,13 +285,13 @@ class DiffusionMRIDataset(IterableDataset):
 
     def _configure_worker(self, worker_info):
         if worker_info is not None:
-            per_worker = math.ceil(len(self._file_paths) / worker_info.num_workers)
+            per_worker = math.ceil(len(self._data_file_paths) / worker_info.num_workers)
             worker_id = worker_info.id
 
             work_start = worker_id * per_worker
-            work_end = min(work_start + per_worker, len(self._file_paths))
+            work_end = min(work_start + per_worker, len(self._data_file_paths))
 
-            self._file_paths = self._file_paths[work_start:work_end]
+            self._data_file_paths = self._data_file_paths[work_start:work_end]
 
     def __len__(self):
         return self._total_batches

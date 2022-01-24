@@ -210,7 +210,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         return optimizer
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        loss = self._shared_eval(batch, batch_idx, "train")
+        loss = self._shared_eval(batch, 0, "train")
 
         if self.reg_lambda > 0:
             reg_term = self.encoder.regularization()
@@ -222,7 +222,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         return loss
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        return self._shared_eval(batch, batch_idx, "val")
+        return self._shared_eval(batch, 0, "val")
 
     def test_step(self, batch: torch.Tensor, batch_idx: int, dataloader_idx: int) -> torch.Tensor:
         dataloader = self.trainer.test_dataloaders[dataloader_idx]
@@ -243,7 +243,7 @@ class ConcreteAutoencoder(pl.LightningModule):
             (sample.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
         )
 
-        self.log(f"test_{tissue}_loss", loss, batch_size=sample.shape[0])
+        self.log(f"test_{tissue}_loss", loss)
         return loss
 
     def on_train_epoch_start(self) -> None:
@@ -254,7 +254,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         mean_max = self.encoder.calc_mean_max()
         self.log("mean_max", mean_max, on_step=False, prog_bar=True)
 
-    def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str) -> torch.Tensor:
+    def _shared_eval(self, batch: torch.Tensor, dataloader_idx: int, prefix: str) -> torch.Tensor:
         """Calculate the loss for a batch.
 
         Args:
@@ -269,7 +269,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         _, decoded = self.forward(sample)
         loss = F.mse_loss(decoded, sample)
 
-        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=sample.shape[0])
+        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return loss
 
@@ -309,7 +309,7 @@ class BaseDecoder(pl.LightningModule):
             (target.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
         )
 
-        self.log(f"test_{tissue}_loss", loss, batch_size=sample.shape[0])
+        self.log(f"test_{tissue}_loss", loss)
         return loss
 
     def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str) -> torch.Tensor:
@@ -328,7 +328,7 @@ class BaseDecoder(pl.LightningModule):
         decoded = self(sample)
         loss = F.mse_loss(decoded, target)
 
-        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=sample.shape[0])
+        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return loss
 

@@ -233,6 +233,7 @@ class DiffusionMRIDataset(IterableDataset):
                         },
                     )
                 )
+        logger.info("created dataset with %d total batches", self._total_batches)
 
     def get_metadata(self, batch_id: int):
         for batch_range, metadata in self._metadata:
@@ -364,17 +365,17 @@ class MRIDataModule(pl.LightningDataModule):
         )
 
         # Train on the whole brain
-        if stage == "fit" or stage is None:
+        if stage == "fit" or stage == "validate" or stage is None:
             self.train_dataset = ChainDataset(
                 [
                     DiffusionMRIDataset(self._parameters_file_path, self._data_file_paths[:-1], tissue, **common_args)
-                    for tissue in ("csf", "cgm", "scgm", "wm", "pt")
+                    for tissue in ("csf", "cgm", "scgm", "wm")
                 ]
             )
             self.val_dataset = ChainDataset(
                 [
-                    DiffusionMRIDataset(self._parameters_file_path, self._data_file_paths[-1:], tissue, **common_args)
-                    for tissue in ("csf", "cgm", "scgm", "wm", "pt")
+                    DiffusionMRIDataset(self._parameters_file_path, self._data_file_paths[-2:], tissue, **common_args)
+                    for tissue in ("csf", "cgm", "scgm", "wm")
                 ]
             )
         # Test on individual tissues

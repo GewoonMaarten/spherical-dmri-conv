@@ -16,7 +16,7 @@ trainer:
   tpu_cores: null
   ipus: null
   log_gpu_memory: null
-  progress_bar_refresh_rate: null
+  progress_bar_refresh_rate: 100
   enable_progress_bar: true
   overfit_batches: 0.0
   track_grad_norm: -1
@@ -34,7 +34,7 @@ trainer:
   limit_predict_batches: 1.0
   val_check_interval: 1.0
   flush_logs_every_n_steps: null
-  log_every_n_steps: 50
+  log_every_n_steps: 100
   accelerator: null
   strategy: null
   sync_batchnorm: false
@@ -48,7 +48,7 @@ trainer:
   benchmark: false
   deterministic: true
   reload_dataloaders_every_n_epochs: 0
-  reload_dataloaders_every_epoch: false
+  reload_dataloaders_every_epoch: true
   auto_lr_find: false
   replace_sampler_ddp: true
   detect_anomaly: false

@@ -6,7 +6,7 @@ trainer:
         monitor: "mean_max"
         mode: "max"
         stopping_threshold: 0.998
-        patience: 10
+        patience: 10000000000000 #basically infinite
     - class_path: pytorch_lightning.callbacks.ModelCheckpoint
       init_args:
         monitor: "mean_max"

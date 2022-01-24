@@ -1,5 +1,5 @@
 trainer:
-  max_epochs: 2
+  max_epochs: 2000
   callbacks:
     - class_path: pytorch_lightning.callbacks.EarlyStopping
       init_args:

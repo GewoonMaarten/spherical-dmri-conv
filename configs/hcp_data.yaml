@@ -1,12 +1,27 @@
 data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
-    data_file: ./data/data_hcp.hdf5
+    parameters_file_path: ./data/prj_HCP_parameters.hdf5
+    data_file_paths:
+      - ./data/prj_HCP_subj_186545_data.hdf5
+      - ./data/prj_HCP_subj_757764_data.hdf5
+      - ./data/prj_HCP_subj_192237_data.hdf5
+      - ./data/prj_HCP_subj_188145_data.hdf5
+      - ./data/prj_HCP_subj_413934_data.hdf5
+      - ./data/prj_HCP_subj_122418_data.hdf5
+      - ./data/prj_HCP_subj_125424_data.hdf5
+      - ./data/prj_HCP_subj_117021_data.hdf5
+      - ./data/prj_HCP_subj_463040_data.hdf5
+      - ./data/prj_HCP_subj_138130_data.hdf5
+      - ./data/prj_HCP_subj_151021_data.hdf5
+      - ./data/prj_HCP_subj_878877_data.hdf5
+      - ./data/prj_HCP_subj_299760_data.hdf5
+      - ./data/prj_HCP_subj_103212_data.hdf5
+      - ./data/prj_HCP_subj_185038_data.hdf5
+      - ./data/prj_HCP_subj_130114_data.hdf5
+      - ./data/prj_HCP_subj_208630_data.hdf5
+      - ./data/prj_HCP_subj_119025_data.hdf5
+      - ./data/prj_HCP_subj_118831_data.hdf5
+      - ./data/prj_HCP_subj_146836_data.hdf5
     batch_size: 256
-    subject_list_train:
-      - tbd
-    subject_list_val:
-      - tbd
-    in_memory: true
     num_workers: 0
-    exclude: "./data/hcp_exclude_b0.txt"

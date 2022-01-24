@@ -25,7 +25,9 @@ if __name__ == "__main__":
     mlflow.set_experiment(experiment_name)
     mlflow.pytorch.autolog()
     mlflow.log_params(cli.config["model"]["init_args"])
-    mlflow.log_params(cli.config["data"]["init_args"])
+    data_cli_config = cli.config["data"]["init_args"]
+    data_cli_config["data_file_paths"] = None
+    mlflow.log_params(data_cli_config)
 
     cli.trainer.fit(model=cli.model, datamodule=cli.datamodule)
     cli.trainer.test(ckpt_path="best", datamodule=cli.datamodule)
@@ -33,8 +35,6 @@ if __name__ == "__main__":
     if experiment_name == "ConcreteAutoencoder":
         latent_features_file_path = "logs/latent_features.txt"
         np.savetxt(
-            latent_features_file_path,
-            np.array(cli.model.encoder.latent_features, dtype=int),
-            fmt="%d",
+            latent_features_file_path, np.array(cli.model.encoder.latent_features, dtype=int), fmt="%d",
         )
         mlflow.log_artifact(latent_features_file_path)

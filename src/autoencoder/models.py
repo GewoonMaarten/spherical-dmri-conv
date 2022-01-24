@@ -234,7 +234,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         else:
             raise Exception("Unknown dataset type. Could not get metadata")
 
-        sample = batch["target"]
+        sample = batch["sample"]
         _, decoded = self.forward(sample)
 
         loss = F.mse_loss(
@@ -264,11 +264,11 @@ class ConcreteAutoencoder(pl.LightningModule):
         Returns:
             torch.Tensor: calculated loss.
         """
-        data = batch["target"]
-        _, decoded = self.forward(data)
-        loss = F.mse_loss(decoded, data)
+        sample = batch["sample"]
+        _, decoded = self.forward(sample)
+        loss = F.mse_loss(decoded, sample)
 
-        self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=True, prog_bar=True)
 
         return loss
 

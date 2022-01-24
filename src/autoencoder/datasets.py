@@ -214,7 +214,8 @@ class DiffusionMRIDataset(IterableDataset):
             self._selected_parameters = np.delete(self._selected_parameters, self._exclude_parameters)
             self._parameters = self._parameters[self._selected_parameters]
 
-        self._transform.pre_compute(parameters=self._parameters, batch_size=self._batch_size)
+        if self._transform is not None:
+            self._transform.pre_compute(parameters=self._parameters, batch_size=self._batch_size)
 
         self._metadata = list()  # stores metadata for each file
 
@@ -293,8 +294,8 @@ class DiffusionMRIDataset(IterableDataset):
 
             self._data_file_paths = self._data_file_paths[work_start:work_end]
 
-    def __len__(self):
-        return self._total_batches
+    # def __len__(self):
+    #     return self._total_batches
 
     def __iter__(self):
         worker_info = torch.utils.data.get_worker_info()

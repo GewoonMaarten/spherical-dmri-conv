@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from typing import Dict, List, Tuple
 
+import h5py
 import numpy as np
 import pytorch_lightning as pl
 import torch
@@ -242,7 +243,7 @@ class ConcreteAutoencoder(pl.LightningModule):
             (sample.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
         )
 
-        self.log(f"test_{tissue}_loss", loss)
+        self.log(f"test_{tissue}_loss", loss, batch_size=sample.shape[0])
         return loss
 
     def on_train_epoch_start(self) -> None:
@@ -268,7 +269,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         _, decoded = self.forward(sample)
         loss = F.mse_loss(decoded, sample)
 
-        self.log(f"{prefix}_loss", loss, on_step=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=sample.shape[0])
 
         return loss
 
@@ -308,7 +309,7 @@ class BaseDecoder(pl.LightningModule):
             (target.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
         )
 
-        self.log(f"test_{tissue}_loss", loss)
+        self.log(f"test_{tissue}_loss", loss, batch_size=sample.shape[0])
         return loss
 
     def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str) -> torch.Tensor:
@@ -327,7 +328,7 @@ class BaseDecoder(pl.LightningModule):
         decoded = self(sample)
         loss = F.mse_loss(decoded, target)
 
-        self.log(f"{prefix}_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=sample.shape[0])
 
         return loss
 
@@ -391,15 +392,17 @@ class SphericalDecoder(BaseDecoder):
 
         sh_layers = list()
         sh_layers.append(
-            "s2_conv", S2Convolution(self._n_ti, self._n_te, self._L[0], self._n_shells[0], self._n_shells[1],),
+            ("s2_conv", S2Convolution(self._n_ti, self._n_te, self._L[0], self._n_shells[0], self._n_shells[1])),
         )
-        sh_layers.append("quadratic_1", QuadraticNonLinearity(self._L[0], self._L[1]))
+        sh_layers.append(("quadratic_1", QuadraticNonLinearity(self._L[0], self._L[1])))
         for i in range(2, len(n_shells)):
             sh_layers.append(
-                f"so3_conv_{i-1}",
-                S2Convolution(self._n_ti, self._n_te, self._L[i - 1], self._n_shells[i - 1], self._n_shells[i],),
+                (
+                    f"so3_conv_{i-1}",
+                    SO3Convolution(self._n_ti, self._n_te, self._L[i - 1], self._n_shells[i - 1], self._n_shells[i]),
+                ),
             )
-            sh_layers.append(f"quadratic_{i}", QuadraticNonLinearity(self._L[i - 1], self._L[i]))
+            sh_layers.append((f"quadratic_{i}", QuadraticNonLinearity(self._L[i - 1], self._L[i])))
 
         self.sh_layers = torch.nn.Sequential(OrderedDict(sh_layers))
         self.linear = torch.nn.Linear(self._linear_layer_input_size, self._linear_layer_output_size)
@@ -416,7 +419,7 @@ class DelimitDecoder(BaseDecoder):
         self,
         linear_layer_input_size: int,
         linear_layer_output_size: int,
-        gradients: List[float],
+        gradients_file_path: str,
         n_shells: List[int],
         L: List[int],
         kernel_sizes: List[int] = [5, 5],
@@ -447,7 +450,7 @@ class DelimitDecoder(BaseDecoder):
         """
         super(DelimitDecoder, self).__init__(learning_rate)
 
-        self._gradients = gradients
+        self._gradients_file_path = gradients_file_path
         self._kernel_sizes = kernel_sizes
         self._linear_layer_input_size = linear_layer_input_size
         self._linear_layer_output_size = linear_layer_output_size
@@ -456,8 +459,13 @@ class DelimitDecoder(BaseDecoder):
         self._lb_lambda = lb_lambda
         self._angular_distance = angular_distance
 
+        with h5py.File(self._gradients_file_path, "r", libver="latest") as archive:
+            self._gradients = archive["parameters"][:, :3]
+
         sh_layers = list()
-        sh_layers.append(("signal2sh", Signal2SH(gradients=gradients, sh_order=self._L[0], lb_lambda=self._lb_lambda)))
+        sh_layers.append(
+            ("signal2sh", Signal2SH(gradients=self._gradients, sh_order=self._L[0], lb_lambda=self._lb_lambda))
+        )
         for i in range(1, len(self._n_shells)):
             sh_layers.append(
                 f"lsc_{i}",

@@ -9,4 +9,4 @@ data:
       - ./data/prj_MUDI_subj_cdmri0014_data.hdf5
       - ./data/prj_MUDI_subj_cdmri0015_data.hdf5
     batch_size: 256
-    num_workers: 4
+    num_workers: 0

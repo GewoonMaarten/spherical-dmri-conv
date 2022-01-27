@@ -25,9 +25,7 @@ if __name__ == "__main__":
     mlflow.set_experiment(experiment_name)
     mlflow.pytorch.autolog()
     mlflow.log_params(cli.config["model"]["init_args"])
-    data_cli_config = copy.deepcopy(cli.config["data"]["init_args"])
-    data_cli_config["data_file_paths"] = None
-    mlflow.log_params(data_cli_config)
+    mlflow.log_params(cli.config["data"]["init_args"])
 
     cli.trainer.fit(model=cli.model, datamodule=cli.datamodule)
     cli.trainer.test(ckpt_path="best", datamodule=cli.datamodule)

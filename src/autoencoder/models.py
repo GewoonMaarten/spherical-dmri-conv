@@ -135,11 +135,8 @@ class Decoder(nn.Module):
         layers = OrderedDict()
         for i in range(1, n_layers):
             n = i - 1
-            if i == n_layers - 1:  # Last layer
-                layers[f"linear_{n}"] = nn.Linear(layer_sizes[i - 1], layer_sizes[i])
-            else:
-                layers[f"linear_{n}"] = nn.Linear(layer_sizes[i - 1], layer_sizes[i])
-                layers[f"relu_{n}"] = nn.LeakyReLU(negative_slope)
+            layers[f"linear_{n}"] = nn.Linear(layer_sizes[i - 1], layer_sizes[i])
+            layers[f"relu_{n}"] = nn.LeakyReLU(negative_slope)
 
         logger.debug("decoder layers: %s", layers)
 
@@ -210,7 +207,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         return optimizer
 
     def training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        loss = self._shared_eval(batch, 0, "train")
+        loss = self._shared_eval(batch, batch_idx, "train")
 
         if self.reg_lambda > 0:
             reg_term = self.encoder.regularization()
@@ -222,16 +219,13 @@ class ConcreteAutoencoder(pl.LightningModule):
         return loss
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
-        return self._shared_eval(batch, 0, "val")
+        return self._shared_eval(batch, batch_idx, "val")
 
     def test_step(self, batch: torch.Tensor, batch_idx: int, dataloader_idx: int) -> torch.Tensor:
         dataloader = self.trainer.test_dataloaders[dataloader_idx]
-        if hasattr(dataloader.dataset, "get_metadata"):
-            metadata = dataloader.dataset.get_metadata(batch_idx)
-            tissue = dataloader.dataset._tissue
-        elif hasattr(dataloader.dataset.datasets[0], "get_metadata"):
-            metadata = dataloader.dataset.datasets[0].get_metadata(batch_idx)
-            tissue = "wb"
+        if hasattr(dataloader.dataset, "get_subject_id_by_batch_id"):
+            subject_id = dataloader.dataset.get_subject_id_by_batch_id(batch_idx)
+            metadata = dataloader.dataset.get_metadata_by_subject_id(subject_id)
         else:
             raise Exception("Unknown dataset type. Could not get metadata")
 
@@ -239,11 +233,11 @@ class ConcreteAutoencoder(pl.LightningModule):
         _, decoded = self.forward(sample)
 
         loss = F.mse_loss(
-            (decoded.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
-            (sample.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
+            (decoded.T / metadata["lstsq_coefficient"] * metadata["max_data"]).T,
+            (sample.T / metadata["lstsq_coefficient"] * metadata["max_data"]).T,
         )
 
-        self.log(f"test_{tissue}_loss", loss)
+        self.log(f"test_{metadata['tissue']}_loss", loss, on_step=True)
         return loss
 
     def on_train_epoch_start(self) -> None:
@@ -269,7 +263,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         _, decoded = self.forward(sample)
         loss = F.mse_loss(decoded, sample)
 
-        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=True, prog_bar=True)
 
         return loss
 
@@ -295,9 +289,6 @@ class BaseDecoder(pl.LightningModule):
         if hasattr(dataloader.dataset, "get_metadata"):
             metadata = dataloader.dataset.get_metadata(batch_idx)
             tissue = dataloader.dataset._tissue
-        elif hasattr(dataloader.dataset.datasets[0], "get_metadata"):
-            metadata = dataloader.dataset.datasets[0].get_metadata(batch_idx)
-            tissue = "wb"
         else:
             raise Exception("Unknown dataset type. Could not get metadata")
 
@@ -328,7 +319,7 @@ class BaseDecoder(pl.LightningModule):
         decoded = self(sample)
         loss = F.mse_loss(decoded, target)
 
-        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=True, prog_bar=True)
 
         return loss
 
@@ -480,7 +471,9 @@ class DelimitDecoder(BaseDecoder):
                     angular_distance=self._angular_distance,
                 ),
             )
-            # TODO: activation layer
+            # As LocalSphericalConvolution is not rotation equivariant we can use any activation layer. We use tanh,
+            # the same as in the paper.
+            sh_layers.append((f"tan_h_{i}", torch.nn.Tanh()))
         sh_layers.append(("sh2signal", SH2Signal(sh_order=self._L[-1], gradients=self._gradients)))
 
         self.sh_layers = torch.nn.Sequential(OrderedDict(sh_layers))

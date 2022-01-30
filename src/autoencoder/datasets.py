@@ -166,7 +166,7 @@ class DiffusionMRIDataset(Dataset):
         tissue: str,
         include_parameters: List[int] = None,
         exclude_parameters: List[int] = None,
-        batch_size: int = 0,
+        batch_size: int = 1,
         return_target: bool = False,
         transform: Union[SphericalTransformer, DelimitTransformer] = None,
     ) -> None:
@@ -219,6 +219,7 @@ class DiffusionMRIDataset(Dataset):
         if self._transform is not None:
             self._transform.pre_compute(parameters=self._parameters, batch_size=self._batch_size)
 
+        self.num_batches = 0
         with h5py.File(self._data_file_path, "r") as archive:
             tissue_id = archive.get("masks").attrs[self._tissue]
             tissue_mask = np.isin(archive.get("masks"), tissue_id)
@@ -231,7 +232,7 @@ class DiffusionMRIDataset(Dataset):
 
     def get_subject_id_by_batch_id(self, batch_id: int) -> int:
         with h5py.File(self._data_file_path, "r") as archive:
-            return archive.get("index")[batch_id * self._batch_size][0]
+            return archive.get("index")[batch_id * self._batch_size]
 
     def get_metadata_by_subject_id(self, subject_id: int):
         with h5py.File(self._data_file_path, "r") as archive:
@@ -262,13 +263,13 @@ class DiffusionMRIDataset(Dataset):
             else:
                 return {"sample": data_filtered}
 
-    def __getstate__(self):
-        """Return state values to be pickled."""
-        return None
+    # def __getstate__(self):
+    #     """Return state values to be pickled."""
+    #     return None
 
-    def __setstate__(self, state):
-        """Restore state from the unpickled state values."""
-        pass
+    # def __setstate__(self, state):
+    #     """Restore state from the unpickled state values."""
+    #     pass
 
 
 @DATAMODULE_REGISTRY

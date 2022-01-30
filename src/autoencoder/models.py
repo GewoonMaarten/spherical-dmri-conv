@@ -135,7 +135,7 @@ class Decoder(nn.Module):
         layers = OrderedDict()
         for i in range(1, n_layers):
             n = i - 1
-            layers[f"linear_{n}"] = nn.Linear(layer_sizes[i - 1], layer_sizes[i])
+            layers[f"linear_{n}"] = nn.Linear(int(layer_sizes[i - 1]), int(layer_sizes[i]))
             layers[f"relu_{n}"] = nn.LeakyReLU(negative_slope)
 
         logger.debug("decoder layers: %s", layers)
@@ -286,9 +286,9 @@ class BaseDecoder(pl.LightningModule):
 
     def test_step(self, batch: torch.Tensor, batch_idx: int, dataloader_idx: int) -> torch.Tensor:
         dataloader = self.trainer.test_dataloaders[dataloader_idx]
-        if hasattr(dataloader.dataset, "get_metadata"):
-            metadata = dataloader.dataset.get_metadata(batch_idx)
-            tissue = dataloader.dataset._tissue
+        if hasattr(dataloader.dataset, "get_subject_id_by_batch_id"):
+            subject_id = dataloader.dataset.get_subject_id_by_batch_id(batch_idx)
+            metadata = dataloader.dataset.get_metadata_by_subject_id(subject_id)
         else:
             raise Exception("Unknown dataset type. Could not get metadata")
 
@@ -296,11 +296,11 @@ class BaseDecoder(pl.LightningModule):
         decoded = self(sample)
 
         loss = F.mse_loss(
-            (decoded.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
-            (target.T / metadata["lstq_coefficient"] * metadata["max_data"]).T,
+            (decoded.T / metadata["lstsq_coefficient"] * metadata["max_data"]).T,
+            (target.T / metadata["lstsq_coefficient"] * metadata["max_data"]).T,
         )
 
-        self.log(f"test_{tissue}_loss", loss)
+        self.log(f"test_{metadata['tissue']}_loss", loss)
         return loss
 
     def _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str) -> torch.Tensor:
@@ -319,7 +319,7 @@ class BaseDecoder(pl.LightningModule):
         decoded = self(sample)
         loss = F.mse_loss(decoded, target)
 
-        self.log(f"{prefix}_loss", loss, on_step=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return loss
 

@@ -64,7 +64,6 @@ class Encoder(nn.Module):
         """
         logits_size = self.logits.size()
 
-        selections: torch.Tensor = None
         if self.training:
             uniform = torch.rand(logits_size, device=x.device)
             gumbel = -torch.log(-torch.log(uniform))

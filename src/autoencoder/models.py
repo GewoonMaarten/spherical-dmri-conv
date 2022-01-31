@@ -1,3 +1,4 @@
+import math
 from collections import OrderedDict
 from typing import Dict, List, Tuple
 
@@ -258,7 +259,7 @@ class ConcreteAutoencoder(pl.LightningModule):
         _, decoded = self.forward(sample)
         loss = F.mse_loss(decoded, sample)
 
-        self.log(f"{prefix}_loss", loss, on_step=True, prog_bar=True)
+        self.log(f"{prefix}_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         return loss
 
@@ -393,7 +394,7 @@ class SphericalDecoder(BaseDecoder):
         self.sh_layers = torch.nn.Sequential(OrderedDict(sh_layers))
         self.linear = torch.nn.Linear(self._linear_layer_input_size, self._linear_layer_output_size)
 
-    def forward(self, x: Dict[int, torch.Tensor]) -> torch.Tensor:
+    def forward(self, x) -> torch.Tensor:
         _, x = self.sh_layers(x)
         x = self.linear(x)
         return x

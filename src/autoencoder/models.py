@@ -17,6 +17,12 @@ from autoencoder.logger import logger
 from autoencoder.spherical.convolution import QuadraticNonLinearity, S2Convolution, SO3Convolution
 
 
+def init_weights_orthogonal(m):
+    if isinstance(m, nn.Linear):
+        torch.nn.init.orthogonal_(m.weight)
+        m.bias.data.fill_(0.01)
+
+
 class Encoder(nn.Module):
     def __init__(
         self,
@@ -377,26 +383,28 @@ class SphericalDecoder(BaseDecoder):
         self._n_shells = n_shells
         self._L = L
 
-        sh_layers = list()
-        sh_layers.append(
-            ("s2_conv", S2Convolution(self._n_ti, self._n_te, self._L[0], self._n_shells[0], self._n_shells[1])),
+        self.s2_conv = S2Convolution(self._n_ti, self._n_te, self._L[0], self._n_shells[0], self._n_shells[1])
+        self.s2_non_linear = QuadraticNonLinearity(self._L[0], self._L[1])
+
+        self.so3_conv_1 = SO3Convolution(self._n_ti, self._n_te, self._L[1], self._n_shells[1], self._n_shells[2])
+        self.so3_non_linear_1 = QuadraticNonLinearity(self._L[1], self._L[2])
+
+        # self.so3_conv_2 = SO3Convolution(self._n_ti, self._n_te, self._L[2], self._n_shells[2], self._n_shells[3])
+        # self.so3_non_linear_2 = QuadraticNonLinearity(self._L[2], self._L[3])
+
+        self.linear = torch.nn.Sequential(
+            torch.nn.Linear(self._linear_layer_input_size, self._linear_layer_output_size), torch.nn.LeakyReLU(0.2),
         )
-        sh_layers.append(("quadratic_1", QuadraticNonLinearity(self._L[0], self._L[1])))
-        for i in range(2, len(n_shells)):
-            sh_layers.append(
-                (
-                    f"so3_conv_{i-1}",
-                    SO3Convolution(self._n_ti, self._n_te, self._L[i - 1], self._n_shells[i - 1], self._n_shells[i]),
-                ),
-            )
-            sh_layers.append((f"quadratic_{i}", QuadraticNonLinearity(self._L[i - 1], self._L[i])))
+        self.linear.apply(init_weights_orthogonal)
 
-        self.sh_layers = torch.nn.Sequential(OrderedDict(sh_layers))
-        self.linear = torch.nn.Linear(self._linear_layer_input_size, self._linear_layer_output_size)
-
-    def forward(self, x) -> torch.Tensor:
-        _, x = self.sh_layers(x)
-        x = self.linear(x)
+    def forward(self, x: Dict[int, torch.Tensor]) -> torch.Tensor:
+        x, y = self.s2_conv(x)
+        x, y = self.s2_non_linear((x, y))
+        x, y = self.so3_conv_1((x, y))
+        x, y = self.so3_non_linear_1((x, y))
+        # x, y = self.so3_conv_2((x, y))
+        # _, y = self.so3_non_linear_2((x, y))
+        x = self.linear(y)
         return x
 
 
@@ -448,6 +456,7 @@ class DelimitDecoder(BaseDecoder):
 
         with h5py.File(self._gradients_file_path, "r", libver="latest") as archive:
             self._gradients = archive["parameters"][:, :3]
+            self._gradients = self._gradients[archive["parameters"][:, 3] != 0]
 
         sh_layers = list()
         sh_layers.append(
@@ -455,17 +464,19 @@ class DelimitDecoder(BaseDecoder):
         )
         for i in range(1, len(self._n_shells)):
             sh_layers.append(
-                f"lsc_{i}",
-                LocalSphericalConvolution(
-                    shells_in=self._n_shells[i - 1],
-                    shells_out=self._n_shells[i],
-                    sh_order_in=self._L[i - 1],
-                    sh_order_out=self._L[i],
-                    lb_lambda=self._lb_lambda,
-                    sampled_gradients=self._gradients,
-                    kernel_sizes=self._kernel_sizes,
-                    angular_distance=self._angular_distance,
-                ),
+                (
+                    f"lsc_{i}",
+                    LocalSphericalConvolution(
+                        shells_in=self._n_shells[i - 1],
+                        shells_out=self._n_shells[i],
+                        sh_order_in=self._L[i - 1],
+                        sh_order_out=self._L[i],
+                        lb_lambda=self._lb_lambda,
+                        sampled_gradients=self._gradients,
+                        kernel_sizes=self._kernel_sizes,
+                        angular_distance=self._angular_distance,
+                    ),
+                )
             )
             # As LocalSphericalConvolution is not rotation equivariant we can use any activation layer. We use tanh,
             # the same as in the paper.

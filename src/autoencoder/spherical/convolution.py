@@ -103,7 +103,7 @@ class S2Convolution(torch.nn.Module):
 
         self.bias = torch.nn.Parameter(torch.zeros(1, ti_n, te_n, b_out, 1, 1))
 
-    def forward(self, x) -> Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]:
+    def forward(self, x: Dict[int, torch.Tensor]) -> Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]:
         rh: Dict[int, torch.Tensor] = dict()
         for l in range(0, int(self._l_in) + 1, int(self._symmetric)):
             rh[l] = torch.einsum("nabil, abiok->nabolk", x[l], self.weights[l])

@@ -9,6 +9,33 @@ from pytorch_lightning.utilities.cli import DATAMODULE_REGISTRY, MODEL_REGISTRY,
 import autoencoder.datasets
 import autoencoder.models
 from autoencoder.logger import set_log_level
+import argparse
+
+
+class kwargs_append_action(argparse.Action):
+    """argparse action to split an argument into KEY=VALUE form on append to a dictionary.
+    """
+
+    def __call__(self, parser, args, values, option_string=None):
+        try:
+            d = dict(map(lambda x: x.split("="), values))
+        except ValueError as ex:
+            raise argparse.ArgumentError(self, f'Could not parse argument "{values}" as k1=v1 k2=v2 ... format')
+        setattr(args, self.dest, d)
+
+
+class MyLightningCLI(LightningCLI):
+    def add_arguments_to_parser(self, parser):
+        parser.add_argument(
+            "--tags",
+            dest="tags",
+            nargs="*",
+            required=False,
+            action=kwargs_append_action,
+            metavar="KEY=VALUE",
+            help="Add key/value tags. Used to tag MLflow runs. May appear multiple times. Aggregate in dict",
+        )
+
 
 if __name__ == "__main__":
     set_log_level(10)
@@ -16,7 +43,7 @@ if __name__ == "__main__":
     MODEL_REGISTRY.register_classes(autoencoder.models, pl.LightningModule, override=True)
     DATAMODULE_REGISTRY.register_classes(autoencoder.datasets, pl.LightningDataModule, override=True)
 
-    cli = LightningCLI(run=False, save_config_overwrite=True)
+    cli = MyLightningCLI(run=False, save_config_overwrite=True)
 
     experiment_name = cli.model.__class__.__name__
 
@@ -27,6 +54,7 @@ if __name__ == "__main__":
     mlflow.pytorch.autolog()
     mlflow.log_params(cli.config["model"]["init_args"])
     mlflow.log_params(cli.config["data"]["init_args"])
+    mlflow.set_tags(cli.config["tags"])
 
     cli.trainer.fit(model=cli.model, datamodule=cli.datamodule)
     cli.trainer.test(ckpt_path="best", datamodule=cli.datamodule)

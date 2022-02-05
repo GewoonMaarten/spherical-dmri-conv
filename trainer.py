@@ -13,8 +13,7 @@ import argparse
 
 
 class kwargs_append_action(argparse.Action):
-    """argparse action to split an argument into KEY=VALUE form on append to a dictionary.
-    """
+    """argparse action to split an argument into KEY=VALUE form on append to a dictionary."""
 
     def __call__(self, parser, args, values, option_string=None):
         try:
@@ -54,7 +53,8 @@ if __name__ == "__main__":
     mlflow.pytorch.autolog()
     mlflow.log_params(cli.config["model"]["init_args"])
     mlflow.log_params(cli.config["data"]["init_args"])
-    mlflow.set_tags(cli.config["tags"])
+    if "tags" in cli.config.keys():
+        mlflow.set_tags(cli.config["tags"])
 
     cli.trainer.fit(model=cli.model, datamodule=cli.datamodule)
     cli.trainer.test(ckpt_path="best", datamodule=cli.datamodule)
@@ -65,7 +65,9 @@ if __name__ == "__main__":
     if experiment_name == "ConcreteAutoencoder":
         latent_features_file_path = "logs/latent_features.txt"
         np.savetxt(
-            latent_features_file_path, np.array(cli.model.encoder.latent_features, dtype=int), fmt="%d",
+            latent_features_file_path,
+            np.array(cli.model.encoder.latent_features, dtype=int),
+            fmt="%d",
         )
         mlflow.log_artifact(latent_features_file_path)
     else:

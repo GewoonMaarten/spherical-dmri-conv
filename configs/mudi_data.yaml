@@ -2,7 +2,7 @@ data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
     parameters_file_path: ./data/prj_MUDI_parameters.hdf5
-    data_file_path: ./prj_MUDI_data.hdf5
+    data_file_path: ./data/prj_MUDI_data.hdf5
     train_subject_ids:
       - 11
       - 12

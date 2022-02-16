@@ -108,7 +108,13 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, input_size: int, output_size: int, n_hidden_layers: int, negative_slope: float = 0.2,) -> None:
+    def __init__(
+        self,
+        input_size: int,
+        output_size: int,
+        n_hidden_layers: int,
+        negative_slope: float = 0.2,
+    ) -> None:
         """Standard decoder. It generates a network from `input_size` to `output_size`. The layers are generates as
         follows:
         ```python
@@ -280,7 +286,11 @@ class BaseDecoder(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self._learning_rate)
         return optimizer
 
-    def training_step(self, batch: Dict[str, torch.Tensor], batch_idx: int,) -> torch.Tensor:
+    def training_step(
+        self,
+        batch: Dict[str, torch.Tensor],
+        batch_idx: int,
+    ) -> torch.Tensor:
         return self._shared_eval(batch, batch_idx, "train")
 
     def validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor:
@@ -329,7 +339,11 @@ class BaseDecoder(pl.LightningModule):
 @MODEL_REGISTRY
 class FCNDecoder(BaseDecoder):
     def __init__(
-        self, input_size: int, output_size: int, hidden_layers: int = 2, learning_rate: float = 1e-3,
+        self,
+        input_size: int,
+        output_size: int,
+        hidden_layers: int = 2,
+        learning_rate: float = 1e-3,
     ):
         """Fully Connected Network decoder
 
@@ -393,7 +407,12 @@ class SphericalDecoder(BaseDecoder):
         # self.so3_non_linear_2 = QuadraticNonLinearity(self._L[2], self._L[3])
 
         self.linear = torch.nn.Sequential(
-            torch.nn.Linear(self._linear_layer_input_size, self._linear_layer_output_size), torch.nn.LeakyReLU(0.2),
+            torch.nn.Linear(self._linear_layer_input_size, 100),
+            torch.nn.LeakyReLU(0.2),
+            torch.nn.Linear(100, 200),
+            torch.nn.LeakyReLU(0.2),
+            torch.nn.Linear(200, self._linear_layer_output_size),
+            torch.nn.LeakyReLU(0.2),
         )
         self.linear.apply(init_weights_orthogonal)
 

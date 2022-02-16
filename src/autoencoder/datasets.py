@@ -56,7 +56,9 @@ class DelimitTransformer(Transformer):
 
         new_data = torch.zeros(ti_n, te_n, b_n * max_gradients, 1, 1, 1)
         for (ti_idx, ti), (te_idx, te), (b_idx, b) in itertools.product(
-            enumerate(ti_s), enumerate(te_s), enumerate(b_s),
+            enumerate(ti_s),
+            enumerate(te_s),
+            enumerate(b_s),
         ):
             filter_scheme = scheme[:, 3] == b
             if scheme.shape[1] > 4:
@@ -88,8 +90,8 @@ class SphericalTransformer(Transformer):
         self._y_inv = gram_schmidt_sh_inv(y, self._l_max, n_iters=self._inversion_n_iters)
 
         self._b_s = np.unique(self._parameters[:, 3])
-        self._ti_s = np.unique(self._parameters[:, 4]) if self._parameters.shape[1] > 4 else [1]
-        self._te_s = np.unique(self._parameters[:, 5]) if self._parameters.shape[1] > 5 else [1]
+        self._ti_s = np.unique(self._parameters[:, 4]) if self._parameters.shape[1] > 4 else np.array([1])
+        self._te_s = np.unique(self._parameters[:, 5]) if self._parameters.shape[1] > 5 else np.array([1])
 
         self._b_n = self._b_s.shape[0]
         self._ti_n = self._ti_s.shape[0]
@@ -185,9 +187,9 @@ class DiffusionMRIDataset(Dataset):
             include_parameters (List[int], optional): parameters to *only* include in the dataset. Defaults to None.
             exclude_parameters (List[int], optional): parameters to exclude from the dataset. Defaults to None.
             batch_size (int, optional): batch size. Defaults to 0.
-            return_target (bool, optional): return target data with all parameters included. Useful for loss calculation 
+            return_target (bool, optional): return target data with all parameters included. Useful for loss calculation
                 when recreating the dataset from a subset of parameters. Defaults to False.
-            transform (Union[SphericalTransformer, DelimitTransformer], optional): Used to transform the data for models 
+            transform (Union[SphericalTransformer, DelimitTransformer], optional): Used to transform the data for models
                 that require different data. Defaults to None.
         """
         super(DiffusionMRIDataset).__init__()

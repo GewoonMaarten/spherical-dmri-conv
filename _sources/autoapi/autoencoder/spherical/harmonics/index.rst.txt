@@ -1,0 +1,45 @@
+:py:mod:`autoencoder.spherical.harmonics`
+=========================================
+
+.. py:module:: autoencoder.spherical.harmonics
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.spherical.harmonics.sh_basis_real
+   autoencoder.spherical.harmonics.gram_schmidt_sh_inv
+
+
+
+.. py:function:: sh_basis_real(cart_coord: torch.Tensor, L: int, symmetric: bool = True)
+
+   Real spherical harmonic basis of even degree.
+
+   Arguments:
+       cart_coord (torch.Tensor): cartesian point coordinates
+       L (int): spherical harmonic degree
+       symmetric (bool): flag indicating whether to compute only spherical harmonics of even degree
+   Returns:
+       torch.Tensor: spherical harmonic bases (each column is a basis)
+
+
+.. py:function:: gram_schmidt_sh_inv(Y: torch.Tensor, L: int, n_iters: int = 1000, symmetric: bool = True)
+
+   Inversion of spherical harmonic basis with Gram-Schmidt orthonormalization process.
+
+   Arguments:
+       Y (torch.Tensor): Spherical harmonics, real or complex
+       L (int): spherical harmonic degree
+       n_iters (int): number of iterations for degree shuffling
+       symmetric (bool): flag indicating whether to compute only spherical harmonics of even degree
+   Returns:
+       torch.Tensor: inverted spherical harmonic bases
+
+

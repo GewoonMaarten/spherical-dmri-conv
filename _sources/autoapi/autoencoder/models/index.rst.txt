@@ -1,0 +1,186 @@
+:py:mod:`autoencoder.models`
+============================
+
+.. py:module:: autoencoder.models
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.models.Encoder
+   autoencoder.models.Decoder
+   autoencoder.models.ConcreteAutoencoder
+   autoencoder.models.BaseDecoder
+   autoencoder.models.FCNDecoder
+   autoencoder.models.SphericalDecoder
+   autoencoder.models.DelimitDecoder
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.models.init_weights_orthogonal
+
+
+
+.. py:function:: init_weights_orthogonal(m)
+
+
+.. py:class:: Encoder(input_size: int, output_size: int, max_temp: float = 10.0, min_temp: float = 0.1, reg_threshold: float = 3.0, reg_eps: float = 1e-10)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   .. py:method:: latent_features(self)
+      :property:
+
+
+   .. py:method:: forward(self, x: torch.Tensor) -> torch.Tensor
+
+      Uses the trained encoder to make inferences.
+
+      Args:
+          x (torch.Tensor): input data. Should be the same size as the encoder input.
+
+      Returns:
+          torch.Tensor: encoder output of size `output_size`.
+
+
+   .. py:method:: update_temp(self, current_epoch, max_epochs) -> torch.Tensor
+
+
+   .. py:method:: calc_mean_max(self) -> torch.Tensor
+
+
+   .. py:method:: regularization(self) -> float
+
+      Regularization term according to https://homes.esat.kuleuven.be/~abertran/reports/TS_JNE_2021.pdf. The sum of
+      probabilities for a selection neuron is penalized if its larger than the threshold value. The returned value is
+      summed with the loss function.
+
+
+
+.. py:class:: Decoder(input_size: int, output_size: int, n_hidden_layers: int, negative_slope: float = 0.2)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   .. py:method:: forward(self, x: torch.Tensor) -> torch.Tensor
+
+      Uses the trained decoder to make inferences.
+
+      Args:
+          x (torch.Tensor): input data. Should be the same size as the decoder input.
+
+      Returns:
+          torch.Tensor: decoder output of size `output_size`.
+
+
+
+.. py:class:: ConcreteAutoencoder(input_output_size: int = 1344, latent_size: int = 500, decoder_hidden_layers: int = 2, learning_rate: float = 0.001, max_temp: float = 10.0, min_temp: float = 0.1, reg_lambda: float = 0.0, reg_threshold: float = 1.0)
+
+   Bases: :py:obj:`pytorch_lightning.LightningModule`
+
+   .. py:method:: forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]
+
+      Uses the trained autoencoder to make inferences.
+
+      Args:
+          x (torch.Tensor): input data. Should be the same size as encoder input.
+
+      Returns:
+          tuple[torch.Tensor, torch.Tensor]: (encoder output, decoder output)
+
+
+   .. py:method:: configure_optimizers(self) -> torch.optim.Adam
+
+
+   .. py:method:: training_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor
+
+
+   .. py:method:: validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor
+
+
+   .. py:method:: test_step(self, batch: torch.Tensor, batch_idx: int, dataloader_idx: int) -> torch.Tensor
+
+
+   .. py:method:: on_train_epoch_start(self) -> None
+
+
+   .. py:method:: on_epoch_end(self) -> None
+
+
+   .. py:method:: _shared_eval(self, batch: torch.Tensor, dataloader_idx: int, prefix: str) -> torch.Tensor
+
+      Calculate the loss for a batch.
+
+      Args:
+          batch (torch.Tensor): batch data.
+          batch_idx (int): batch id.
+          prefix (str): prefix for logging.
+
+      Returns:
+          torch.Tensor: calculated loss.
+
+
+
+.. py:class:: BaseDecoder(learning_rate, *args, **kwargs)
+
+   Bases: :py:obj:`pytorch_lightning.LightningModule`
+
+   .. py:method:: configure_optimizers(self) -> torch.optim.Adam
+
+
+   .. py:method:: training_step(self, batch: Dict[str, torch.Tensor], batch_idx: int) -> torch.Tensor
+
+
+   .. py:method:: validation_step(self, batch: torch.Tensor, batch_idx: int) -> torch.Tensor
+
+
+   .. py:method:: test_step(self, batch: torch.Tensor, batch_idx: int, dataloader_idx: int) -> torch.Tensor
+
+
+   .. py:method:: _shared_eval(self, batch: torch.Tensor, batch_idx: int, prefix: str) -> torch.Tensor
+
+      Calculate the loss for a batch.
+
+      Args:
+          batch (torch.Tensor): batch data.
+          batch_idx (int): batch id.
+          prefix (str): prefix for logging.
+
+      Returns:
+          torch.Tensor: calculated loss.
+
+
+
+.. py:class:: FCNDecoder(input_size: int, output_size: int, hidden_layers: int = 2, learning_rate: float = 0.001)
+
+   Bases: :py:obj:`BaseDecoder`
+
+   .. py:method:: forward(self, x)
+
+
+
+.. py:class:: SphericalDecoder(n_ti: int, n_te: int, linear_layer_input_size: int, linear_layer_output_size: int, n_shells: List[int], L: List[int], learning_rate: float = 0.001)
+
+   Bases: :py:obj:`BaseDecoder`
+
+   .. py:method:: forward(self, x: Dict[int, torch.Tensor]) -> torch.Tensor
+
+
+
+.. py:class:: DelimitDecoder(linear_layer_input_size: int, linear_layer_output_size: int, gradients_file_path: str, n_shells: List[int], L: List[int], kernel_sizes: List[int] = [5, 5], lb_lambda: float = 0.006, angular_distance: float = 0, learning_rate: float = 0.001)
+
+   Bases: :py:obj:`BaseDecoder`
+
+   .. py:method:: forward(self, x: torch.Tensor)
+
+
+

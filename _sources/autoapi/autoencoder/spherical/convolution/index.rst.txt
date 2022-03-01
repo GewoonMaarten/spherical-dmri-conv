@@ -1,0 +1,53 @@
+:py:mod:`autoencoder.spherical.convolution`
+===========================================
+
+.. py:module:: autoencoder.spherical.convolution
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.spherical.convolution.QuadraticNonLinearity
+   autoencoder.spherical.convolution.S2Convolution
+   autoencoder.spherical.convolution.SO3Convolution
+
+
+
+
+.. py:class:: QuadraticNonLinearity(l_in, l_out, symmetric: bool = True)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   .. py:method:: forward(self, x: Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]) -> Tuple[Dict[int, torch.Tensor], torch.Tensor]
+
+
+   .. py:method:: _extract_features(self, rh_n: Dict[int, torch.Tensor], feats: Optional[torch.Tensor]) -> torch.Tensor
+
+      Extract rotation invariant features.
+
+      Args:
+          rh_n (dict[int, torch.Tensor]): result from the quadratic non-linearity.
+
+
+
+.. py:class:: S2Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   .. py:method:: forward(self, x: Dict[int, torch.Tensor]) -> Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]
+
+
+
+.. py:class:: SO3Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   .. py:method:: forward(self, x: Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]) -> Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]
+
+
+

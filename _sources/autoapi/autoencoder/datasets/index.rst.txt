@@ -1,0 +1,104 @@
+:py:mod:`autoencoder.datasets`
+==============================
+
+.. py:module:: autoencoder.datasets
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.datasets.Transformer
+   autoencoder.datasets.DelimitTransformer
+   autoencoder.datasets.SphericalTransformer
+   autoencoder.datasets.DiffusionMRIDataset
+   autoencoder.datasets.MRIDataModule
+
+
+
+
+.. py:class:: Transformer
+
+   Bases: :py:obj:`abc.ABC`, :py:obj:`object`
+
+   Helper class that provides a standard way to create an ABC using
+   inheritance.
+
+   .. py:method:: pre_compute(self, **kwargs)
+      :abstractmethod:
+
+
+
+.. py:class:: DelimitTransformer
+
+   Bases: :py:obj:`Transformer`
+
+   Helper class that provides a standard way to create an ABC using
+   inheritance.
+
+   .. py:method:: pre_compute(self, **kwargs)
+
+
+   .. py:method:: __call__(self, **kwargs)
+
+
+
+.. py:class:: SphericalTransformer(l_max: int = 0, symmetric: bool = True, inversion_n_iters: int = 1000)
+
+   Bases: :py:obj:`Transformer`
+
+   Helper class that provides a standard way to create an ABC using
+   inheritance.
+
+   .. py:method:: pre_compute(self, **kwargs)
+
+
+   .. py:method:: __call__(self, **kwargs)
+
+
+
+.. py:class:: DiffusionMRIDataset(parameters_file_path: pathlib.Path, data_file_path: pathlib.Path, subject_list, tissue: str, include_parameters: List[int] = None, exclude_parameters: List[int] = None, batch_size: int = 1, return_target: bool = False, transform: Union[SphericalTransformer, DelimitTransformer] = None)
+
+   Bases: :py:obj:`torch.utils.data.Dataset`
+
+   .. py:attribute:: tissues
+      :annotation: = ['wb', 'gm', 'wm', 'csf']
+
+      
+
+   .. py:method:: get_subject_id_by_batch_id(self, batch_id: int) -> int
+
+
+   .. py:method:: get_metadata_by_subject_id(self, subject_id: int)
+
+
+   .. py:method:: __len__(self)
+
+
+   .. py:method:: __getitem__(self, index)
+
+      Generates one sample of data
+
+
+
+.. py:class:: MRIDataModule(parameters_file_path: str, data_file_path: str, train_subject_ids: List[int], validate_subject_ids: List[int], include_parameters: str = None, exclude_parameters: str = None, return_target: bool = False, transform: Union[SphericalTransformer, DelimitTransformer] = None, batch_size: int = 0, num_workers: int = 0)
+
+   Bases: :py:obj:`pytorch_lightning.LightningDataModule`
+
+   .. py:method:: setup(self, stage: Optional[str]) -> None
+
+
+   .. py:method:: train_dataloader(self) -> torch.utils.data.DataLoader
+
+
+   .. py:method:: val_dataloader(self) -> torch.utils.data.DataLoader
+
+
+   .. py:method:: test_dataloader(self) -> torch.utils.data.DataLoader
+
+
+

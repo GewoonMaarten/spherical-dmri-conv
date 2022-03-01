@@ -1,0 +1,170 @@
+:py:mod:`autoencoder.logger`
+============================
+
+.. py:module:: autoencoder.logger
+
+.. autoapi-nested-parse::
+
+   Logging levels:
+   CRITICAL    50
+   ERROR       40
+   WARNING     30
+   INFO        20
+   DEBUG       10
+   NOTSET      0
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.logger.BraceString
+   autoencoder.logger.StyleAdapter
+   autoencoder.logger.ColorFormatter
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.logger.get_logger
+   autoencoder.logger.set_log_level
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.logger.LOGGER_NAME
+   autoencoder.logger.FORMATTER
+   autoencoder.logger.logger
+
+
+.. py:data:: LOGGER_NAME
+   :annotation: = MUDI
+
+   
+
+.. py:data:: FORMATTER
+   :annotation: = %(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)
+
+   
+
+.. py:class:: BraceString
+
+   Bases: :py:obj:`str`
+
+   str(object='') -> str
+   str(bytes_or_buffer[, encoding[, errors]]) -> str
+
+   Create a new string object from the given object. If encoding or
+   errors is specified, then the object must expose a data buffer
+   that will be decoded using the given encoding and error handler.
+   Otherwise, returns the result of object.__str__() (if defined)
+   or repr(object).
+   encoding defaults to sys.getdefaultencoding().
+   errors defaults to 'strict'.
+
+   .. py:method:: __mod__(self, other)
+
+      Return self%value.
+
+
+   .. py:method:: __str__(self)
+
+      Return str(self).
+
+
+
+.. py:class:: StyleAdapter(logger, extra=None)
+
+   Bases: :py:obj:`logging.LoggerAdapter`
+
+   An adapter for loggers which makes it easier to specify contextual
+   information in logging output.
+
+   .. py:method:: process(self, msg, kwargs)
+
+      Process the logging message and keyword arguments passed in to
+      a logging call to insert contextual information. You can either
+      manipulate the message itself, the keyword args or both. Return
+      the message and kwargs modified (or not) to suit your needs.
+
+      Normally, you'll only need to override this one method in a
+      LoggerAdapter subclass for your specific needs.
+
+
+
+.. py:class:: ColorFormatter(fmt=None, datefmt=None, style='%', validate=True, *, defaults=None)
+
+   Bases: :py:obj:`logging.Formatter`
+
+   Logging Formatter to add colors and count warning / errors
+
+   .. py:attribute:: grey
+      :annotation: = [38;21m
+
+      
+
+   .. py:attribute:: yellow
+      :annotation: = [33;21m
+
+      
+
+   .. py:attribute:: red
+      :annotation: = [31;21m
+
+      
+
+   .. py:attribute:: bold_red
+      :annotation: = [31;1m
+
+      
+
+   .. py:attribute:: reset
+      :annotation: = [0m
+
+      
+
+   .. py:attribute:: FORMATS
+      
+
+      
+
+   .. py:method:: format(self, record: logging.LogRecord) -> str
+
+      Format the specified record as text.
+
+      The record's attribute dictionary is used as the operand to a
+      string formatting operation which yields the returned string.
+      Before formatting the dictionary, a couple of preparatory steps
+      are carried out. The message attribute of the record is computed
+      using LogRecord.getMessage(). If the formatting string uses the
+      time (as determined by a call to usesTime(), formatTime() is
+      called to format the event time. If there is exception information,
+      it is formatted using formatException() and appended to the message.
+
+
+
+.. py:function:: get_logger() -> None
+
+   Create a logger with a stream handler and a file handler
+
+
+.. py:function:: set_log_level(log_level: int) -> None
+
+
+.. py:data:: logger
+   
+
+   
+

@@ -48,7 +48,7 @@ trainer:
   benchmark: false
   deterministic: true
   reload_dataloaders_every_n_epochs: 0
-  reload_dataloaders_every_epoch: false
+  reload_dataloaders_every_epoch: true
   auto_lr_find: false
   replace_sampler_ddp: true
   detect_anomaly: false

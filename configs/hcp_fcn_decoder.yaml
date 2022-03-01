@@ -17,8 +17,9 @@ model:
 data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
-    include_parameters: data/HCP-60-random-equal-b.txt
+    include_parameters: data/HCP-60-random-b1000-b2000.txt
     return_target: True
 tags:
   data: HCP
-  input_size: "60"
+  input_size: "30"
+  run_group: "FCN: regularisation"

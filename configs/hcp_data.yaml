@@ -11,5 +11,5 @@ data:
     validate_subject_ids:
       - 103010
       - 146836
-    batch_size: 256
+    batch_size: 512
     num_workers: 0

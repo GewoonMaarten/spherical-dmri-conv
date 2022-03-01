@@ -3,6 +3,7 @@ trainer:
     - class_path: pytorch_lightning.callbacks.EarlyStopping
       init_args:
         monitor: "val_loss"
+        patience: 3
     - class_path: pytorch_lightning.callbacks.ModelCheckpoint
       init_args:
         monitor: "val_loss"
@@ -16,5 +17,9 @@ model:
 data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
-    include_parameters: ./data/mudi_include_latent.txt
+    include_parameters: data/MUDI-500-random-no-duplicates_features_1.txt
     return_target: True
+tags:
+  data: MUDI
+  input_size: "500"
+  run_group: "FCN: random samples 1"

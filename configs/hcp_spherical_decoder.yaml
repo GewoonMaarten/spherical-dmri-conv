@@ -1,9 +1,9 @@
 trainer:
   callbacks:
-    - class_path: pytorch_lightning.callbacks.EarlyStopping
-      init_args:
-        monitor: "val_loss"
-        patience: 5
+    # - class_path: pytorch_lightning.callbacks.EarlyStopping
+    #   init_args:
+    #     monitor: "val_loss"
+    #     patience: 5
     - class_path: pytorch_lightning.callbacks.ModelCheckpoint
       init_args:
         monitor: "val_loss"
@@ -12,26 +12,26 @@ model:
   init_args:
     n_ti: 1
     n_te: 1
-    linear_layer_input_size: 41
+    linear_layer_input_size: 270
     linear_layer_output_size: 288
     n_shells:
+      - 2
       - 3
-      - 8
-      - 16
+      - 3
     L:
+      - 6
       - 4
       - 2
-      - 0
     learning_rate: 0.0001
 data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
-    include_parameters: data/HCP-60-random-equal-b.txt
+    include_parameters: data/HCP-60-random-b1000-b2000.txt
     return_target: True
     transform:
       class_path: autoencoder.datasets.HCPSphericalTransformer
       init_args:
-        l_max: 4
+        l_max: 6
         symmetric: true
         inversion_n_iters: 1000
 tags:

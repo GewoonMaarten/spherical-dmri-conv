@@ -28,9 +28,10 @@ author = "Maarten de Klerk"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "autoapi.extension", "sphinx.ext.napoleon"]
+extensions = ["sphinx.ext.autodoc", "autoapi.extension", "sphinx.ext.napoleon", "sphinxcontrib.bibtex"]
 
 autosummary_generate = True
+
 autoapi_type = "python"
 autoapi_dirs = ["../../src"]
 autoapi_options = [
@@ -46,6 +47,9 @@ autoapi_python_class_content = "init"
 
 autodoc_typehints = "description"
 autodoc_class_signature = "separated"
+
+bibtex_bibfiles = ["refs.bib"]
+bibtex_default_style = "unsrt"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

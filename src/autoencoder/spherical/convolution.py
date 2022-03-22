@@ -7,6 +7,7 @@ import math
 
 class QuadraticNonLinearity(torch.nn.Module):
     def __init__(self, l_in, l_out, symmetric: bool = True) -> None:
+        """Special non-linearity function for data in spectral domain."""
         super(QuadraticNonLinearity, self).__init__()
 
         self.register_buffer("_l_in", torch.tensor(l_in))
@@ -78,7 +79,7 @@ class QuadraticNonLinearity(torch.nn.Module):
             feats_new.append(feats)
 
         for l in range(0, int(self._l_out + 1), int(self._symmetric)):
-            n_l = 8 * (math.pi ** 2) / (2 * l + 1)
+            n_l = 8 * (math.pi**2) / (2 * l + 1)
 
             feats_l = torch.flatten(torch.sum(torch.pow(rh_n[l], 2), (5, 4)), start_dim=1)
             feats_new.append(n_l * feats_l)

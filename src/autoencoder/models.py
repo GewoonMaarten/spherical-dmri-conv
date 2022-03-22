@@ -1,18 +1,13 @@
-import math
 from collections import OrderedDict
 from typing import Dict, List, Tuple
 
-import h5py
 import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from pytorch_lightning.profiler import PassThroughProfiler
 from pytorch_lightning.utilities.cli import MODEL_REGISTRY
 from torch import nn
 
-from autoencoder.delimit.convolution import LocalSphericalConvolution
-from autoencoder.delimit.transform import SH2Signal, Signal2SH
 from autoencoder.logger import logger
 from autoencoder.spherical.convolution import QuadraticNonLinearity, S2Convolution, SO3Convolution
 
@@ -424,89 +419,4 @@ class SphericalDecoder(BaseDecoder):
         # x, y = self.so3_conv_2((x, y))
         # _, y = self.so3_non_linear_2((x, y))
         x = self.linear(y)
-        return x
-
-
-@MODEL_REGISTRY
-class DelimitDecoder(BaseDecoder):
-    def __init__(
-        self,
-        linear_layer_input_size: int,
-        linear_layer_output_size: int,
-        gradients_file_path: str,
-        n_shells: List[int],
-        L: List[int],
-        kernel_sizes: List[int] = [5, 5],
-        lb_lambda: float = 0.006,
-        angular_distance: float = 0,
-        learning_rate: float = 1e-3,
-    ) -> None:
-        """Decoder based on DELIMIT ("DELIMIT PyTorch - An extension for Deep Learning in Diffusion Imaging" by Koppers and Merhof).
-
-        Paper: https://arxiv.org/pdf/1808.01517v1.pdf
-
-        The decoder consists of a signal to SH transform, one or multiple local spherical convolutions, sh to signal
-        transform, and a linear layer.
-
-        Args:
-            linear_layer_input_size (int): size of the input for the linear layer.
-            linear_layer_output_size (int): size of the output for the linear layer.
-            gradients (list[float]): gradient directions, shape: (N, 3).
-            n_shells (list[int]): number of b-value shells. List size should be the same as L.
-            L (list[int]): degree of spherical harmonic. List size should be the same as n_shells.
-            kernel_sizes (list[int], optional): list of number of sampled points around each sampled gradient point.
-                                                Each entry defines a new angular circle around the gradient.
-            lb_lambda (float, optional): laplace beltrami regularization during SH fit.
-            angular_distance (float, optional): defines the angle between the origin and every other point within the
-                                                kernel. If 0 then an angle will be calculated based on the provided
-                                                gradients.
-            learning_rate (float, optional): learning_rate.
-        """
-        super(DelimitDecoder, self).__init__(learning_rate)
-
-        self._gradients_file_path = gradients_file_path
-        self._kernel_sizes = kernel_sizes
-        self._linear_layer_input_size = linear_layer_input_size
-        self._linear_layer_output_size = linear_layer_output_size
-        self._n_shells = n_shells
-        self._L = L
-        self._lb_lambda = lb_lambda
-        self._angular_distance = angular_distance
-
-        with h5py.File(self._gradients_file_path, "r", libver="latest") as archive:
-            self._gradients = archive["parameters"][:, :3]
-            self._gradients = self._gradients[archive["parameters"][:, 3] != 0]
-
-        sh_layers = list()
-        sh_layers.append(
-            ("signal2sh", Signal2SH(gradients=self._gradients, sh_order=self._L[0], lb_lambda=self._lb_lambda))
-        )
-        for i in range(1, len(self._n_shells)):
-            sh_layers.append(
-                (
-                    f"lsc_{i}",
-                    LocalSphericalConvolution(
-                        shells_in=self._n_shells[i - 1],
-                        shells_out=self._n_shells[i],
-                        sh_order_in=self._L[i - 1],
-                        sh_order_out=self._L[i],
-                        lb_lambda=self._lb_lambda,
-                        sampled_gradients=self._gradients,
-                        kernel_sizes=self._kernel_sizes,
-                        angular_distance=self._angular_distance,
-                    ),
-                )
-            )
-            # As LocalSphericalConvolution is not rotation equivariant we can use any activation layer. We use tanh,
-            # the same as in the paper.
-            sh_layers.append((f"tan_h_{i}", torch.nn.Tanh()))
-        sh_layers.append(("sh2signal", SH2Signal(sh_order=self._L[-1], gradients=self._gradients)))
-
-        self.sh_layers = torch.nn.Sequential(OrderedDict(sh_layers))
-        self.linear = torch.nn.Linear(self._linear_layer_input_size, self._linear_layer_output_size)
-
-    def forward(self, x: torch.Tensor):
-        x = self.sh_layers(x)
-        x = torch.flatten(x, start_dim=1)
-        x = torch.linear(x)
         return x

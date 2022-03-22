@@ -25,6 +25,8 @@
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
     
   <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
 
@@ -32,6 +34,9 @@
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
+    <script src="_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
     <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <link rel="index" title="Index" href="#" />
     <link rel="search" title="Search" href="search.html" />
@@ -128,6 +133,15 @@
          </code>
         </a>
        </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="autoapi/autoencoder/spherical/transform/index.html">
+         <code class="xref py py-mod docutils literal notranslate">
+          <span class="pre">
+           autoencoder.spherical.transform
+          </span>
+         </code>
+        </a>
+       </li>
       </ul>
      </li>
      <li class="toctree-l3">
@@ -167,42 +181,6 @@
       </a>
      </li>
     </ul>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="autoapi/utils/index.html">
-     <code class="xref py py-mod docutils literal notranslate">
-      <span class="pre">
-       utils
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="autoapi/transform/index.html">
-     <code class="xref py py-mod docutils literal notranslate">
-      <span class="pre">
-       transform
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="autoapi/convolution/index.html">
-     <code class="xref py py-mod docutils literal notranslate">
-      <span class="pre">
-       convolution
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="autoapi/loss/index.html">
-     <code class="xref py py-mod docutils literal notranslate">
-      <span class="pre">
-       loss
-      </span>
-     </code>
-    </a>
    </li>
   </ul>
  </li>
@@ -395,6 +373,13 @@
         <li><a href="autoapi/autoencoder/spherical/harmonics/index.html#module-autoencoder.spherical.harmonics">module</a>
 </li>
       </ul></li>
+      <li>
+    autoencoder.spherical.transform
+
+      <ul>
+        <li><a href="autoapi/autoencoder/spherical/transform/index.html#module-autoencoder.spherical.transform">module</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -417,8 +402,6 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.Encoder.calc_mean_max">calc_mean_max() (autoencoder.models.Encoder method)</a>
 </li>
-      <li><a href="autoapi/utils/index.html#utils.cart2sph">cart2sph() (in module utils)</a>
-</li>
       <li><a href="autoapi/autoencoder/__main__/index.html#autoencoder.__main__.cli">cli (in module autoencoder.__main__)</a>
 </li>
       <li><a href="autoapi/autoencoder/logger/index.html#autoencoder.logger.ColorFormatter">ColorFormatter (class in autoencoder.logger)</a>
@@ -433,13 +416,6 @@
         <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.ConcreteAutoencoder.configure_optimizers">(autoencoder.models.ConcreteAutoencoder method)</a>
 </li>
       </ul></li>
-      <li>
-    convolution
-
-      <ul>
-        <li><a href="autoapi/convolution/index.html#module-convolution">module</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -447,8 +423,6 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.Decoder">Decoder (class in autoencoder.models)</a>
-</li>
-      <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.DelimitDecoder">DelimitDecoder (class in autoencoder.models)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -483,8 +457,6 @@
       <ul>
         <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.Decoder.forward">(autoencoder.models.Decoder method)</a>
 </li>
-        <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.DelimitDecoder.forward">(autoencoder.models.DelimitDecoder method)</a>
-</li>
         <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.Encoder.forward">(autoencoder.models.Encoder method)</a>
 </li>
         <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.FCNDecoder.forward">(autoencoder.models.FCNDecoder method)</a>
@@ -497,15 +469,9 @@
 </li>
         <li><a href="autoapi/autoencoder/spherical/convolution/index.html#autoencoder.spherical.convolution.SO3Convolution.forward">(autoencoder.spherical.convolution.SO3Convolution method)</a>
 </li>
-        <li><a href="autoapi/convolution/index.html#convolution.LocalSphericalConvolution.forward">(convolution.LocalSphericalConvolution method)</a>
+        <li><a href="autoapi/autoencoder/spherical/transform/index.html#autoencoder.spherical.transform.S2_to_Signal.forward">(autoencoder.spherical.transform.S2_to_Signal method)</a>
 </li>
-        <li><a href="autoapi/convolution/index.html#convolution.SphericalConvolution.forward">(convolution.SphericalConvolution method)</a>
-</li>
-        <li><a href="autoapi/loss/index.html#loss.MSESignal.forward">(loss.MSESignal method)</a>
-</li>
-        <li><a href="autoapi/transform/index.html#transform.SH2Signal.forward">(transform.SH2Signal method)</a>
-</li>
-        <li><a href="autoapi/transform/index.html#transform.Signal2SH.forward">(transform.Signal2SH method)</a>
+        <li><a href="autoapi/autoencoder/spherical/transform/index.html#autoencoder.spherical.transform.Signal_to_S2.forward">(autoencoder.spherical.transform.Signal_to_S2 method)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -518,12 +484,16 @@
 </li>
       <li><a href="autoapi/autoencoder/datasets/index.html#autoencoder.datasets.DiffusionMRIDataset.get_metadata_by_subject_id">get_metadata_by_subject_id() (autoencoder.datasets.DiffusionMRIDataset method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/autoencoder/datasets/index.html#autoencoder.datasets.DiffusionMRIDataset.get_subject_id_by_batch_id">get_subject_id_by_batch_id() (autoencoder.datasets.DiffusionMRIDataset method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/autoencoder/spherical/harmonics/index.html#autoencoder.spherical.harmonics.gram_schmidt_sh_inv">gram_schmidt_sh_inv() (in module autoencoder.spherical.harmonics)</a>
+
+      <ul>
+        <li><a href="autoapi/autoencoder/spherical/transform/index.html#autoencoder.spherical.transform.gram_schmidt_sh_inv">(in module autoencoder.spherical.transform)</a>
 </li>
+      </ul></li>
       <li><a href="autoapi/autoencoder/logger/index.html#autoencoder.logger.ColorFormatter.grey">grey (autoencoder.logger.ColorFormatter attribute)</a>
 </li>
   </ul></td>
@@ -533,6 +503,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.init_weights_orthogonal">init_weights_orthogonal() (in module autoencoder.models)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/autoencoder/spherical/transform/index.html#autoencoder.spherical.transform.Signal_to_S2.inversion_functions">inversion_functions (autoencoder.spherical.transform.Signal_to_S2 attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -550,21 +524,18 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.Encoder.latent_features">latent_features (autoencoder.models.Encoder property)</a>
 </li>
-      <li><a href="autoapi/convolution/index.html#convolution.LocalSphericalConvolution">LocalSphericalConvolution (class in convolution)</a>
+      <li><a href="autoapi/autoencoder/spherical/transform/index.html#autoencoder.spherical.transform.lms_laplace_beltrami_sh_inv">lms_laplace_beltrami_sh_inv() (in module autoencoder.spherical.transform)</a>
 </li>
-      <li><a href="autoapi/autoencoder/logger/index.html#autoencoder.logger.logger">logger (in module autoencoder.logger)</a>
+      <li><a href="autoapi/autoencoder/spherical/transform/index.html#autoencoder.spherical.transform.lms_sh_inv">lms_sh_inv() (in module autoencoder.spherical.transform)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/autoencoder/spherical/transform/index.html#autoencoder.spherical.transform.lms_tikhonov_sh_inv">lms_tikhonov_sh_inv() (in module autoencoder.spherical.transform)</a>
+</li>
+      <li><a href="autoapi/autoencoder/logger/index.html#autoencoder.logger.logger">logger (in module autoencoder.logger)</a>
+</li>
       <li><a href="autoapi/autoencoder/logger/index.html#autoencoder.logger.LOGGER_NAME">LOGGER_NAME (in module autoencoder.logger)</a>
 </li>
-      <li>
-    loss
-
-      <ul>
-        <li><a href="autoapi/loss/index.html#module-loss">module</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -591,20 +562,12 @@
 </li>
         <li><a href="autoapi/autoencoder/spherical/harmonics/index.html#module-autoencoder.spherical.harmonics">autoencoder.spherical.harmonics</a>
 </li>
-        <li><a href="autoapi/convolution/index.html#module-convolution">convolution</a>
-</li>
-        <li><a href="autoapi/loss/index.html#module-loss">loss</a>
-</li>
-        <li><a href="autoapi/transform/index.html#module-transform">transform</a>
-</li>
-        <li><a href="autoapi/utils/index.html#module-utils">utils</a>
+        <li><a href="autoapi/autoencoder/spherical/transform/index.html#module-autoencoder.spherical.transform">autoencoder.spherical.transform</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/autoencoder/datasets/index.html#autoencoder.datasets.MRIDataModule">MRIDataModule (class in autoencoder.datasets)</a>
-</li>
-      <li><a href="autoapi/loss/index.html#loss.MSESignal">MSESignal (class in loss)</a>
 </li>
       <li><a href="autoapi/autoencoder/__main__/index.html#autoencoder.__main__.MyLightningCLI">MyLightningCLI (class in autoencoder.__main__)</a>
 </li>
@@ -666,25 +629,21 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/autoencoder/spherical/transform/index.html#autoencoder.spherical.transform.S2_to_Signal">S2_to_Signal (class in autoencoder.spherical.transform)</a>
+</li>
       <li><a href="autoapi/autoencoder/spherical/convolution/index.html#autoencoder.spherical.convolution.S2Convolution">S2Convolution (class in autoencoder.spherical.convolution)</a>
 </li>
       <li><a href="autoapi/autoencoder/logger/index.html#autoencoder.logger.set_log_level">set_log_level() (in module autoencoder.logger)</a>
 </li>
       <li><a href="autoapi/autoencoder/datasets/index.html#autoencoder.datasets.MRIDataModule.setup">setup() (autoencoder.datasets.MRIDataModule method)</a>
 </li>
-      <li><a href="autoapi/transform/index.html#transform.SH2Signal">SH2Signal (class in transform)</a>
-</li>
       <li><a href="autoapi/autoencoder/spherical/harmonics/index.html#autoencoder.spherical.harmonics.sh_basis_real">sh_basis_real() (in module autoencoder.spherical.harmonics)</a>
-</li>
-      <li><a href="autoapi/transform/index.html#transform.Signal2SH">Signal2SH (class in transform)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/autoencoder/spherical/transform/index.html#autoencoder.spherical.transform.Signal_to_S2">Signal_to_S2 (class in autoencoder.spherical.transform)</a>
+</li>
       <li><a href="autoapi/autoencoder/spherical/convolution/index.html#autoencoder.spherical.convolution.SO3Convolution">SO3Convolution (class in autoencoder.spherical.convolution)</a>
-</li>
-      <li><a href="autoapi/utils/index.html#utils.sph2cart">sph2cart() (in module utils)</a>
-</li>
-      <li><a href="autoapi/convolution/index.html#convolution.SphericalConvolution">SphericalConvolution (class in convolution)</a>
 </li>
       <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.SphericalDecoder">SphericalDecoder (class in autoencoder.models)</a>
 </li>
@@ -708,21 +667,14 @@
       </ul></li>
       <li><a href="autoapi/autoencoder/datasets/index.html#autoencoder.datasets.DiffusionMRIDataset.tissues">tissues (autoencoder.datasets.DiffusionMRIDataset attribute)</a>
 </li>
-      <li><a href="autoapi/autoencoder/datasets/index.html#autoencoder.datasets.MRIDataModule.train_dataloader">train_dataloader() (autoencoder.datasets.MRIDataModule method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/autoencoder/datasets/index.html#autoencoder.datasets.MRIDataModule.train_dataloader">train_dataloader() (autoencoder.datasets.MRIDataModule method)</a>
+</li>
       <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.BaseDecoder.training_step">training_step() (autoencoder.models.BaseDecoder method)</a>
 
       <ul>
         <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.ConcreteAutoencoder.training_step">(autoencoder.models.ConcreteAutoencoder method)</a>
-</li>
-      </ul></li>
-      <li>
-    transform
-
-      <ul>
-        <li><a href="autoapi/transform/index.html#module-transform">module</a>
 </li>
       </ul></li>
       <li><a href="autoapi/autoencoder/datasets/index.html#autoencoder.datasets.Transformer">Transformer (class in autoencoder.datasets)</a>
@@ -735,15 +687,6 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/autoencoder/models/index.html#autoencoder.models.Encoder.update_temp">update_temp() (autoencoder.models.Encoder method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li>
-    utils
-
-      <ul>
-        <li><a href="autoapi/utils/index.html#module-utils">module</a>
-</li>
-      </ul></li>
   </ul></td>
 </tr></table>
 

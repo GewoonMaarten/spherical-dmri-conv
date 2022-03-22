@@ -1,0 +1,103 @@
+:py:mod:`autoencoder.spherical.transform`
+=========================================
+
+.. py:module:: autoencoder.spherical.transform
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.spherical.transform.Signal_to_S2
+   autoencoder.spherical.transform.S2_to_Signal
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.spherical.transform.lms_sh_inv
+   autoencoder.spherical.transform.lms_tikhonov_sh_inv
+   autoencoder.spherical.transform.lms_laplace_beltrami_sh_inv
+   autoencoder.spherical.transform.gram_schmidt_sh_inv
+
+
+
+.. py:function:: lms_sh_inv(sh, l_max, **kwargs)
+
+   Inversion of spherical harmonic basis with least-mean square
+
+   :param sh: real spherical harmonics bases of even degree (each column is a basis)
+   :param l_max: spherical harmonics degree
+
+   :returns: inverted spherical harmonic bases of even degree
+
+
+.. py:function:: lms_tikhonov_sh_inv(sh, l_max, **kwargs)
+
+   Inversion of spherical harmonic basis with least-mean square regularized with Tikhonov regularization term :cite:p:`hess2006q`
+
+   :param sh: real spherical harmonics bases of even degree (each column is a basis)
+   :param l_max: spherical harmonics degree
+   :param \*\*lambda_: regularization weight. Defaults to 0.006
+   :type \*\*lambda_: float
+
+   :returns: inverted spherical harmonic bases of even degree
+
+
+.. py:function:: lms_laplace_beltrami_sh_inv(sh, l_max, **kwargs)
+
+   Inversion of spherical harmonic basis with least-mean square regularized with Laplace-Beltrami regularization term :cite:p:`descoteaux2007regularized`
+
+   :param sh: real spherical harmonics bases of even degree (each column is a basis)
+   :param l_max: spherical harmonics degree
+   :param \*\*lambda_: regularization weight. Defaults to 0.006
+   :type \*\*lambda_: float
+
+   :returns: inverted spherical harmonic bases of even degree
+
+
+.. py:function:: gram_schmidt_sh_inv(sh, l_max, **kwargs)
+
+   Inversion of spherical harmonic basis with Gram-Schmidt orthonormalization process
+
+   :param sh: real spherical harmonics bases of even degree (each column is a basis)
+   :param l_max: spherical harmonics degree
+   :param \*\*n_iter: number of iterations for degree shuffling. Defaults to 1000
+   :type \*\*n_iter: int
+
+   :returns: inverted spherical harmonic bases of even degree
+
+
+.. py:class:: Signal_to_S2(gradients, sh_order_max, inversion_function, **kwargs)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   .. py:attribute:: inversion_functions
+      :annotation: :Dict[str, Callable]
+
+      Dictionary of functions to invert the real spherical harmonic basis of even degree.
+      Available functions are:
+           - "lms" = :func:`lms_sh_inv`
+           - "lms_tikhonov" = :func:`lms_tikhonov_sh_inv`
+           - "lms_laplace_beltrami" = :func:`lms_laplace_beltrami_sh_inv`
+           - "gram_schmidt" = :func:`gram_schmidt_sh_inv`
+
+   .. py:method:: forward(self, x)
+
+
+
+.. py:class:: S2_to_Signal(gradients, sh_order_max)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   .. py:method:: forward(self, x)
+
+
+

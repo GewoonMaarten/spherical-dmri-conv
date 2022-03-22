@@ -19,35 +19,41 @@ Classes
 
 
 
-.. py:class:: QuadraticNonLinearity(l_in, l_out, symmetric: bool = True)
+.. py:class:: QuadraticNonLinearity(l_in, l_out, symmetric = True)
 
    Bases: :py:obj:`torch.nn.Module`
 
-   .. py:method:: forward(self, x: Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]) -> Tuple[Dict[int, torch.Tensor], torch.Tensor]
+   Special non-linearity function for data in spectral domain.
+
+   .. py:method:: forward(self, x)
 
 
-   .. py:method:: _extract_features(self, rh_n: Dict[int, torch.Tensor], feats: Optional[torch.Tensor]) -> torch.Tensor
+   .. py:method:: _extract_features(self, rh_n, feats)
 
       Extract rotation invariant features.
 
-      Args:
-          rh_n (dict[int, torch.Tensor]): result from the quadratic non-linearity.
+      :param rh_n: result from the quadratic non-linearity.
+      :type rh_n: dict[int, torch.Tensor]
 
 
 
-.. py:class:: S2Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True)
-
-   Bases: :py:obj:`torch.nn.Module`
-
-   .. py:method:: forward(self, x: Dict[int, torch.Tensor]) -> Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]
-
-
-
-.. py:class:: SO3Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True)
+.. py:class:: S2Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric = True)
 
    Bases: :py:obj:`torch.nn.Module`
 
-   .. py:method:: forward(self, x: Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]) -> Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]
+   Convolution between spherical signals and kernels in spectral domain.
+
+   .. py:method:: forward(self, x)
+
+
+
+.. py:class:: SO3Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric = True)
+
+   Bases: :py:obj:`torch.nn.Module`
+
+   Convolution between SO(3) signals and kernels in spectral domain.
+
+   .. py:method:: forward(self, x)
 
 
 

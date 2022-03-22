@@ -25,6 +25,8 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
     
   <link rel="preload" as="script" href="../../../_static/js/index.be7d3bbb2ef33a8344ce.js">
 
@@ -32,6 +34,9 @@
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
     <script src="../../../_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -128,6 +133,15 @@
          </code>
         </a>
        </li>
+       <li class="toctree-l4">
+        <a class="reference internal" href="../spherical/transform/index.html">
+         <code class="xref py py-mod docutils literal notranslate">
+          <span class="pre">
+           autoencoder.spherical.transform
+          </span>
+         </code>
+        </a>
+       </li>
       </ul>
      </li>
      <li class="toctree-l3">
@@ -167,42 +181,6 @@
       </a>
      </li>
     </ul>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../utils/index.html">
-     <code class="xref py py-mod docutils literal notranslate">
-      <span class="pre">
-       utils
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../transform/index.html">
-     <code class="xref py py-mod docutils literal notranslate">
-      <span class="pre">
-       transform
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../convolution/index.html">
-     <code class="xref py py-mod docutils literal notranslate">
-      <span class="pre">
-       convolution
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../../loss/index.html">
-     <code class="xref py py-mod docutils literal notranslate">
-      <span class="pre">
-       loss
-      </span>
-     </code>
-    </a>
    </li>
   </ul>
  </li>
@@ -566,13 +544,13 @@ NOTSET      0</p>
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.logger.BraceString" title="autoencoder.logger.BraceString"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BraceString</span></code></a></p></td>
-<td><p>str(object='') -&gt; str</p></td>
+<td><p>Initialize self.  See help(type(self)) for accurate signature.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.logger.StyleAdapter" title="autoencoder.logger.StyleAdapter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StyleAdapter</span></code></a></p></td>
-<td><p>An adapter for loggers which makes it easier to specify contextual</p></td>
+<td><p>Initialize the adapter with a logger and a dict-like object which</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.logger.ColorFormatter" title="autoencoder.logger.ColorFormatter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColorFormatter</span></code></a></p></td>
-<td><p>Logging Formatter to add colors and count warning / errors</p></td>
+<td><p>Initialize the formatter with specified format strings.</p></td>
 </tr>
 </tbody>
 </table>
@@ -585,10 +563,10 @@ NOTSET      0</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.logger.get_logger" title="autoencoder.logger.get_logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_logger</span></code></a>() → None</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.logger.get_logger" title="autoencoder.logger.get_logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_logger</span></code></a>()</p></td>
 <td><p>Create a logger with a stream handler and a file handler</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.logger.set_log_level" title="autoencoder.logger.set_log_level"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_log_level</span></code></a>(log_level: int) → None</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.logger.set_log_level" title="autoencoder.logger.set_log_level"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_log_level</span></code></a>(log_level)</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -627,15 +605,7 @@ NOTSET      0</p>
 <dt class="sig sig-object py" id="autoencoder.logger.BraceString">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">BraceString</span></span><a class="headerlink" href="#autoencoder.logger.BraceString" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code></p>
-<p>str(object=’’) -&gt; str
-str(bytes_or_buffer[, encoding[, errors]]) -&gt; str</p>
-<p>Create a new string object from the given object. If encoding or
-errors is specified, then the object must expose a data buffer
-that will be decoded using the given encoding and error handler.
-Otherwise, returns the result of object.__str__() (if defined)
-or repr(object).
-encoding defaults to sys.getdefaultencoding().
-errors defaults to ‘strict’.</p>
+<p>Initialize self.  See help(type(self)) for accurate signature.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.logger.BraceString.__mod__">
 <span class="sig-name descname"><span class="pre">__mod__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.logger.BraceString.__mod__" title="Permalink to this definition">¶</a></dt>
@@ -654,8 +624,12 @@ errors defaults to ‘strict’.</p>
 <dt class="sig sig-object py" id="autoencoder.logger.StyleAdapter">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">StyleAdapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.logger.StyleAdapter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">logging.LoggerAdapter</span></code></p>
-<p>An adapter for loggers which makes it easier to specify contextual
-information in logging output.</p>
+<p>Initialize the adapter with a logger and a dict-like object which
+provides contextual information. This constructor signature allows
+easy stacking of LoggerAdapters, if so desired.</p>
+<p>You can effectively pass keyword arguments as shown in the
+following example:</p>
+<p>adapter = LoggerAdapter(someLogger, dict(p1=v1, p2=”v2”))</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.logger.StyleAdapter.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.logger.StyleAdapter.process" title="Permalink to this definition">¶</a></dt>
@@ -673,7 +647,17 @@ LoggerAdapter subclass for your specific needs.</p>
 <dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">ColorFormatter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datefmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'%'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">defaults</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.logger.ColorFormatter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">logging.Formatter</span></code></p>
-<p>Logging Formatter to add colors and count warning / errors</p>
+<p>Initialize the formatter with specified format strings.</p>
+<p>Initialize the formatter either with the specified format string, or a
+default as described above. Allow for specialized date formatting with
+the optional datefmt argument. If datefmt is omitted, you get an
+ISO8601-like (or RFC 3339-like) format.</p>
+<p>Use a style parameter of ‘%’, ‘{‘ or ‘$’ to specify that you want to
+use one of %-formatting, <code class="xref py py-meth docutils literal notranslate"><span class="pre">str.format()</span></code> (<code class="docutils literal notranslate"><span class="pre">{}</span></code>) formatting or
+<code class="xref py py-class docutils literal notranslate"><span class="pre">string.Template</span></code> formatting in your format string.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 3.2: </span>Added the <code class="docutils literal notranslate"><span class="pre">style</span></code> parameter.</p>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter.grey">
 <span class="sig-name descname"><span class="pre">grey</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">[38;21m</span></em><a class="headerlink" href="#autoencoder.logger.ColorFormatter.grey" title="Permalink to this definition">¶</a></dt>
@@ -706,7 +690,7 @@ LoggerAdapter subclass for your specific needs.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter.format">
-<span class="sig-name descname"><span class="pre">format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">record</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">logging.LogRecord</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#autoencoder.logger.ColorFormatter.format" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">record</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.logger.ColorFormatter.format" title="Permalink to this definition">¶</a></dt>
 <dd><p>Format the specified record as text.</p>
 <p>The record’s attribute dictionary is used as the operand to a
 string formatting operation which yields the returned string.
@@ -716,20 +700,41 @@ using LogRecord.getMessage(). If the formatting string uses the
 time (as determined by a call to usesTime(), formatTime() is
 called to format the event time. If there is exception information,
 it is formatted using formatException() and appended to the message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>record</strong> (<em>logging.LogRecord</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="autoencoder.logger.get_logger">
-<span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">get_logger</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#autoencoder.logger.get_logger" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">get_logger</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.logger.get_logger" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a logger with a stream handler and a file handler</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="autoencoder.logger.set_log_level">
-<span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">set_log_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#autoencoder.logger.set_log_level" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">set_log_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.logger.set_log_level" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log_level</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="autoencoder.logger.logger">

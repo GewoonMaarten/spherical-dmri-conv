@@ -63,16 +63,7 @@ Attributes
 
    Bases: :py:obj:`str`
 
-   str(object='') -> str
-   str(bytes_or_buffer[, encoding[, errors]]) -> str
-
-   Create a new string object from the given object. If encoding or
-   errors is specified, then the object must expose a data buffer
-   that will be decoded using the given encoding and error handler.
-   Otherwise, returns the result of object.__str__() (if defined)
-   or repr(object).
-   encoding defaults to sys.getdefaultencoding().
-   errors defaults to 'strict'.
+   Initialize self.  See help(type(self)) for accurate signature.
 
    .. py:method:: __mod__(self, other)
 
@@ -89,8 +80,14 @@ Attributes
 
    Bases: :py:obj:`logging.LoggerAdapter`
 
-   An adapter for loggers which makes it easier to specify contextual
-   information in logging output.
+   Initialize the adapter with a logger and a dict-like object which
+   provides contextual information. This constructor signature allows
+   easy stacking of LoggerAdapters, if so desired.
+
+   You can effectively pass keyword arguments as shown in the
+   following example:
+
+   adapter = LoggerAdapter(someLogger, dict(p1=v1, p2="v2"))
 
    .. py:method:: process(self, msg, kwargs)
 
@@ -108,7 +105,19 @@ Attributes
 
    Bases: :py:obj:`logging.Formatter`
 
-   Logging Formatter to add colors and count warning / errors
+   Initialize the formatter with specified format strings.
+
+   Initialize the formatter either with the specified format string, or a
+   default as described above. Allow for specialized date formatting with
+   the optional datefmt argument. If datefmt is omitted, you get an
+   ISO8601-like (or RFC 3339-like) format.
+
+   Use a style parameter of '%', '{' or '$' to specify that you want to
+   use one of %-formatting, :meth:`str.format` (``{}``) formatting or
+   :class:`string.Template` formatting in your format string.
+
+   .. versionchanged:: 3.2
+      Added the ``style`` parameter.
 
    .. py:attribute:: grey
       :annotation: = [38;21m
@@ -140,7 +149,7 @@ Attributes
 
       
 
-   .. py:method:: format(self, record: logging.LogRecord) -> str
+   .. py:method:: format(self, record)
 
       Format the specified record as text.
 
@@ -155,12 +164,12 @@ Attributes
 
 
 
-.. py:function:: get_logger() -> None
+.. py:function:: get_logger()
 
    Create a logger with a stream handler and a file handler
 
 
-.. py:function:: set_log_level(log_level: int) -> None
+.. py:function:: set_log_level(log_level)
 
 
 .. py:data:: logger

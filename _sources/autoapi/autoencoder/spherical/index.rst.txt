@@ -12,5 +12,6 @@ Submodules
 
    convolution/index.rst
    harmonics/index.rst
+   transform/index.rst
 
 

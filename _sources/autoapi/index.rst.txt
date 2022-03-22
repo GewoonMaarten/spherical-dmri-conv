@@ -7,9 +7,5 @@ This page contains auto-generated API reference documentation [#f1]_.
    :titlesonly:
 
    /autoapi/autoencoder/index
-   /autoapi/utils/index
-   /autoapi/transform/index
-   /autoapi/convolution/index
-   /autoapi/loss/index
 
 .. [#f1] Created with `sphinx-autoapi <https://github.com/readthedocs/sphinx-autoapi>`_

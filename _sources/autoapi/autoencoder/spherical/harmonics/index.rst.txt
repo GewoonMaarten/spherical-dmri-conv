@@ -18,28 +18,35 @@ Functions
 
 
 
-.. py:function:: sh_basis_real(cart_coord: torch.Tensor, L: int, symmetric: bool = True)
+.. py:function:: sh_basis_real(cart_coord, L, symmetric = True)
 
    Real spherical harmonic basis of even degree.
 
-   Arguments:
-       cart_coord (torch.Tensor): cartesian point coordinates
-       L (int): spherical harmonic degree
-       symmetric (bool): flag indicating whether to compute only spherical harmonics of even degree
-   Returns:
-       torch.Tensor: spherical harmonic bases (each column is a basis)
+   :param cart_coord: cartesian point coordinates
+   :type cart_coord: torch.Tensor
+   :param L: spherical harmonic degree
+   :type L: int
+   :param symmetric: flag indicating whether to compute only spherical harmonics of even degree
+   :type symmetric: bool
+
+   :returns: spherical harmonic bases (each column is a basis)
+   :rtype: torch.Tensor
 
 
-.. py:function:: gram_schmidt_sh_inv(Y: torch.Tensor, L: int, n_iters: int = 1000, symmetric: bool = True)
+.. py:function:: gram_schmidt_sh_inv(Y, L, n_iters = 1000, symmetric = True)
 
    Inversion of spherical harmonic basis with Gram-Schmidt orthonormalization process.
 
-   Arguments:
-       Y (torch.Tensor): Spherical harmonics, real or complex
-       L (int): spherical harmonic degree
-       n_iters (int): number of iterations for degree shuffling
-       symmetric (bool): flag indicating whether to compute only spherical harmonics of even degree
-   Returns:
-       torch.Tensor: inverted spherical harmonic bases
+   :param Y: Spherical harmonics, real or complex
+   :type Y: torch.Tensor
+   :param L: spherical harmonic degree
+   :type L: int
+   :param n_iters: number of iterations for degree shuffling
+   :type n_iters: int
+   :param symmetric: flag indicating whether to compute only spherical harmonics of even degree
+   :type symmetric: bool
+
+   :returns: inverted spherical harmonic bases
+   :rtype: torch.Tensor
 
 

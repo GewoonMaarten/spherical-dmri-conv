@@ -47,7 +47,7 @@ Classes
 
 
 
-.. py:class:: SphericalTransformer(l_max: int = 0, symmetric: bool = True, inversion_n_iters: int = 1000)
+.. py:class:: SphericalTransformer(l_max = 0, symmetric = True, inversion_n_iters = 1000)
 
    Bases: :py:obj:`Transformer`
 
@@ -61,19 +61,46 @@ Classes
 
 
 
-.. py:class:: DiffusionMRIDataset(parameters_file_path: pathlib.Path, data_file_path: pathlib.Path, subject_list, tissue: str, include_parameters: List[int] = None, exclude_parameters: List[int] = None, batch_size: int = 1, return_target: bool = False, transform: Union[SphericalTransformer, DelimitTransformer] = None)
+.. py:class:: DiffusionMRIDataset(parameters_file_path, data_file_path, subject_list, tissue, include_parameters = None, exclude_parameters = None, batch_size = 1, return_target = False, transform = None)
 
    Bases: :py:obj:`torch.utils.data.Dataset`
+
+   Diffusion MRI dataset. Loads voxel data from HDF5 file fast.
+
+   :param parameters_file_path: HDF5 file path that contains all parameters from the MRI data
+   :type parameters_file_path: Path
+   :param data_file_paths: list of HDF5 file paths containing voxel data
+   :type data_file_paths: List[Path]
+   :param tissue: The tissue to return. Can be the following values: `wb`, `gm`, `wm`, and `csf`.
+                  where:
+                      - `wb`  = Whole Brain
+                      - `cgm` = Grey Matter
+                      - `wm`  = White Matter
+                      - `csf` = Cerebral Spinal Fluid
+                  These tissue types should be created beforehand with MRTrix3 `5ttgen` tool.
+   :type tissue: str
+   :param include_parameters: parameters to *only* include in the dataset. Defaults to None.
+   :type include_parameters: List[int], optional
+   :param exclude_parameters: parameters to exclude from the dataset. Defaults to None.
+   :type exclude_parameters: List[int], optional
+   :param batch_size: batch size. Defaults to 0.
+   :type batch_size: int, optional
+   :param return_target: return target data with all parameters included. Useful for loss calculation
+                         when recreating the dataset from a subset of parameters. Defaults to False.
+   :type return_target: bool, optional
+   :param transform: Used to transform the data for models
+                     that require different data. Defaults to None.
+   :type transform: Union[SphericalTransformer, DelimitTransformer], optional
 
    .. py:attribute:: tissues
       :annotation: = ['wb', 'gm', 'wm', 'csf']
 
       
 
-   .. py:method:: get_subject_id_by_batch_id(self, batch_id: int) -> int
+   .. py:method:: get_subject_id_by_batch_id(self, batch_id)
 
 
-   .. py:method:: get_metadata_by_subject_id(self, subject_id: int)
+   .. py:method:: get_metadata_by_subject_id(self, subject_id)
 
 
    .. py:method:: __len__(self)
@@ -85,20 +112,20 @@ Classes
 
 
 
-.. py:class:: MRIDataModule(parameters_file_path: str, data_file_path: str, train_subject_ids: List[int], validate_subject_ids: List[int], include_parameters: str = None, exclude_parameters: str = None, return_target: bool = False, transform: Union[SphericalTransformer, DelimitTransformer] = None, batch_size: int = 0, num_workers: int = 0)
+.. py:class:: MRIDataModule(parameters_file_path, data_file_path, train_subject_ids, validate_subject_ids, include_parameters = None, exclude_parameters = None, return_target = False, transform = None, batch_size = 0, num_workers = 0)
 
    Bases: :py:obj:`pytorch_lightning.LightningDataModule`
 
-   .. py:method:: setup(self, stage: Optional[str]) -> None
+   .. py:method:: setup(self, stage)
 
 
-   .. py:method:: train_dataloader(self) -> torch.utils.data.DataLoader
+   .. py:method:: train_dataloader(self)
 
 
-   .. py:method:: val_dataloader(self) -> torch.utils.data.DataLoader
+   .. py:method:: val_dataloader(self)
 
 
-   .. py:method:: test_dataloader(self) -> torch.utils.data.DataLoader
+   .. py:method:: test_dataloader(self)
 
 
 

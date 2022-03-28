@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from typing import Dict, List, Tuple
 
+import h5py
 import numpy as np
 import pytorch_lightning as pl
 import torch
@@ -10,6 +11,7 @@ from torch import nn
 
 from autoencoder.logger import logger
 from autoencoder.spherical.convolution import QuadraticNonLinearity, S2Convolution, SO3Convolution
+from autoencoder.spherical.transform import S2_to_Signal, Signal_to_S2
 
 
 def init_weights_orthogonal(m):
@@ -420,3 +422,73 @@ class SphericalDecoder(BaseDecoder):
         # _, y = self.so3_non_linear_2((x, y))
         x = self.linear(y)
         return x
+
+
+@MODEL_REGISTRY
+class SphericalDecoder2(BaseDecoder):
+    def __init__(self, learning_rate: float = 1e-3):
+        super().__init__(learning_rate)
+
+        self.sh_degree = 6
+        self.n_shells = 3
+
+        with h5py.File("./data/prj_HCP_parameters.hdf5", "r", libver="latest") as archive:
+            parameters = archive["parameters"][...]
+
+        gradients = list()
+        for b in np.unique(parameters[:, 3]):
+            if b == 0:
+                continue
+            gradients.append(parameters[parameters[:, 3] == b, :3])
+        gradients = np.stack(gradients, axis=0)
+
+        self.signal_to_s2 = Signal_to_S2(gradients, self.sh_degree, "lms_tikhonov")
+        self.s2_to_signal = S2_to_Signal(gradients, self.sh_degree)
+
+        self.s2_conv = S2Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
+        self.s2_non_linear = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
+
+        self.so3_conv_1 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
+        self.so3_non_linear_1 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
+
+        self.so3_conv_2 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
+        self.so3_non_linear_2 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
+        
+        self.so3_conv_3 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
+        self.so3_non_linear_3 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
+
+        self.linear_decoder = Decoder(276, self.s2_to_signal.n_sh, 2)
+
+    def forward(self, x: torch.Tensor):
+        x = x.float()
+        x = self.signal_to_s2(x)
+
+        sh_coefficients = OrderedDict()
+        s = 0
+        for l in range(0, self.sh_degree + 1, 2):
+            o = 2 * l + 1
+            sh_coefficients[l] = x[:, None, None, :, torch.arange(s, s + o)]
+            s += o
+
+        x = self.s2_conv(sh_coefficients)
+        x = self.s2_non_linear(x)
+
+        x = self.so3_conv_1(x)
+        x = self.so3_non_linear_1(x)
+
+        x = self.so3_conv_2(x)
+        x = self.so3_non_linear_2(x)
+        
+        x = self.so3_conv_3(x)
+        x = self.so3_non_linear_3(x)
+
+        results = list()
+        for l in range(0, self.sh_degree + 1, 2):
+            results.append(torch.flatten(x[0][l], start_dim=4))
+        x = torch.cat(results, 4).squeeze()
+
+        x = self.linear_decoder(x)
+
+        x = self.s2_to_signal(x)
+
+        return torch.flatten(x, start_dim=1)

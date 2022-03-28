@@ -119,44 +119,51 @@ class Signal_to_S2(torch.nn.Module):
     def __init__(
         self,
         gradients: torch.Tensor,
-        sh_order_max: int,
+        sh_degree_max: int,
         inversion_function: Literal["lms", "lms_tikhonov", "lms_laplace_beltrami", "gram_schmidt"],
         **kwargs,
     ):
         super(Signal_to_S2, self).__init__()
+
+        self.sh_degree_max = sh_degree_max
 
         if inversion_function not in self.inversion_functions.keys():
             raise ValueError(
                 f"inversion_function '{inversion_function}' unknown, inversion_function has to be one of {*self.inversion_functions,}"
             )
 
-        m, n = sph_harm_ind_list(sh_order_max)
-        n_sph = np.sum([2 * l + 1 for l in range(0, sh_order_max + 1, 2)])
+        m, n = sph_harm_ind_list(self.sh_degree_max)
         n_shells = gradients.shape[0]
 
-        self.Y_inv = np.zeros((n_shells, n_sph, gradients.shape[1]))
+        self.Y_inv = np.zeros((n_shells, self.n_sh, gradients.shape[1]))
         for sh_idx in range(n_shells):
             x, y, z = gradients[sh_idx, :, 0], gradients[sh_idx, :, 1], gradients[sh_idx, :, 2]
             _, theta, phi = cart2sphere(x, y, z)
             Y_gs = real_sh_descoteaux_from_index(m, n, theta[:, None], phi[:, None])
-            self.Y_inv[sh_idx, :, :] = self.inversion_functions[inversion_function](Y_gs, sh_order_max, **kwargs)
+            self.Y_inv[sh_idx, :, :] = self.inversion_functions[inversion_function](Y_gs, self.sh_degree_max, **kwargs)
 
         self.Y_inv = torch.from_numpy(self.Y_inv).float()
         self.Y_inv = torch.nn.Parameter(self.Y_inv, requires_grad=False)
+
+    @property
+    def n_sh(self):
+        """Number of spherical harmonic coefficients"""
+        return np.sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
 
     def forward(self, x: torch.Tensor):
         return torch.einsum("npc,clp->ncl", x, self.Y_inv)
 
 
 class S2_to_Signal(torch.nn.Module):
-    def __init__(self, gradients: torch.Tensor, sh_order_max: int):
+    def __init__(self, gradients: torch.Tensor, sh_degree_max: int):
         super(S2_to_Signal, self).__init__()
 
-        m, n = sph_harm_ind_list(sh_order_max)
-        n_sph = np.sum([2 * l + 1 for l in range(0, sh_order_max + 1, 2)])
+        self.sh_degree_max = sh_degree_max
+
+        m, n = sph_harm_ind_list(self.sh_degree_max)
         n_shells = gradients.shape[0]
 
-        self.Y_gs = np.zeros((n_shells, n_sph, gradients.shape[1]))
+        self.Y_gs = np.zeros((n_shells, self.n_sh, gradients.shape[1]))
         for sh_idx in range(n_shells):
             x, y, z = gradients[sh_idx, :, 0], gradients[sh_idx, :, 1], gradients[sh_idx, :, 2]
             _, theta, phi = cart2sphere(x, y, z)
@@ -164,6 +171,11 @@ class S2_to_Signal(torch.nn.Module):
 
         self.Y_gs = torch.from_numpy(self.Y_gs).float()
         self.Y_gs = torch.nn.Parameter(self.Y_gs, requires_grad=False)
+
+    @property
+    def n_sh(self):
+        """Number of spherical harmonic coefficients"""
+        return np.sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
 
     def forward(self, x: torch.Tensor):
         return torch.einsum("ncl,clp->npc", x, self.Y_gs)

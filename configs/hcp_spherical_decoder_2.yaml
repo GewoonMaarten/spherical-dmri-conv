@@ -1,0 +1,27 @@
+trainer:
+  callbacks:
+    # - class_path: pytorch_lightning.callbacks.EarlyStopping
+    #   init_args:
+    #     monitor: "val_loss"
+    #     patience: 5
+    - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+      init_args:
+        monitor: "val_loss"
+model:
+  class_path: autoencoder.models.SphericalDecoder2
+  init_args:
+    learning_rate: 0.0001
+data:
+  class_path: autoencoder.datasets.MRIDataModule
+  init_args:
+    include_parameters: data/HCP-120-95803402858e47e8acdf6c86a068f0e8.txt
+    return_target: True
+    transform:
+      class_path: autoencoder.datasets.SphericalTransformer
+      init_args:
+        l_max: 6
+        symmetric: true
+        inversion_n_iters: 1000
+tags:
+  data: HCP
+  input_size: "60"

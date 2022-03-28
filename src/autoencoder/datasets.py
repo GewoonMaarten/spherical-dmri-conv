@@ -22,60 +22,6 @@ class Transformer(ABC, object):
         pass
 
 
-class DelimitTransformer(Transformer):
-    def pre_compute(self, **kwargs):
-        self._parameters = kwargs["parameters"]
-
-    def __call__(self, **kwargs):
-        data = kwargs["data"]
-        scheme = kwargs["scheme"]
-
-        b0_filter = scheme[:, 3] != 0.0
-
-        scheme = scheme[b0_filter]
-        data = data[b0_filter]
-
-        b_s, b_counts = np.unique(scheme[:, 3], return_counts=True)
-        ti_s = list()
-        te_s = list()
-
-        b_n = b_s.shape[0]
-        ti_n = 1
-        te_n = 1
-
-        max_gradients = b_counts[0]
-
-        if scheme.shape[1] > 4:
-            ti_s = np.unique(scheme[:, 4])
-            te_s = np.unique(scheme[:, 5])
-            ti_n = ti_s.shape[0]
-            te_n = te_s.shape[0]
-
-            gradient_filter = (scheme[:, 4] == scheme[:, 4][0]) & (scheme[:, 5] == scheme[:, 5][0])
-            max_gradients = np.max([data[(scheme[:, 3] == b) & gradient_filter].shape[0] for b in b_s])
-
-        new_data = torch.zeros(ti_n, te_n, b_n * max_gradients, 1, 1, 1)
-        for (ti_idx, ti), (te_idx, te), (b_idx, b) in itertools.product(
-            enumerate(ti_s),
-            enumerate(te_s),
-            enumerate(b_s),
-        ):
-            filter_scheme = scheme[:, 3] == b
-            if scheme.shape[1] > 4:
-                filter_scheme = filter_scheme & (scheme[:, 4] == ti) & (scheme[:, 5] == te)
-
-            if not np.any(filter_scheme):
-                continue
-
-            data_filtered = torch.from_numpy(data[filter_scheme])
-            n_data_gradients = data_filtered.shape[0]
-            new_data[
-                ti_idx, te_idx, (b_idx * max_gradients) : (b_idx * max_gradients + n_data_gradients), 0, 0, 0
-            ] = data_filtered
-
-        return torch.flatten(new_data, start_dim=1, end_dim=3)
-
-
 class SphericalTransformer(Transformer):
     def __init__(self, l_max: int = 0, symmetric: bool = True, inversion_n_iters: int = 1000) -> None:
         self._l_max = l_max
@@ -87,7 +33,7 @@ class SphericalTransformer(Transformer):
 
         # Fit the spherical harmonics on the gradients.
         y = sh_basis_real(torch.from_numpy(self._parameters[:, :3]), self._l_max)
-        self._y_inv = gram_schmidt_sh_inv(y, self._l_max, n_iters=self._inversion_n_iters)
+        # self._y_inv = gram_schmidt_sh_inv(y, self._l_max, n_iters=self._inversion_n_iters)
 
         self._b_s = np.unique(self._parameters[:, 3])
         self._ti_s = np.unique(self._parameters[:, 4]) if self._parameters.shape[1] > 4 else np.array([1])
@@ -104,6 +50,8 @@ class SphericalTransformer(Transformer):
 
         self._filters = list()
         for (ti_idx, ti), (te_idx, te), b in itertools.product(enumerate(self._ti_s), enumerate(self._te_s), self._b_s):
+            if b == 0:
+                continue
             filter = self._parameters[:, 3] == b
             if self._parameters.shape[1] > 4:
                 filter = filter & (self._parameters[:, 4] == ti) & (self._parameters[:, 5] == te)
@@ -121,40 +69,43 @@ class SphericalTransformer(Transformer):
     def __call__(self, **kwargs):
         data = kwargs["data"]
 
-        sh_coefficients_b_idx = dict()
-        sh_coefficients = dict()
-        for l in range(0, self._l_max + 1, self._symmetric):
-            o = 2 * l + 1
-            sh_coefficients_b_idx[l] = 0
-            sh_coefficients[l] = torch.zeros((data.shape[0], self._ti_n, self._te_n, self._b_n, o))
+        grouped_data = np.empty((data.shape[0], 90, 3))
+        for idx, (_, _, _, _, _, filter) in enumerate(self._filters):
+            grouped_data[:, :, idx] = data[:, filter]
+        # sh_coefficients_b_idx = dict()
+        # sh_coefficients = dict()
+        # for l in range(0, self._l_max + 1, self._symmetric):
+        #     o = 2 * l + 1
+        #     sh_coefficients_b_idx[l] = 0
+        #     sh_coefficients[l] = torch.zeros((data.shape[0], self._ti_n, self._te_n, self._b_n, o))
 
-        prev_b = [self._b_s[0]]
-        for ti_idx, te_idx, b, l, l_size, filter in self._filters:
-            # If we've visited all b values, we reset the counter
-            if b in prev_b:
-                sh_coefficients_b_idx = {k: 0 for k in sh_coefficients_b_idx}
-                prev_b = [b]
-            else:
-                prev_b.append(b)
+        # prev_b = [self._b_s[0]]
+        # for ti_idx, te_idx, b, l, l_size, filter in self._filters:
+        #     # If we've visited all b values, we reset the counter
+        #     if b in prev_b:
+        #         sh_coefficients_b_idx = {k: 0 for k in sh_coefficients_b_idx}
+        #         prev_b = [b]
+        #     else:
+        #         prev_b.append(b)
 
-            data_filtered = torch.from_numpy(data[:, filter])
-            y_inv_filtered = self._y_inv[:l_size, filter]
+        #     data_filtered = torch.from_numpy(data[:, filter])
+        #     y_inv_filtered = self._y_inv[:l_size, filter]
 
-            sh_coefficient = torch.einsum("np,lp->nl", data_filtered, y_inv_filtered)
-            # print(sh_coefficient.shape, sh_coefficients[l].shape)
+        #     sh_coefficient = torch.einsum("np,lp->nl", data_filtered, y_inv_filtered)
+        #     # print(sh_coefficient.shape, sh_coefficients[l].shape)
 
-            # Extract even covariants.
-            s = 0
-            for l in range(0, l + 1, self._symmetric):
-                o = 2 * l + 1
-                sh_coefficients[l][:, ti_idx, te_idx, sh_coefficients_b_idx[l]] = sh_coefficient[
-                    :, torch.arange(s, s + o)
-                ]
+        #     # Extract even covariants.
+        #     s = 0
+        #     for l in range(0, l + 1, self._symmetric):
+        #         o = 2 * l + 1
+        #         sh_coefficients[l][:, ti_idx, te_idx, sh_coefficients_b_idx[l]] = sh_coefficient[
+        #             :, torch.arange(s, s + o)
+        #         ]
 
-                s += o
-                sh_coefficients_b_idx[l] += 1
+        #         s += o
+        #         sh_coefficients_b_idx[l] += 1
 
-        return sh_coefficients
+        return grouped_data
 
 
 class DiffusionMRIDataset(Dataset):
@@ -170,7 +121,7 @@ class DiffusionMRIDataset(Dataset):
         exclude_parameters: List[int] = None,
         batch_size: int = 1,
         return_target: bool = False,
-        transform: Union[SphericalTransformer, DelimitTransformer] = None,
+        transform: SphericalTransformer = None,
     ) -> None:
         """Diffusion MRI dataset. Loads voxel data from HDF5 file fast.
 
@@ -213,10 +164,10 @@ class DiffusionMRIDataset(Dataset):
         self._selected_parameters = np.arange(self._parameters.shape[0])
         if self._include_parameters is not None:
             self._selected_parameters = self._selected_parameters[self._include_parameters]
-            self._parameters = self._parameters[self._selected_parameters]
+            # self._parameters = self._parameters[self._selected_parameters]
         elif self._exclude_parameters is not None:
             self._selected_parameters = np.delete(self._selected_parameters, self._exclude_parameters)
-            self._parameters = self._parameters[self._selected_parameters]
+            # self._parameters = self._parameters[self._selected_parameters]
 
         if self._transform is not None:
             self._transform.pre_compute(parameters=self._parameters, batch_size=self._batch_size)
@@ -255,10 +206,13 @@ class DiffusionMRIDataset(Dataset):
             batch_end = min(batch_start + self._batch_size, self.dim)
 
             data = archive["data"][self.selection[batch_start:batch_end]]
-            data_filtered = data[:, self._selected_parameters]
+            data_filtered = np.zeros_like(data)
+            data_filtered[:, self._selected_parameters] = data[:, self._selected_parameters]
 
             if self._transform is not None:
                 data_filtered = self._transform(data=data_filtered, scheme=self._selected_parameters)
+                data = self._transform(data=data, scheme=self._selected_parameters)
+                data = torch.flatten(torch.from_numpy(data).float(), start_dim=1)
 
             if self._return_target:
                 return {"target": data, "sample": data_filtered}
@@ -285,7 +239,7 @@ class MRIDataModule(pl.LightningDataModule):
         include_parameters: str = None,
         exclude_parameters: str = None,
         return_target: bool = False,
-        transform: Union[SphericalTransformer, DelimitTransformer] = None,
+        transform: SphericalTransformer = None,
         batch_size: int = 0,
         num_workers: int = 0,
     ):

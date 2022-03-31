@@ -2,7 +2,11 @@ from typing import Callable, Dict, Literal
 
 import numpy as np
 import torch
-from dipy.reconst.shm import cart2sphere, real_sh_descoteaux_from_index, sph_harm_ind_list
+from dipy.reconst.shm import (
+    cart2sphere,
+    real_sh_descoteaux_from_index,
+    sph_harm_ind_list,
+)
 
 
 def lms_sh_inv(sh: np.ndarray, l_max: int, **kwargs) -> np.ndarray:
@@ -52,7 +56,7 @@ def lms_laplace_beltrami_sh_inv(sh: np.ndarray, l_max: int, **kwargs) -> np.ndar
     count = 0
     for l in range(0, l_max + 1, 2):
         for _ in range(-l, l + 1):
-            lb_reg[count, count] = l**2 * (l + 1) ** 2
+            lb_reg[count, count] = l ** 2 * (l + 1) ** 2
             count += 1
     return np.dot(np.linalg.inv(np.dot(sh.T, sh) + lambda_ * lb_reg), sh.T)
 
@@ -89,7 +93,9 @@ def gram_schmidt_sh_inv(sh: np.ndarray, l_max: int, **kwargs) -> np.ndarray:
             for j in range(0, i):
                 if np.sum(sh_inv[j, :] ** 2) > 1.0e-8:
                     sh_inv[i, :] -= (
-                        np.sum(sh_inv[i, :] * sh_inv[j, :]) / (np.sum(sh_inv[j, :] ** 2) + 1.0e-8) * sh_inv[j, :]
+                        np.sum(sh_inv[i, :] * sh_inv[j, :])
+                        / (np.sum(sh_inv[j, :] ** 2) + 1.0e-8)
+                        * sh_inv[j, :]
                     )
             sh_inv[i, :] /= np.sqrt(np.sum(sh_inv[i, :] ** 2))
         sh_inv_final += sh_inv[deorder, :]
@@ -120,9 +126,35 @@ class Signal_to_S2(torch.nn.Module):
         self,
         gradients: torch.Tensor,
         sh_degree_max: int,
-        inversion_function: Literal["lms", "lms_tikhonov", "lms_laplace_beltrami", "gram_schmidt"],
+        inversion_function: Literal[
+            "lms", "lms_tikhonov", "lms_laplace_beltrami", "gram_schmidt"
+        ],
         **kwargs,
     ):
+        """Computes the Spherical harmonic coefficients.
+
+        Args:
+            gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a, b, 3)``, where
+                ``a`` are the number of b values (shells) and ``b`` is the number of gradient directions. The vector is in
+                cartesian coordinates (xyz).
+            sh_degree_max: Maximum degree of Spherical Harmonics to fit.
+            inversion_function: name of the inversion function to apply (see :py:attr:`Signal_to_S2.inversion_functions`
+                for options).
+
+        Raises:
+            ValueError: raised when an unknown inversion function is given.
+
+        Example:
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 3
+
+            gradients = torch.rand((4, 90, 3))
+            data = torch.rand((512, 90, 4)) # dwi data with 90 gradient directions and 4 b-values
+            signal_to_s2 = Signal_to_S2(gradients, 4, "gram_schmidt")
+            signal_to_s2(data)
+        """
         super(Signal_to_S2, self).__init__()
 
         self.sh_degree_max = sh_degree_max
@@ -137,17 +169,22 @@ class Signal_to_S2(torch.nn.Module):
 
         self.Y_inv = np.zeros((n_shells, self.n_sh, gradients.shape[1]))
         for sh_idx in range(n_shells):
-            x, y, z = gradients[sh_idx, :, 0], gradients[sh_idx, :, 1], gradients[sh_idx, :, 2]
+            x, y, z = (
+                gradients[sh_idx, :, 0],
+                gradients[sh_idx, :, 1],
+                gradients[sh_idx, :, 2],
+            )
             _, theta, phi = cart2sphere(x, y, z)
             Y_gs = real_sh_descoteaux_from_index(m, n, theta[:, None], phi[:, None])
-            self.Y_inv[sh_idx, :, :] = self.inversion_functions[inversion_function](Y_gs, self.sh_degree_max, **kwargs)
+            self.Y_inv[sh_idx, :, :] = self.inversion_functions[inversion_function](
+                Y_gs, self.sh_degree_max, **kwargs
+            )
 
         self.Y_inv = torch.from_numpy(self.Y_inv).float()
         self.Y_inv = torch.nn.Parameter(self.Y_inv, requires_grad=False)
 
     @property
     def n_sh(self):
-        """Number of spherical harmonic coefficients"""
         return np.sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
 
     def forward(self, x: torch.Tensor):
@@ -156,6 +193,25 @@ class Signal_to_S2(torch.nn.Module):
 
 class S2_to_Signal(torch.nn.Module):
     def __init__(self, gradients: torch.Tensor, sh_degree_max: int):
+        """Computes the DWI from the spherical coefficients.
+
+        Args:
+            gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a,b,3)``, where
+                ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is in
+                cartesian coordinates (xyz).
+            sh_degree_max: Maximum degree of Spherical Harmonics to fit.
+
+        Example:
+
+        .. code-block:: python
+            :linenos:
+            :emphasize-lines: 3
+
+            gradients = torch.rand((4, 90, 3))
+            data = torch.rand((512, 4, 15)) # Spherical coefficients with L of degree 4 and 4 b-values
+            s2_to_signal = S2_to_Signal(gradients, 4)
+            s2_to_signal(data)
+        """
         super(S2_to_Signal, self).__init__()
 
         self.sh_degree_max = sh_degree_max
@@ -165,16 +221,21 @@ class S2_to_Signal(torch.nn.Module):
 
         self.Y_gs = np.zeros((n_shells, self.n_sh, gradients.shape[1]))
         for sh_idx in range(n_shells):
-            x, y, z = gradients[sh_idx, :, 0], gradients[sh_idx, :, 1], gradients[sh_idx, :, 2]
+            x, y, z = (
+                gradients[sh_idx, :, 0],
+                gradients[sh_idx, :, 1],
+                gradients[sh_idx, :, 2],
+            )
             _, theta, phi = cart2sphere(x, y, z)
-            self.Y_gs[sh_idx, :, :] = real_sh_descoteaux_from_index(m, n, theta[:, None], phi[:, None]).T
+            self.Y_gs[sh_idx, :, :] = real_sh_descoteaux_from_index(
+                m, n, theta[:, None], phi[:, None]
+            ).T
 
         self.Y_gs = torch.from_numpy(self.Y_gs).float()
         self.Y_gs = torch.nn.Parameter(self.Y_gs, requires_grad=False)
 
     @property
     def n_sh(self):
-        """Number of spherical harmonic coefficients"""
         return np.sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
 
     def forward(self, x: torch.Tensor):

@@ -131,7 +131,11 @@ class Signal_to_S2(torch.nn.Module):
         ],
         **kwargs,
     ):
-        """Computes the Spherical harmonic coefficients.
+        """Computes the Spherical harmonic coefficients, according to:
+
+        .. math::
+
+            \hat{s}^m_l = \int_{S^2} s(r) \overline{Y^m_l(r)} dr
 
         Args:
             gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a, b, 3)``, where
@@ -193,7 +197,11 @@ class Signal_to_S2(torch.nn.Module):
 
 class S2_to_Signal(torch.nn.Module):
     def __init__(self, gradients: torch.Tensor, sh_degree_max: int):
-        """Computes the DWI from the spherical coefficients.
+        """Computes the DWI from the spherical coefficients, according to:
+
+        .. math::
+
+            s(r) = \sum^{L_{max}}_{l=0} \sum^{m=l}_{m=-l} \hat{s}^m_l Y^m_l(r)
 
         Args:
             gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a,b,3)``, where

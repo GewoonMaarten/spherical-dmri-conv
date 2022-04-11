@@ -11,7 +11,7 @@ from torch import nn
 
 from autoencoder.logger import logger
 from autoencoder.spherical.convolution import QuadraticNonLinearity, S2Convolution, SO3Convolution
-from autoencoder.spherical.transform import S2_to_Signal, Signal_to_S2
+from autoencoder.spherical.transform import S2ToSignal, SignalToS2
 
 
 def init_weights_orthogonal(m):
@@ -442,8 +442,8 @@ class SphericalDecoder2(BaseDecoder):
             gradients.append(parameters[parameters[:, 3] == b, :3])
         gradients = np.stack(gradients, axis=0)
 
-        self.signal_to_s2 = Signal_to_S2(gradients, self.sh_degree, "lms_tikhonov")
-        self.s2_to_signal = S2_to_Signal(gradients, self.sh_degree)
+        self.signal_to_s2 = SignalToS2(gradients, self.sh_degree, "lms_tikhonov")
+        self.s2_to_signal = S2ToSignal(gradients, self.sh_degree)
 
         self.s2_conv = S2Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
         self.s2_non_linear = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
@@ -453,7 +453,7 @@ class SphericalDecoder2(BaseDecoder):
 
         self.so3_conv_2 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
         self.so3_non_linear_2 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
-        
+
         self.so3_conv_3 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
         self.so3_non_linear_3 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
 
@@ -478,7 +478,7 @@ class SphericalDecoder2(BaseDecoder):
 
         x = self.so3_conv_2(x)
         x = self.so3_non_linear_2(x)
-        
+
         x = self.so3_conv_3(x)
         x = self.so3_non_linear_3(x)
 

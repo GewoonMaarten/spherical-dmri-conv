@@ -9,7 +9,7 @@ from dipy.reconst.shm import (
 )
 
 
-class Signal_to_S2(torch.nn.Module):
+class SignalToS2(torch.nn.Module):
     def __init__(
         self,
         gradients: torch.Tensor,
@@ -42,10 +42,10 @@ class Signal_to_S2(torch.nn.Module):
 
             gradients = torch.rand((4, 90, 3))
             data = torch.rand((512, 90, 4)) # dwi data with 90 gradient directions and 4 b-values
-            signal_to_s2 = Signal_to_S2(gradients, 4, "gram_schmidt")
+            signal_to_s2 = SignalToS2(gradients, 4, "gram_schmidt")
             signal_to_s2(data)
         """
-        super(Signal_to_S2, self).__init__()
+        super(SignalToS2, self).__init__()
 
         self.inversion_functions: Dict[str, Callable] = {
             "lms": self.lms_sh_inv,
@@ -177,7 +177,7 @@ class Signal_to_S2(torch.nn.Module):
         return sh_inv_final
 
 
-class S2_to_Signal(torch.nn.Module):
+class S2ToSignal(torch.nn.Module):
     def __init__(self, gradients: torch.Tensor, sh_degree_max: int):
         """Computes the DWI from the spherical coefficients, according to:
 
@@ -199,10 +199,10 @@ class S2_to_Signal(torch.nn.Module):
 
             gradients = torch.rand((4, 90, 3))
             data = torch.rand((512, 4, 15)) # Spherical coefficients with L of degree 4 and 4 b-values
-            s2_to_signal = S2_to_Signal(gradients, 4)
+            s2_to_signal = S2ToSignal(gradients, 4)
             s2_to_signal(data)
         """
-        super(S2_to_Signal, self).__init__()
+        super(S2ToSignal, self).__init__()
 
         self.sh_degree_max = sh_degree_max
 

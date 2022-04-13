@@ -1,3 +1,5 @@
+:orphan:
+
 :py:mod:`autoencoder.__main__`
 ==============================
 
@@ -13,17 +15,8 @@ Classes
 .. autoapisummary::
 
    autoencoder.__main__.kwargs_append_action
-   autoencoder.__main__.MyLightningCLI
 
 
-
-
-Attributes
-~~~~~~~~~~
-
-.. autoapisummary::
-
-   autoencoder.__main__.cli
 
 
 .. py:class:: kwargs_append_action(option_strings, dest, nargs=None, const=None, default=None, type=None, choices=None, required=False, help=None, metavar=None)
@@ -32,20 +25,4 @@ Attributes
 
    argparse action to split an argument into KEY=VALUE form on append to a dictionary.
 
-   .. py:method:: __call__(self, parser, args, values, option_string=None)
-
-
-
-.. py:class:: MyLightningCLI
-
-   Bases: :py:obj:`pytorch_lightning.utilities.cli.LightningCLI`
-
-   .. py:method:: add_arguments_to_parser(self, parser)
-
-
-
-.. py:data:: cli
-   
-
-   
 

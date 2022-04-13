@@ -1,3 +1,5 @@
+:orphan:
+
 :py:mod:`autoencoder.spherical.transform`
 =========================================
 
@@ -12,92 +14,141 @@ Classes
 
 .. autoapisummary::
 
-   autoencoder.spherical.transform.Signal_to_S2
-   autoencoder.spherical.transform.S2_to_Signal
+   autoencoder.spherical.transform.SignalToS2
+   autoencoder.spherical.transform.S2ToSignal
+   autoencoder.spherical.transform.SO3ToSignal
 
 
 
-Functions
-~~~~~~~~~
 
-.. autoapisummary::
-
-   autoencoder.spherical.transform.lms_sh_inv
-   autoencoder.spherical.transform.lms_tikhonov_sh_inv
-   autoencoder.spherical.transform.lms_laplace_beltrami_sh_inv
-   autoencoder.spherical.transform.gram_schmidt_sh_inv
-
-
-
-.. py:function:: lms_sh_inv(sh, l_max, **kwargs)
-
-   Inversion of spherical harmonic basis with least-mean square
-
-   :param sh: real spherical harmonics bases of even degree (each column is a basis)
-   :param l_max: spherical harmonics degree
-
-   :returns: inverted spherical harmonic bases of even degree
-
-
-.. py:function:: lms_tikhonov_sh_inv(sh, l_max, **kwargs)
-
-   Inversion of spherical harmonic basis with least-mean square regularized with Tikhonov regularization term :cite:p:`hess2006q`
-
-   :param sh: real spherical harmonics bases of even degree (each column is a basis)
-   :param l_max: spherical harmonics degree
-   :param \*\*lambda_: regularization weight. Defaults to 0.006
-   :type \*\*lambda_: float
-
-   :returns: inverted spherical harmonic bases of even degree
-
-
-.. py:function:: lms_laplace_beltrami_sh_inv(sh, l_max, **kwargs)
-
-   Inversion of spherical harmonic basis with least-mean square regularized with Laplace-Beltrami regularization term :cite:p:`descoteaux2007regularized`
-
-   :param sh: real spherical harmonics bases of even degree (each column is a basis)
-   :param l_max: spherical harmonics degree
-   :param \*\*lambda_: regularization weight. Defaults to 0.006
-   :type \*\*lambda_: float
-
-   :returns: inverted spherical harmonic bases of even degree
-
-
-.. py:function:: gram_schmidt_sh_inv(sh, l_max, **kwargs)
-
-   Inversion of spherical harmonic basis with Gram-Schmidt orthonormalization process
-
-   :param sh: real spherical harmonics bases of even degree (each column is a basis)
-   :param l_max: spherical harmonics degree
-   :param \*\*n_iter: number of iterations for degree shuffling. Defaults to 1000
-   :type \*\*n_iter: int
-
-   :returns: inverted spherical harmonic bases of even degree
-
-
-.. py:class:: Signal_to_S2(gradients, sh_order_max, inversion_function, **kwargs)
+.. py:class:: SignalToS2(gradients, sh_degree_max, inversion_function, **kwargs)
 
    Bases: :py:obj:`torch.nn.Module`
 
-   .. py:attribute:: inversion_functions
-      :annotation: :Dict[str, Callable]
+   Computes the Spherical harmonic coefficients, according to:
 
-      Dictionary of functions to invert the real spherical harmonic basis of even degree.
-      Available functions are:
-           - "lms" = :func:`lms_sh_inv`
-           - "lms_tikhonov" = :func:`lms_tikhonov_sh_inv`
-           - "lms_laplace_beltrami" = :func:`lms_laplace_beltrami_sh_inv`
-           - "gram_schmidt" = :func:`gram_schmidt_sh_inv`
+   .. math::
 
-   .. py:method:: forward(self, x)
+       \hat{s}^m_l = \int_{S^2} s(r) \overline{Y^m_l(r)} dr
+
+   :param gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a, b, 3)``, where
+                     ``a`` are the number of b values (shells) and ``b`` is the number of gradient directions. The vector is in
+                     cartesian coordinates (xyz).
+   :param sh_degree_max: Maximum degree of Spherical Harmonics to fit.
+   :param inversion_function: name of the inversion function to apply (see :py:attr:`Signal_to_S2.inversion_functions`
+                              for options).
+
+   :raises ValueError: raised when an unknown inversion function is given.
+
+   Example:
+
+   .. code-block:: python
+       :linenos:
+       :emphasize-lines: 3
+
+       gradients = torch.rand((4, 90, 3))
+       data = torch.rand((512, 90, 4)) # dwi data with 90 gradient directions and 4 b-values
+       signal_to_s2 = SignalToS2(gradients, 4, "gram_schmidt")
+       signal_to_s2(data)
+
+   .. py:method:: lms_sh_inv(self, sh, l_max, **kwargs)
+
+      Inversion of spherical harmonic basis with least-mean square
+
+      :param sh: real spherical harmonics bases of even degree (each column is a basis)
+      :param l_max: spherical harmonics degree
+
+      :returns: inverted spherical harmonic bases of even degree
+
+
+   .. py:method:: lms_tikhonov_sh_inv(self, sh, l_max, **kwargs)
+
+      Inversion of spherical harmonic basis with least-mean square regularized with Tikhonov regularization term :cite:p:`hess2006q`
+
+      :param sh: real spherical harmonics bases of even degree (each column is a basis)
+      :param l_max: spherical harmonics degree
+      :param \*\*lambda_: regularization weight. Defaults to 0.006
+      :type \*\*lambda_: float
+
+      :returns: inverted spherical harmonic bases of even degree
+
+
+   .. py:method:: lms_laplace_beltrami_sh_inv(self, sh, l_max, **kwargs)
+
+      Inversion of spherical harmonic basis with least-mean square regularized with Laplace-Beltrami regularization term :cite:p:`descoteaux2007regularized`
+
+      :param sh: real spherical harmonics bases of even degree (each column is a basis)
+      :param l_max: spherical harmonics degree
+      :param \*\*lambda_: regularization weight. Defaults to 0.006
+      :type \*\*lambda_: float
+
+      :returns: inverted spherical harmonic bases of even degree
+
+
+   .. py:method:: gram_schmidt_sh_inv(self, sh, l_max, **kwargs)
+
+      Inversion of spherical harmonic basis with Gram-Schmidt orthonormalization process
+
+      :param sh: real spherical harmonics bases of even degree (each column is a basis)
+      :param l_max: spherical harmonics degree
+      :param \*\*n_iter: number of iterations for degree shuffling. Defaults to 1000
+      :type \*\*n_iter: int
+
+      :returns: inverted spherical harmonic bases of even degree
 
 
 
-.. py:class:: S2_to_Signal(gradients, sh_order_max)
+.. py:class:: S2ToSignal(gradients, sh_degree_max)
 
    Bases: :py:obj:`torch.nn.Module`
 
-   .. py:method:: forward(self, x)
+   Computes the DWI from the spherical coefficients, according to:
 
+   .. math::
+
+       s(r) = \sum^{L_{max}}_{l=0} \sum^{m=l}_{m=-l} \hat{s}^m_l Y^m_l(r)
+
+   :param gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a,b,3)``, where
+                     ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is in
+                     cartesian coordinates (xyz).
+   :param sh_degree_max: Maximum degree of Spherical Harmonics to fit.
+
+   Example:
+
+   .. code-block:: python
+       :linenos:
+       :emphasize-lines: 3
+
+       gradients = torch.rand((4, 90, 3))
+       data = torch.rand((512, 4, 15)) # Spherical coefficients with L of degree 4 and 4 b-values
+       s2_to_signal = S2ToSignal(gradients, 4)
+       s2_to_signal(data)
+
+
+.. py:class:: SO3ToSignal(gradients, sh_degree_max)
+
+   Bases: :py:obj:`S2ToSignal`
+
+   Computes the DWI from the spherical coefficients, according to:
+
+   .. math::
+
+       s(r) = \sum^{L_{max}}_{l=0} \sum^{m=l}_{m=-l} \hat{s}^m_l Y^m_l(r)
+
+   :param gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a,b,3)``, where
+                     ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is in
+                     cartesian coordinates (xyz).
+   :param sh_degree_max: Maximum degree of Spherical Harmonics to fit.
+
+   Example:
+
+   .. code-block:: python
+       :linenos:
+       :emphasize-lines: 3
+
+       gradients = torch.rand((4, 90, 3))
+       data = torch.rand((512, 4, 15)) # Spherical coefficients with L of degree 4 and 4 b-values
+       s2_to_signal = S2ToSignal(gradients, 4)
+       s2_to_signal(data)
 
 

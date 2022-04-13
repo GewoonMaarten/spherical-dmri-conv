@@ -1,17 +1,8 @@
+:orphan:
+
 :py:mod:`autoencoder.spherical`
 ===============================
 
 .. py:module:: autoencoder.spherical
-
-
-Submodules
-----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 1
-
-   convolution/index.rst
-   harmonics/index.rst
-   transform/index.rst
 
 

@@ -1,3 +1,5 @@
+:orphan:
+
 :py:mod:`autoencoder.datasets`
 ==============================
 
@@ -13,10 +15,8 @@ Classes
 .. autoapisummary::
 
    autoencoder.datasets.Transformer
-   autoencoder.datasets.DelimitTransformer
    autoencoder.datasets.SphericalTransformer
    autoencoder.datasets.DiffusionMRIDataset
-   autoencoder.datasets.MRIDataModule
 
 
 
@@ -28,24 +28,6 @@ Classes
    Helper class that provides a standard way to create an ABC using
    inheritance.
 
-   .. py:method:: pre_compute(self, **kwargs)
-      :abstractmethod:
-
-
-
-.. py:class:: DelimitTransformer
-
-   Bases: :py:obj:`Transformer`
-
-   Helper class that provides a standard way to create an ABC using
-   inheritance.
-
-   .. py:method:: pre_compute(self, **kwargs)
-
-
-   .. py:method:: __call__(self, **kwargs)
-
-
 
 .. py:class:: SphericalTransformer(l_max = 0, symmetric = True, inversion_n_iters = 1000)
 
@@ -53,12 +35,6 @@ Classes
 
    Helper class that provides a standard way to create an ABC using
    inheritance.
-
-   .. py:method:: pre_compute(self, **kwargs)
-
-
-   .. py:method:: __call__(self, **kwargs)
-
 
 
 .. py:class:: DiffusionMRIDataset(parameters_file_path, data_file_path, subject_list, tissue, include_parameters = None, exclude_parameters = None, batch_size = 1, return_target = False, transform = None)
@@ -92,40 +68,9 @@ Classes
                      that require different data. Defaults to None.
    :type transform: Union[SphericalTransformer, DelimitTransformer], optional
 
-   .. py:attribute:: tissues
-      :annotation: = ['wb', 'gm', 'wm', 'csf']
-
-      
-
-   .. py:method:: get_subject_id_by_batch_id(self, batch_id)
-
-
-   .. py:method:: get_metadata_by_subject_id(self, subject_id)
-
-
-   .. py:method:: __len__(self)
-
-
    .. py:method:: __getitem__(self, index)
 
       Generates one sample of data
-
-
-
-.. py:class:: MRIDataModule(parameters_file_path, data_file_path, train_subject_ids, validate_subject_ids, include_parameters = None, exclude_parameters = None, return_target = False, transform = None, batch_size = 0, num_workers = 0)
-
-   Bases: :py:obj:`pytorch_lightning.LightningDataModule`
-
-   .. py:method:: setup(self, stage)
-
-
-   .. py:method:: train_dataloader(self)
-
-
-   .. py:method:: val_dataloader(self)
-
-
-   .. py:method:: test_dataloader(self)
 
 
 

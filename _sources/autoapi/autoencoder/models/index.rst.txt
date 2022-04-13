@@ -1,3 +1,5 @@
+:orphan:
+
 :py:mod:`autoencoder.models`
 ============================
 
@@ -15,22 +17,9 @@ Classes
    autoencoder.models.Encoder
    autoencoder.models.Decoder
    autoencoder.models.ConcreteAutoencoder
-   autoencoder.models.BaseDecoder
    autoencoder.models.FCNDecoder
-   autoencoder.models.SphericalDecoder
 
 
-
-Functions
-~~~~~~~~~
-
-.. autoapisummary::
-
-   autoencoder.models.init_weights_orthogonal
-
-
-
-.. py:function:: init_weights_orthogonal(m)
 
 
 .. py:class:: Encoder(input_size, output_size, max_temp = 10.0, min_temp = 0.1, reg_threshold = 3.0, reg_eps = 1e-10)
@@ -54,10 +43,6 @@ Functions
    :type reg_eps: float, optional
    :param regularization term. Defaults to 1e-10.:
 
-   .. py:method:: latent_features(self)
-      :property:
-
-
    .. py:method:: forward(self, x)
 
       Uses the trained encoder to make inferences.
@@ -67,12 +52,6 @@ Functions
 
       :returns: encoder output of size `output_size`.
       :rtype: torch.Tensor
-
-
-   .. py:method:: update_temp(self, current_epoch, max_epochs)
-
-
-   .. py:method:: calc_mean_max(self)
 
 
    .. py:method:: regularization(self)
@@ -151,57 +130,7 @@ Functions
       :rtype: tuple[torch.Tensor, torch.Tensor]
 
 
-   .. py:method:: configure_optimizers(self)
-
-
-   .. py:method:: training_step(self, batch, batch_idx)
-
-
-   .. py:method:: validation_step(self, batch, batch_idx)
-
-
-   .. py:method:: test_step(self, batch, batch_idx, dataloader_idx)
-
-
-   .. py:method:: on_train_epoch_start(self)
-
-
-   .. py:method:: on_epoch_end(self)
-
-
    .. py:method:: _shared_eval(self, batch, dataloader_idx, prefix)
-
-      Calculate the loss for a batch.
-
-      :param batch: batch data.
-      :type batch: torch.Tensor
-      :param batch_idx: batch id.
-      :type batch_idx: int
-      :param prefix: prefix for logging.
-      :type prefix: str
-
-      :returns: calculated loss.
-      :rtype: torch.Tensor
-
-
-
-.. py:class:: BaseDecoder(learning_rate, *args, **kwargs)
-
-   Bases: :py:obj:`pytorch_lightning.LightningModule`
-
-   .. py:method:: configure_optimizers(self)
-
-
-   .. py:method:: training_step(self, batch, batch_idx)
-
-
-   .. py:method:: validation_step(self, batch, batch_idx)
-
-
-   .. py:method:: test_step(self, batch, batch_idx, dataloader_idx)
-
-
-   .. py:method:: _shared_eval(self, batch, batch_idx, prefix)
 
       Calculate the loss for a batch.
 
@@ -231,37 +160,5 @@ Functions
    :type hidden_layers: int, optional
    :param learning_rate: learning rate. Defaults to 1e-3.
    :type learning_rate: float, optional
-
-   .. py:method:: forward(self, x)
-
-
-
-.. py:class:: SphericalDecoder(n_ti, n_te, linear_layer_input_size, linear_layer_output_size, n_shells, L, learning_rate = 0.001)
-
-   Bases: :py:obj:`BaseDecoder`
-
-   Spherical decoder based on: "A Spherical Convolutional Neural Network for White Matter Structure Imaging via dMRI" by Sedlar et al.
-
-   paper: https://rdcu.be/cFiOY
-
-   :param n_ti: number of unique TI values.
-   :type n_ti: int
-   :param n_te: number of unique TE values.
-   :type n_te: int
-   :param linear_layer_input_size: size of the input for the linear layer.
-   :type linear_layer_input_size: int
-   :param linear_layer_output_size: size of the output for the linear layer.
-   :type linear_layer_output_size: int
-   :param n_shells: number of b-value shells. List size determines number of convolutions. List size
-                    should be the same as L.
-   :type n_shells: list[int]
-   :param L: degree of spherical harmonic. List size determines number of convolutions. List size should
-             be the same as n_shells.
-   :type L: list[int]
-   :param learning_rate: learning rate. Defaults to 1e-3.
-   :type learning_rate: float, optional
-
-   .. py:method:: forward(self, x)
-
 
 

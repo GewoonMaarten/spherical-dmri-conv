@@ -1,3 +1,5 @@
+:orphan:
+
 :py:mod:`autoencoder.spherical.convolution`
 ===========================================
 
@@ -25,17 +27,6 @@ Classes
 
    Special non-linearity function for data in spectral domain.
 
-   .. py:method:: forward(self, x)
-
-
-   .. py:method:: _extract_features(self, rh_n, feats)
-
-      Extract rotation invariant features.
-
-      :param rh_n: result from the quadratic non-linearity.
-      :type rh_n: dict[int, torch.Tensor]
-
-
 
 .. py:class:: S2Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric = True)
 
@@ -43,17 +34,11 @@ Classes
 
    Convolution between spherical signals and kernels in spectral domain.
 
-   .. py:method:: forward(self, x)
-
-
 
 .. py:class:: SO3Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric = True)
 
    Bases: :py:obj:`torch.nn.Module`
 
    Convolution between SO(3) signals and kernels in spectral domain.
-
-   .. py:method:: forward(self, x)
-
 
 

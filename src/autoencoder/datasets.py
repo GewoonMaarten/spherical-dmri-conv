@@ -1,19 +1,14 @@
-import copy
 import itertools
-import math
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import h5py
 import numpy as np
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities.cli import DATAMODULE_REGISTRY
-from torch.utils.data import ChainDataset, DataLoader, Dataset
-
-from autoencoder.logger import logger
-from autoencoder.spherical.harmonics import gram_schmidt_sh_inv, sh_basis_real
+from torch.utils.data import DataLoader, Dataset
 
 
 class Transformer(ABC, object):
@@ -32,7 +27,7 @@ class SphericalTransformer(Transformer):
         self._parameters = kwargs["parameters"]
 
         # Fit the spherical harmonics on the gradients.
-        y = sh_basis_real(torch.from_numpy(self._parameters[:, :3]), self._l_max)
+        # y = sh_basis_real(torch.from_numpy(self._parameters[:, :3]), self._l_max)
         # self._y_inv = gram_schmidt_sh_inv(y, self._l_max, n_iters=self._inversion_n_iters)
 
         self._b_s = np.unique(self._parameters[:, 3])
@@ -206,26 +201,19 @@ class DiffusionMRIDataset(Dataset):
             batch_end = min(batch_start + self._batch_size, self.dim)
 
             data = archive["data"][self.selection[batch_start:batch_end]]
-            data_filtered = np.zeros_like(data)
-            data_filtered[:, self._selected_parameters] = data[:, self._selected_parameters]
 
             if self._transform is not None:
+                data_filtered = np.zeros_like(data)
+                data_filtered[:, self._selected_parameters] = data[:, self._selected_parameters]
                 data_filtered = self._transform(data=data_filtered, scheme=self._selected_parameters)
                 data = self._transform(data=data, scheme=self._selected_parameters)
                 data = torch.flatten(torch.from_numpy(data).float(), start_dim=1)
-
+            else:
+                data_filtered = data[:, self._selected_parameters]
             if self._return_target:
                 return {"target": data, "sample": data_filtered}
             else:
                 return {"sample": data_filtered}
-
-    # def __getstate__(self):
-    #     """Return state values to be pickled."""
-    #     return None
-
-    # def __setstate__(self, state):
-    #     """Restore state from the unpickled state values."""
-    #     pass
 
 
 @DATAMODULE_REGISTRY

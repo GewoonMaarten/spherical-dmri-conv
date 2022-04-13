@@ -11,7 +11,7 @@ from torch import nn
 
 from autoencoder.logger import logger
 from autoencoder.spherical.convolution import QuadraticNonLinearity, S2Convolution, SO3Convolution
-from autoencoder.spherical.transform import S2ToSignal, SignalToS2
+from autoencoder.spherical.transform import S2ToSignal, SO3ToSignal, SignalToS2
 
 
 def init_weights_orthogonal(m):
@@ -360,72 +360,6 @@ class FCNDecoder(BaseDecoder):
 
 @MODEL_REGISTRY
 class SphericalDecoder(BaseDecoder):
-    def __init__(
-        self,
-        n_ti: int,
-        n_te: int,
-        linear_layer_input_size: int,
-        linear_layer_output_size: int,
-        n_shells: List[int],
-        L: List[int],
-        learning_rate: float = 1e-3,
-    ) -> None:
-        """Spherical decoder based on: "A Spherical Convolutional Neural Network for White Matter Structure Imaging via dMRI" by Sedlar et al.
-
-        paper: https://rdcu.be/cFiOY
-
-        Args:
-            n_ti (int): number of unique TI values.
-            n_te (int): number of unique TE values.
-            linear_layer_input_size (int): size of the input for the linear layer.
-            linear_layer_output_size (int): size of the output for the linear layer.
-            n_shells (list[int]): number of b-value shells. List size determines number of convolutions. List size
-                                  should be the same as L.
-            L (list[int]): degree of spherical harmonic. List size determines number of convolutions. List size should
-                           be the same as n_shells.
-            learning_rate (float, optional): learning rate. Defaults to 1e-3.
-        """
-        super(SphericalDecoder, self).__init__(learning_rate)
-
-        self._n_ti = n_ti
-        self._n_te = n_te
-        self._linear_layer_input_size = linear_layer_input_size
-        self._linear_layer_output_size = linear_layer_output_size
-        self._n_shells = n_shells
-        self._L = L
-
-        self.s2_conv = S2Convolution(self._n_ti, self._n_te, self._L[0], self._n_shells[0], self._n_shells[1])
-        self.s2_non_linear = QuadraticNonLinearity(self._L[0], self._L[1])
-
-        self.so3_conv_1 = SO3Convolution(self._n_ti, self._n_te, self._L[1], self._n_shells[1], self._n_shells[2])
-        self.so3_non_linear_1 = QuadraticNonLinearity(self._L[1], self._L[2])
-
-        # self.so3_conv_2 = SO3Convolution(self._n_ti, self._n_te, self._L[2], self._n_shells[2], self._n_shells[3])
-        # self.so3_non_linear_2 = QuadraticNonLinearity(self._L[2], self._L[3])
-
-        self.linear = torch.nn.Sequential(
-            torch.nn.Linear(self._linear_layer_input_size, 100),
-            torch.nn.LeakyReLU(0.2),
-            torch.nn.Linear(100, 200),
-            torch.nn.LeakyReLU(0.2),
-            torch.nn.Linear(200, self._linear_layer_output_size),
-            torch.nn.LeakyReLU(0.2),
-        )
-        self.linear.apply(init_weights_orthogonal)
-
-    def forward(self, x: Dict[int, torch.Tensor]) -> torch.Tensor:
-        x, y = self.s2_conv(x)
-        x, y = self.s2_non_linear((x, y))
-        x, y = self.so3_conv_1((x, y))
-        x, y = self.so3_non_linear_1((x, y))
-        # x, y = self.so3_conv_2((x, y))
-        # _, y = self.so3_non_linear_2((x, y))
-        x = self.linear(y)
-        return x
-
-
-@MODEL_REGISTRY
-class SphericalDecoder2(BaseDecoder):
     def __init__(self, learning_rate: float = 1e-3):
         super().__init__(learning_rate)
 
@@ -444,6 +378,7 @@ class SphericalDecoder2(BaseDecoder):
 
         self.signal_to_s2 = SignalToS2(gradients, self.sh_degree, "lms_tikhonov")
         self.s2_to_signal = S2ToSignal(gradients, self.sh_degree)
+        self.so3_to_signal = SO3ToSignal(gradients, self.sh_degree)
 
         self.s2_conv = S2Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
         self.s2_non_linear = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
@@ -457,7 +392,7 @@ class SphericalDecoder2(BaseDecoder):
         self.so3_conv_3 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
         self.so3_non_linear_3 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
 
-        self.linear_decoder = Decoder(276, self.s2_to_signal.n_sh, 2)
+        # self.linear_decoder = Decoder(276, self.s2_to_signal.n_sh, 2)
 
     def forward(self, x: torch.Tensor):
         x = x.float()
@@ -482,13 +417,15 @@ class SphericalDecoder2(BaseDecoder):
         x = self.so3_conv_3(x)
         x = self.so3_non_linear_3(x)
 
-        results = list()
-        for l in range(0, self.sh_degree + 1, 2):
-            results.append(torch.flatten(x[0][l], start_dim=4))
-        x = torch.cat(results, 4).squeeze()
+        x = self.so3_to_signal(x)
 
-        x = self.linear_decoder(x)
+        # results = list()
+        # for l in range(0, self.sh_degree + 1, 2):
+        #     results.append(torch.flatten(x[0][l], start_dim=4))
+        # x = torch.cat(results, 4).squeeze()
 
-        x = self.s2_to_signal(x)
+        # x = self.linear_decoder(x)
+
+        # x = self.s2_to_signal(x)
 
         return torch.flatten(x, start_dim=1)

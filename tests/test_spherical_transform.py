@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 from autoencoder.logger import get_logger
-from autoencoder.spherical.transform import S2ToSignal, SignalToS2
+from autoencoder.spherical.transform import SO3ToSignal, S2ToSignal, SignalToS2
 from dipy.core.sphere import hemi_icosahedron
 
 logger = get_logger()

@@ -27,9 +27,7 @@ class QuadraticNonLinearity(torch.nn.Module):
 
                     self.wigner_j[l][l1][l2] = o3.wigner_3j(l1, l2, l).T
 
-    def forward(
-        self, x: Tuple[Dict[int, torch.Tensor], Optional[torch.Tensor]]
-    ) -> Tuple[Dict[int, torch.Tensor], torch.Tensor]:
+    def forward(self, x: Dict[int, torch.Tensor]) -> Dict[int, torch.Tensor]:
         rh_n: Dict[int, torch.Tensor] = dict()
 
         for l in range(0, int(self._l_out + 1), int(self._symmetric)):

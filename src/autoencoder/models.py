@@ -377,7 +377,6 @@ class SphericalDecoder(BaseDecoder):
         gradients = np.stack(gradients, axis=0)
 
         self.signal_to_s2 = SignalToS2(gradients, self.sh_degree, "lms_tikhonov")
-        self.s2_to_signal = S2ToSignal(gradients, self.sh_degree)
         self.so3_to_signal = SO3ToSignal(gradients, self.sh_degree)
 
         self.s2_conv = S2Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
@@ -392,13 +391,11 @@ class SphericalDecoder(BaseDecoder):
         self.so3_conv_3 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
         self.so3_non_linear_3 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
 
-        # self.linear_decoder = Decoder(276, self.s2_to_signal.n_sh, 2)
-
     def forward(self, x: torch.Tensor):
         x = x.float()
         x = self.signal_to_s2(x)
 
-        sh_coefficients = OrderedDict()
+        sh_coefficients: Dict[int, torch.Tensor] = dict()
         s = 0
         for l in range(0, self.sh_degree + 1, 2):
             o = 2 * l + 1
@@ -418,14 +415,5 @@ class SphericalDecoder(BaseDecoder):
         x = self.so3_non_linear_3(x)
 
         x = self.so3_to_signal(x)
-
-        # results = list()
-        # for l in range(0, self.sh_degree + 1, 2):
-        #     results.append(torch.flatten(x[0][l], start_dim=4))
-        # x = torch.cat(results, 4).squeeze()
-
-        # x = self.linear_decoder(x)
-
-        # x = self.s2_to_signal(x)
 
         return torch.flatten(x, start_dim=1)

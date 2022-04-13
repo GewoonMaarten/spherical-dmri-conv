@@ -95,7 +95,7 @@ class SignalToS2(torch.nn.Module):
 
     @property
     def n_sh(self):
-        return np.sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
+        return sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
 
     def forward(self, x: torch.Tensor):
         return torch.einsum("npc,clp->ncl", x, self.Y_inv)
@@ -250,13 +250,13 @@ class S2ToSignal(torch.nn.Module):
 
     @property
     def n_sh(self):
-        return np.sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
+        return sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
 
     def forward(self, x: torch.Tensor):
         return torch.einsum("ncl,clp->npc", x, self.Y_gs)
 
 
-class SO3ToSignal(S2ToSignal):
+class SO3ToSignal(torch.nn.Module):
     def __init__(self, gradients: torch.Tensor, sh_degree_max: int):
         """Computes the DWI from the Wigner-D matrix coefficients.
         Every coefficient in the `Wigner-D matrix`_ where :math:`m != 0` are thrown away, leaving us with the
@@ -291,9 +291,10 @@ class SO3ToSignal(S2ToSignal):
 
         .. _Wigner-D matrix: https://en.wikipedia.org/wiki/Wigner_D-matrix
         """
-        super().__init__(gradients, sh_degree_max)
+        super(SO3ToSignal, self).__init__()
+        self.s2_to_signal = S2ToSignal(gradients, sh_degree_max)
 
     def forward(self, x: Dict[int, torch.Tensor]):
         x = [x[l][:, :, :, :, :, (2 * l + 1) // 2] for l in x]
         x = torch.cat(x, 4).squeeze()
-        return super().forward(x)
+        return self.s2_to_signal(x)

@@ -17,33 +17,49 @@ class SignalToS2(torch.nn.Module):
         inversion_function: Literal["lms", "lms_tikhonov", "lms_laplace_beltrami", "gram_schmidt"],
         **kwargs,
     ):
-        """Computes the Spherical harmonic coefficients, according to:
+        """Computes the spherical harmonic coefficients.
+        According to:
 
         .. math::
 
             \hat{s}^m_l = \int_{S^2} s(r) \overline{Y^m_l(r)} dr
 
+        where :math:`\hat{s}^m_l` are the spherical coefficients, :math:`r \in \mathbb{R}^3`,
+        :math:`s : S^2 \mapsto \mathbb{C}` and :math:`\overline{Y^m_l(r)}` denotes the `spherical harmonics`_, the
+        overbar denotes the `complex conjugation`_.
+
+        See "Spherical CNNs" by T. Cohen `et al.` for more information :cite:p:`cohen2018spherical`.
+
+        Example usage:
+
+        .. code-block:: python
+            :linenos:
+
+            # Create random dwi data with 90 gradient directions and 4 b-values
+            gradients = torch.rand((4, 90, 3)) # {b-values, gradients, xyz}
+            data = torch.rand((512, 90, 4)) # {batch size, gradients, b-values}
+
+            signal_to_s2 = SignalToS2(gradients, 4, "gram_schmidt")
+            signal_to_s2(data)
+
         Args:
             gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a, b, 3)``, where
-                ``a`` are the number of b values (shells) and ``b`` is the number of gradient directions. The vector is in
-                cartesian coordinates (xyz).
-            sh_degree_max: Maximum degree of Spherical Harmonics to fit.
-            inversion_function: name of the inversion function to apply (see :py:attr:`Signal_to_S2.inversion_functions`
-                for options).
+                ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is
+                in cartesian coordinates (xyz).
+            sh_degree_max: Maximum degree (``l``) of Spherical Harmonics to fit. Denoted by :math:`L_{max}` in the
+                equation.
+            inversion_function: name of the inversion function to apply. Available functions are:
+
+                - ``"lms"`` = :func:`lms_sh_inv`
+                - ``"lms_tikhonov"`` = :func:`lms_tikhonov_sh_inv`
+                - ``"lms_laplace_beltrami"`` = :func:`lms_laplace_beltrami_sh_inv`
+                - ``"gram_schmidt"`` = :func:`gram_schmidt_sh_inv`
 
         Raises:
             ValueError: raised when an unknown inversion function is given.
 
-        Example:
-
-        .. code-block:: python
-            :linenos:
-            :emphasize-lines: 3
-
-            gradients = torch.rand((4, 90, 3))
-            data = torch.rand((512, 90, 4)) # dwi data with 90 gradient directions and 4 b-values
-            signal_to_s2 = SignalToS2(gradients, 4, "gram_schmidt")
-            signal_to_s2(data)
+        .. _spherical harmonics: https://en.wikipedia.org/wiki/Spherical_harmonics
+        .. _complex conjugation: https://en.wikipedia.org/wiki/Complex_conjugate
         """
         super(SignalToS2, self).__init__()
 
@@ -134,7 +150,7 @@ class SignalToS2(torch.nn.Module):
         return np.dot(np.linalg.inv(np.dot(sh.T, sh) + lambda_ * lb_reg), sh.T)
 
     def gram_schmidt_sh_inv(self, sh: np.ndarray, l_max: int, **kwargs) -> np.ndarray:
-        """Inversion of spherical harmonic basis with Gram-Schmidt orthonormalization process
+        """Inversion of spherical harmonic basis with Gram-Schmidt orthonormalization process :cite:p:`yeo2005computing`
 
         Args:
             sh: real spherical harmonics bases of even degree (each column is a basis)
@@ -179,28 +195,38 @@ class SignalToS2(torch.nn.Module):
 
 class S2ToSignal(torch.nn.Module):
     def __init__(self, gradients: torch.Tensor, sh_degree_max: int):
-        """Computes the DWI from the spherical coefficients, according to:
+        """Computes the DWI from the spherical harmonic coefficients.
+        According to:
 
         .. math::
 
             s(r) = \sum^{L_{max}}_{l=0} \sum^{m=l}_{m=-l} \hat{s}^m_l Y^m_l(r)
 
-        Args:
-            gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a,b,3)``, where
-                ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is in
-                cartesian coordinates (xyz).
-            sh_degree_max: Maximum degree of Spherical Harmonics to fit.
+        where :math:`s(r)` is the DWI signal, :math:`r \in \mathbb{R}^3`,
+        :math:`Y^m_l(r)` denotes the `spherical harmonics`_ and :math:`\hat{s}^m_l` are the spherical coefficients.
 
-        Example:
+        See "Spherical CNNs" by T. Cohen `et al.` for more information :cite:p:`cohen2018spherical`.
+
+        Example usage:
 
         .. code-block:: python
             :linenos:
-            :emphasize-lines: 3
 
-            gradients = torch.rand((4, 90, 3))
-            data = torch.rand((512, 4, 15)) # Spherical coefficients with L of degree 4 and 4 b-values
+            # Create random sh coefficients with 90 gradient directions and 4 b-values
+            gradients = torch.rand((4, 90, 3)) # {b-values, gradients, xyz}
+            data = torch.rand((512, 90, 4)) # {batch size, gradients, SH coefficients}
+
             s2_to_signal = S2ToSignal(gradients, 4)
             s2_to_signal(data)
+
+        Args:
+            gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a,b,3)``, where
+                ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is
+                in cartesian coordinates (xyz).
+            sh_degree_max: Maximum degree (``l``) of Spherical Harmonics to fit. Denoted by :math:`L_{max}` in the
+                equation.
+
+        .. _spherical harmonics: https://en.wikipedia.org/wiki/Spherical_harmonics
         """
         super(S2ToSignal, self).__init__()
 
@@ -232,9 +258,42 @@ class S2ToSignal(torch.nn.Module):
 
 class SO3ToSignal(S2ToSignal):
     def __init__(self, gradients: torch.Tensor, sh_degree_max: int):
+        """Computes the DWI from the Wigner-D matrix coefficients.
+        Every coefficient in the `Wigner-D matrix`_ where :math:`m != 0` are thrown away, leaving us with the
+        spherical harmonic coefficients. More formally:
+
+        .. math::
+
+            Y_l^n(r) = D_l^{m=0,n}(R)
+
+        After this, the same steps are used as in :class:`.S2ToSignal`.
+
+        Example usage:
+
+        .. code-block:: python
+            :linenos:
+
+            gradients = torch.rand((4, 90, 3)) # {b-values, gradients, xyz}
+            data = {
+                0: torch.rand((512, 90, 1, 1)), # {batch size, gradients, Wigner-D coefficients, Wigner-D coefficients}
+                2: torch.rand((512, 90, 5, 5)),
+                4: torch.rand((512, 90, 9, 9))
+            } # data is expected to be a dict where each key is a sh degree.
+
+            so3_to_signal = SO3ToSignal(gradients, 4)
+            so3_to_signal(data)
+
+        Args:
+            gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a,b,3)``, where
+                ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is
+                in cartesian coordinates (xyz).
+            sh_degree_max: Maximum degree of Spherical Harmonics to fit.
+
+        .. _Wigner-D matrix: https://en.wikipedia.org/wiki/Wigner_D-matrix
+        """
         super().__init__(gradients, sh_degree_max)
 
     def forward(self, x: Dict[int, torch.Tensor]):
-        x = [x[l][:, :, :, :, (2 * l + 1) // 2, :] for l in x]
+        x = [x[l][:, :, :, :, :, (2 * l + 1) // 2] for l in x]
         x = torch.cat(x, 4).squeeze()
         return super().forward(x)

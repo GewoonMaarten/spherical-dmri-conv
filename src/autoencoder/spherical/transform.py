@@ -228,3 +228,13 @@ class S2ToSignal(torch.nn.Module):
 
     def forward(self, x: torch.Tensor):
         return torch.einsum("ncl,clp->npc", x, self.Y_gs)
+
+
+class SO3ToSignal(S2ToSignal):
+    def __init__(self, gradients: torch.Tensor, sh_degree_max: int):
+        super().__init__(gradients, sh_degree_max)
+
+    def forward(self, x: Dict[int, torch.Tensor]):
+        x = [x[l][:, :, :, :, (2 * l + 1) // 2, :] for l in x]
+        x = torch.cat(x, 4).squeeze()
+        return super().forward(x)

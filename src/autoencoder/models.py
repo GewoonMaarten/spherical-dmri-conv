@@ -382,23 +382,26 @@ class SphericalDecoder(BaseDecoder):
         with h5py.File(parameters_file_path, "r", libver="latest") as archive:
             parameters = archive["parameters"][...]
 
+        ti_n = np.unique(parameters[:, 4]).shape[0] if parameters.shape[1] > 4 else 1
+        te_n = np.unique(parameters[:, 5]).shape[0] if parameters.shape[1] > 5 else 1
+
         gradients = group_te_ti_b_values(parameters)
 
-        # FIXME: using pytorch Sequential Module (https://pytorch.org/docs/stable/generated/torch.nn.Sequential.html)
-        #        would clean this code up, but it creates problems with TorchScript JIT compiling in the __main__ file.
         self.signal_to_s2 = SignalToS2(gradients, self.sh_degree, "lms_tikhonov")
         self.so3_to_signal = SO3ToSignal(gradients, self.sh_degree)
 
-        self.s2_conv = S2Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
+        # FIXME: using pytorch Sequential Module (https://pytorch.org/docs/stable/generated/torch.nn.Sequential.html)
+        #        would clean this code up, but it creates problems with TorchScript JIT compiling in the __main__ file.
+        self.s2_conv = S2Convolution(ti_n, te_n, self.sh_degree, self.n_shells, self.n_shells)
         self.s2_non_linear = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
 
-        self.so3_conv_1 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
+        self.so3_conv_1 = SO3Convolution(ti_n, te_n, self.sh_degree, self.n_shells, self.n_shells)
         self.so3_non_linear_1 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
 
-        self.so3_conv_2 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
+        self.so3_conv_2 = SO3Convolution(ti_n, te_n, self.sh_degree, self.n_shells, self.n_shells)
         self.so3_non_linear_2 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
 
-        self.so3_conv_3 = SO3Convolution(1, 1, self.sh_degree, self.n_shells, self.n_shells)
+        self.so3_conv_3 = SO3Convolution(ti_n, te_n, self.sh_degree, self.n_shells, self.n_shells)
         self.so3_non_linear_3 = QuadraticNonLinearity(self.sh_degree, self.sh_degree)
 
     def forward(self, x: torch.Tensor):

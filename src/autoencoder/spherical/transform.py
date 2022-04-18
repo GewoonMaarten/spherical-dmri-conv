@@ -1,18 +1,91 @@
-from typing import Callable, Dict, Literal
+from typing import Callable, Dict, Literal, Optional, Union
 
 import numpy as np
 import torch
-from dipy.reconst.shm import (
-    cart2sphere,
-    real_sh_descoteaux_from_index,
-    sph_harm_ind_list,
-)
+from dipy.reconst.shm import cart2sphere, real_sh_descoteaux_from_index, sph_harm_ind_list
+
+
+def group_b_values(
+    gradients: np.ndarray,
+    parameters: np.ndarray,
+    b_s: np.ndarray,
+    ti_idx: Optional[int] = 0,
+    te_idx: Optional[int] = 0,
+) -> np.ndarray:
+    """Group DWI gradients by b-values and returns the grouped gradient directions.
+    This function is necessary for the S^2 fourier transforms.
+
+    Args:
+        gradients: empty numpy array to store gradients of shape: {TI, TE, b-value, gradient directions, xyz}. The
+            gradient direction dimension can be an arbitrary value as it will be resized in this function.
+        parameters: ungrouped gradient directions.
+        b_s: all unique b-values.
+        ti_idx: TI index of the ``gradients`` attribute. Defaults to 0.
+        te_idx: TE index of the ``gradients`` attribute. Defaults to 0.
+
+    Returns:
+        grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz}.
+    """
+    for b_idx, b in enumerate(b_s):
+        parameters_b: np.ndarray = parameters[parameters[:, 3] == b]
+
+        if parameters_b.shape[0] > gradients.shape[3]:
+            gradients = np.resize(
+                gradients,
+                (
+                    gradients.shape[0],
+                    gradients.shape[1],
+                    gradients.shape[2],
+                    parameters_b.shape[0],
+                    3,
+                ),
+            )
+
+        gradients[ti_idx, te_idx, b_idx, : parameters_b.shape[0]] = parameters_b[:, :3]
+
+    return gradients
+
+
+def group_te_ti_b_values(parameters: np.ndarray) -> np.ndarray:
+    """Group DWI gradient direction by b-values and TI and TE parameters if applicable.
+    This function is necessary for the S^2 fourier transforms.
+
+    Args:
+        parameters: ungrouped gradients directions.
+
+    Returns:
+        grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz}.
+    """
+    b_s = np.unique(parameters[:, 3])
+    ti_s = np.unique(parameters[:, 4]) if parameters.shape[1] > 4 else None
+    te_s = np.unique(parameters[:, 5]) if parameters.shape[1] > 5 else None
+
+    gradients = np.zeros(
+        (
+            ti_s.shape[0] if ti_s is not None else 1,
+            te_s.shape[0] if te_s is not None else 1,
+            b_s.shape[0],
+            1,  # initial number of gradient direction per b-value, will resize later
+            3,
+        )
+    )
+
+    if ti_s is not None and te_s is not None:
+        for ti_idx, ti in enumerate(ti_s):
+            parameters_ti = parameters[parameters[:, 4] == ti]
+            for te_idx, te in enumerate(te_s):
+                parameters_te = parameters_ti[parameters_ti[:, 5] == te]
+                gradients = group_b_values(gradients, parameters_te, b_s, ti_idx, te_idx)
+    else:
+        gradients = group_b_values(gradients, parameters, b_s)
+
+    return gradients
 
 
 class SignalToS2(torch.nn.Module):
     def __init__(
         self,
-        gradients: torch.Tensor,
+        gradients: Union[torch.Tensor, np.ndarray],
         sh_degree_max: int,
         inversion_function: Literal["lms", "lms_tikhonov", "lms_laplace_beltrami", "gram_schmidt"],
         **kwargs,
@@ -36,14 +109,14 @@ class SignalToS2(torch.nn.Module):
             :linenos:
 
             # Create random dwi data with 90 gradient directions and 4 b-values
-            gradients = torch.rand((4, 90, 3)) # {b-values, gradients, xyz}
-            data = torch.rand((512, 90, 4)) # {batch size, gradients, b-values}
+            gradients = torch.rand((1,1,4, 90, 3)) # {TI, TE, b-values, gradients, xyz}
+            data = torch.rand((1,1,512, 90, 4)) # {TI, TE, batch size, gradients, b-values}
 
             signal_to_s2 = SignalToS2(gradients, 4, "gram_schmidt")
             signal_to_s2(data)
 
         Args:
-            gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a, b, 3)``, where
+            gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(TI, TE, a, b, 3)``, where
                 ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is
                 in cartesian coordinates (xyz).
             sh_degree_max: Maximum degree (``l``) of Spherical Harmonics to fit. Denoted by :math:`L_{max}` in the
@@ -77,18 +150,32 @@ class SignalToS2(torch.nn.Module):
             )
 
         m, n = sph_harm_ind_list(self.sh_degree_max)
-        n_shells = gradients.shape[0]
+        n_shells = gradients.shape[2]
 
-        self.Y_inv = np.zeros((n_shells, self.n_sh, gradients.shape[1]))
-        for sh_idx in range(n_shells):
-            x, y, z = (
-                gradients[sh_idx, :, 0],
-                gradients[sh_idx, :, 1],
-                gradients[sh_idx, :, 2],
+        # FIXME: the ordering of the dimensions in this tensor can probably be improved to enable a quicker execution
+        #        of the einsum in the forward function.
+        self.Y_inv = np.zeros(
+            (
+                gradients.shape[0],  # TI values
+                gradients.shape[1],  # TE values
+                n_shells,  # b-values
+                self.n_sh,
+                gradients.shape[3],  # gradient directions
             )
-            _, theta, phi = cart2sphere(x, y, z)
-            Y_gs = real_sh_descoteaux_from_index(m, n, theta[:, None], phi[:, None])
-            self.Y_inv[sh_idx, :, :] = self.inversion_functions[inversion_function](Y_gs, self.sh_degree_max, **kwargs)
+        )
+        for ti_idx in range(gradients.shape[0]):
+            for te_idx in range(gradients.shape[1]):
+                for sh_idx in range(n_shells):
+                    x, y, z = (
+                        gradients[ti_idx, te_idx, sh_idx, :, 0],
+                        gradients[ti_idx, te_idx, sh_idx, :, 1],
+                        gradients[ti_idx, te_idx, sh_idx, :, 2],
+                    )
+                    _, theta, phi = cart2sphere(x, y, z)
+                    Y_gs = real_sh_descoteaux_from_index(m, n, theta[:, None], phi[:, None])
+                    self.Y_inv[ti_idx, te_idx, sh_idx, :, :] = self.inversion_functions[inversion_function](
+                        Y_gs, self.sh_degree_max, **kwargs
+                    )
 
         self.Y_inv = torch.from_numpy(self.Y_inv).float()
         self.Y_inv = torch.nn.Parameter(self.Y_inv, requires_grad=False)
@@ -98,7 +185,7 @@ class SignalToS2(torch.nn.Module):
         return sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
 
     def forward(self, x: torch.Tensor):
-        return torch.einsum("npc,clp->ncl", x, self.Y_inv)
+        return torch.einsum("nabpc,abclp->nabcl", x, self.Y_inv)
 
     def lms_sh_inv(self, sh: np.ndarray, l_max: int, **kwargs) -> np.ndarray:
         """Inversion of spherical harmonic basis with least-mean square
@@ -194,7 +281,7 @@ class SignalToS2(torch.nn.Module):
 
 
 class S2ToSignal(torch.nn.Module):
-    def __init__(self, gradients: torch.Tensor, sh_degree_max: int):
+    def __init__(self, gradients: Union[torch.Tensor, np.ndarray], sh_degree_max: int):
         """Computes the DWI from the spherical harmonic coefficients.
         According to:
 
@@ -220,7 +307,7 @@ class S2ToSignal(torch.nn.Module):
             s2_to_signal(data)
 
         Args:
-            gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a,b,3)``, where
+            gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(TI, TE, a, b, 3)``, where
                 ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is
                 in cartesian coordinates (xyz).
             sh_degree_max: Maximum degree (``l``) of Spherical Harmonics to fit. Denoted by :math:`L_{max}` in the
@@ -233,17 +320,29 @@ class S2ToSignal(torch.nn.Module):
         self.sh_degree_max = sh_degree_max
 
         m, n = sph_harm_ind_list(self.sh_degree_max)
-        n_shells = gradients.shape[0]
+        n_shells = gradients.shape[2]
 
-        self.Y_gs = np.zeros((n_shells, self.n_sh, gradients.shape[1]))
-        for sh_idx in range(n_shells):
-            x, y, z = (
-                gradients[sh_idx, :, 0],
-                gradients[sh_idx, :, 1],
-                gradients[sh_idx, :, 2],
+        # FIXME: the ordering of the dimensions in this tensor can probably be improved to enable a quicker execution
+        #        of the einsum in the forward function.
+        self.Y_gs = np.zeros(
+            (
+                gradients.shape[0],  # TI values
+                gradients.shape[1],  # TE values
+                n_shells,  # b-values
+                self.n_sh,
+                gradients.shape[3],  # gradient directions
             )
-            _, theta, phi = cart2sphere(x, y, z)
-            self.Y_gs[sh_idx, :, :] = real_sh_descoteaux_from_index(m, n, theta[:, None], phi[:, None]).T
+        )
+        for ti_idx in range(gradients.shape[0]):
+            for te_idx in range(gradients.shape[1]):
+                for sh_idx in range(n_shells):
+                    x, y, z = (
+                        gradients[ti_idx, te_idx, sh_idx, :, 0],
+                        gradients[ti_idx, te_idx, sh_idx, :, 1],
+                        gradients[ti_idx, te_idx, sh_idx, :, 2],
+                    )
+                    _, theta, phi = cart2sphere(x, y, z)
+                    self.Y_gs[sh_idx, :, :] = real_sh_descoteaux_from_index(m, n, theta[:, None], phi[:, None]).T
 
         self.Y_gs = torch.from_numpy(self.Y_gs).float()
         self.Y_gs = torch.nn.Parameter(self.Y_gs, requires_grad=False)
@@ -253,7 +352,7 @@ class S2ToSignal(torch.nn.Module):
         return sum([2 * l + 1 for l in range(0, self.sh_degree_max + 1, 2)])
 
     def forward(self, x: torch.Tensor):
-        return torch.einsum("ncl,clp->npc", x, self.Y_gs)
+        return torch.einsum("nabcl,abclp->nabpc", x, self.Y_gs)
 
 
 class SO3ToSignal(torch.nn.Module):

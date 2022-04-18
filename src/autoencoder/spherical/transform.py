@@ -342,7 +342,9 @@ class S2ToSignal(torch.nn.Module):
                         gradients[ti_idx, te_idx, sh_idx, :, 2],
                     )
                     _, theta, phi = cart2sphere(x, y, z)
-                    self.Y_gs[sh_idx, :, :] = real_sh_descoteaux_from_index(m, n, theta[:, None], phi[:, None]).T
+                    self.Y_gs[ti_idx, te_idx, sh_idx, :, :] = real_sh_descoteaux_from_index(
+                        m, n, theta[:, None], phi[:, None]
+                    ).T
 
         self.Y_gs = torch.from_numpy(self.Y_gs).float()
         self.Y_gs = torch.nn.Parameter(self.Y_gs, requires_grad=False)

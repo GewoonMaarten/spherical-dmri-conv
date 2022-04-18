@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 import h5py
 import numpy as np
@@ -11,7 +11,7 @@ from torch import nn
 
 from autoencoder.logger import logger
 from autoencoder.spherical.convolution import QuadraticNonLinearity, S2Convolution, SO3Convolution
-from autoencoder.spherical.transform import S2ToSignal, SO3ToSignal, SignalToS2
+from autoencoder.spherical.transform import SO3ToSignal, SignalToS2, group_te_ti_b_values
 
 
 def init_weights_orthogonal(m):
@@ -274,7 +274,12 @@ class ConcreteAutoencoder(pl.LightningModule):
 
 
 class BaseDecoder(pl.LightningModule):
-    def __init__(self, learning_rate, *args, **kwargs) -> None:
+    def __init__(self, learning_rate: float, *args, **kwargs) -> None:
+        """Internal module used as a base for the :class:`.FCNDecoder` and the :class:`.SphericalDecoder`.
+
+        Args:
+            learning_rate: Learning rate
+        """
         super().__init__(*args, **kwargs)
 
         self._learning_rate = learning_rate
@@ -360,22 +365,27 @@ class FCNDecoder(BaseDecoder):
 
 @MODEL_REGISTRY
 class SphericalDecoder(BaseDecoder):
-    def __init__(self, learning_rate: float = 1e-3):
+    def __init__(self, parameters_file_path: str, sh_degree: int, n_shells: int, learning_rate: float = 1e-3):
+        """Spherical decoder
+
+        Args:
+            parameters_file_path: Path string of the parameters file
+            sh_degree: Spherical Harmonics degree
+            n_shells: Number of b-values
+            learning_rate: Learning rate. Defaults to 1e-3.
+        """
         super().__init__(learning_rate)
 
-        self.sh_degree = 6
-        self.n_shells = 3
+        self.sh_degree = sh_degree
+        self.n_shells = n_shells
 
-        with h5py.File("./data/prj_HCP_parameters.hdf5", "r", libver="latest") as archive:
+        with h5py.File(parameters_file_path, "r", libver="latest") as archive:
             parameters = archive["parameters"][...]
 
-        gradients = list()
-        for b in np.unique(parameters[:, 3]):
-            if b == 0:
-                continue
-            gradients.append(parameters[parameters[:, 3] == b, :3])
-        gradients = np.stack(gradients, axis=0)
+        gradients = group_te_ti_b_values(parameters)
 
+        # FIXME: using pytorch Sequential Module (https://pytorch.org/docs/stable/generated/torch.nn.Sequential.html)
+        #        would clean this code up, but it creates problems with TorchScript JIT compiling in the __main__ file.
         self.signal_to_s2 = SignalToS2(gradients, self.sh_degree, "lms_tikhonov")
         self.so3_to_signal = SO3ToSignal(gradients, self.sh_degree)
 
@@ -395,11 +405,12 @@ class SphericalDecoder(BaseDecoder):
         x = x.float()
         x = self.signal_to_s2(x)
 
+        # create dictionary where each key is a sh degree
         sh_coefficients: Dict[int, torch.Tensor] = dict()
         s = 0
         for l in range(0, self.sh_degree + 1, 2):
             o = 2 * l + 1
-            sh_coefficients[l] = x[:, None, None, :, torch.arange(s, s + o)]
+            sh_coefficients[l] = x[:, :, :, :, torch.arange(s, s + o)]
             s += o
 
         x = self.s2_conv(sh_coefficients)

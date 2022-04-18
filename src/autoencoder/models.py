@@ -14,7 +14,12 @@ from autoencoder.spherical.convolution import QuadraticNonLinearity, S2Convoluti
 from autoencoder.spherical.transform import SO3ToSignal, SignalToS2, group_te_ti_b_values
 
 
-def init_weights_orthogonal(m):
+def init_weights_orthogonal(m: torch.nn.Module):
+    """If Pytorch module is Linear then initialize the according to ``torch.nn.init.orthogonal``
+
+    Args:
+        m: input module
+    """
     if isinstance(m, nn.Linear):
         torch.nn.init.orthogonal_(m.weight)
         m.bias.data.fill_(0.01)
@@ -30,17 +35,19 @@ class Encoder(nn.Module):
         reg_threshold: float = 3.0,
         reg_eps: float = 1e-10,
     ) -> None:
-        """Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
+        """Feature selection encoder
+        Implemented according to "`Concrete Autoencoders for Differentiable Feature Selection and Reconstruction.`"
+        :cite:p:`DBLP:journals/corr/abs-1901-09346`.
 
         Args:
-            input_size (int): size of the input layer. Should be the same as the `output_size` of the decoder.
-            output_size (int): size of the latent layer. Should be the same as the `input_size` of the decoder.
-            max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
-            min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
-            reg_threshold (float, optional): regularization threshold. The encoder will be penalized when the sum of
-            probabilities for a selection neuron exceed this threshold. Defaults to 0.3.
-            reg_eps (float, optional): regularization epsilon. Minimum value for the clamped softmax function in
-            regularization term. Defaults to 1e-10.
+            input_size: size of the input layer. Should be the same as the `output_size` of the decoder.
+            output_size: size of the latent layer. Should be the same as the `input_size` of the decoder.
+            max_temp: maximum temperature for Gumble Softmax. Defaults to 10.0.
+            min_temp: minimum temperature for Gumble Softmax. Defaults to 0.1.
+            reg_threshold: regularization threshold. The encoder will be penalized when the sum of
+                probabilities for a selection neuron exceed this threshold. Defaults to 0.3.
+            reg_eps: regularization epsilon. Minimum value for the clamped softmax function in
+                regularization term. Defaults to 1e-10.
         """
         super(Encoder, self).__init__()
 
@@ -121,11 +128,11 @@ class Decoder(nn.Module):
         ```
 
         Args:
-            input_size (int): size of the latent layer. Should be the same as the `output_size` of the encoder.
-            output_size (int): size of the output layer. Should be the same as `input_size` of the encoder.
-            n_hidden_layers (int): number of hidden layers. If 0 then the input will be directly connected to the
+            input_size: size of the latent layer. Should be the same as the `output_size` of the encoder.
+            output_size: size of the output layer. Should be the same as `input_size` of the encoder.
+            n_hidden_layers: number of hidden layers. If 0 then the input will be directly connected to the
             output.
-            negative_slope (float, optional): negative slope for the Leaky ReLu activation layer. Defaults to 0.2.
+            negative_slope: negative slope for the Leaky ReLu activation layer. Defaults to 0.2.
         """
         super(Decoder, self).__init__()
 
@@ -173,17 +180,21 @@ class ConcreteAutoencoder(pl.LightningModule):
         reg_lambda: float = 0.0,
         reg_threshold: float = 1.0,
     ) -> None:
-        """Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
+        """Trains a concrete autoencoder
+        Implemented according to "`Concrete Autoencoders for Differentiable Feature Selection and Reconstruction.`"
+        :cite:p:`DBLP:journals/corr/abs-1901-09346`.
 
         Args:
-            input_output_size (int): size of the input and output layer.
-            latent_size (int): size of the latent layer.
-            decoder_hidden_layers (int, optional): number of hidden layers for the decoder. Defaults to 2.
-            learning_rate (float, optional): learning rate for the optimizer. Defaults to 1e-3.
-            max_temp (float, optional): maximum temperature for Gumble Softmax. Defaults to 10.0.
-            min_temp (float, optional): minimum temperature for Gumble Softmax. Defaults to 0.1.
-            reg_lambda(float, optional): how much weight to apply to the regularization term. If the value is 0.0 then no regularization will be applied. Defaults to 0.0.
-            reg_threshold (float, optional): regularization threshold. The encoder will be penalized when the sum of probabilities for a selection neuron exceed this threshold. Defaults to 1.0.
+            input_output_size: size of the input and output layer.
+            latent_size: size of the latent layer.
+            decoder_hidden_layers: number of hidden layers for the decoder. Defaults to 2.
+            learning_rate: learning rate for the optimizer. Defaults to 1e-3.
+            max_temp: maximum temperature for Gumble Softmax. Defaults to 10.0.
+            min_temp: minimum temperature for Gumble Softmax. Defaults to 0.1.
+            reg_lambda: how much weight to apply to the regularization term. If the value is 0.0 then no regularization
+                will be applied. Defaults to 0.0.
+            reg_threshold: regularization threshold. The encoder will be penalized when the sum of probabilities for a
+                selection neuron exceed this threshold. Defaults to 1.0.
         """
         super(ConcreteAutoencoder, self).__init__()
         self.save_hyperparameters()
@@ -350,10 +361,10 @@ class FCNDecoder(BaseDecoder):
         """Fully Connected Network decoder
 
         Args:
-            input_size (int): input size of the network
-            output_size (int): output size of the network
-            hidden_layers (int, optional): number of hidden layers. Defaults to 2.
-            learning_rate (float, optional): learning rate. Defaults to 1e-3.
+            input_size: input size of the network
+            output_size: output size of the network
+            hidden_layers: number of hidden layers. Defaults to 2.
+            learning_rate: learning rate. Defaults to 1e-3.
         """
         super(FCNDecoder, self).__init__(learning_rate)
 

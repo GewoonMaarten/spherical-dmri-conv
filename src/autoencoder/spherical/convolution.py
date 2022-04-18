@@ -6,8 +6,15 @@ import math
 
 
 class QuadraticNonLinearity(torch.nn.Module):
-    def __init__(self, l_in, l_out, symmetric: bool = True) -> None:
-        """Special non-linearity function for data in spectral domain."""
+    def __init__(self, l_in: int, l_out: int, symmetric: bool = True) -> None:
+        """Special non-linearity function for data in spectral domain.
+        Code adapated from: https://gitlab.inria.fr/ssedlar/fourier_s2cnn/-/blob/master/fourier_s2cnn/estimators/fourier_s2cnn_utils.py#L180
+
+        Args:
+            l_in: input Spherical Harmonic degree.
+            l_out: output Spherical Harmonic degree.
+            symmetric: only use Spherical Harmonics of even degree. Defaults to True.
+        """
         super(QuadraticNonLinearity, self).__init__()
 
         self.register_buffer("_l_in", torch.tensor(l_in))
@@ -67,8 +74,18 @@ class QuadraticNonLinearity(torch.nn.Module):
 
 
 class S2Convolution(torch.nn.Module):
-    def __init__(self, ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True):
-        """Convolution between spherical signals and kernels in spectral domain."""
+    def __init__(self, ti_n: int, te_n: int, l_in: int, b_in: int, b_out: int, symmetric: bool = True):
+        """Convolution between spherical signals and kernels in spectral domain.
+
+        Args:
+            ti_n: number of TI values
+            te_n: number of TE values
+            l_in: Spherical Harmonics degree
+            b_in: number of input b-values
+            b_out: number of output b-values
+            symmetric: only use Spherical Harmonics of even degree. Defaults to True.
+        """
+
         super(S2Convolution, self).__init__()
 
         self.register_buffer("_l_in", torch.tensor(l_in))
@@ -94,7 +111,16 @@ class S2Convolution(torch.nn.Module):
 
 class SO3Convolution(torch.nn.Module):
     def __init__(self, ti_n, te_n, l_in, b_in, b_out, symmetric: bool = True):
-        """Convolution between SO(3) signals and kernels in spectral domain."""
+        """Convolution between SO(3) signals and kernels in spectral domain.
+
+        Args:
+            ti_n: number of TI values
+            te_n: number of TE values
+            l_in: Spherical Harmonics degree
+            b_in: number of input b-values
+            b_out: number of output b-values
+            symmetric: only use Spherical Harmonics of even degree. Defaults to True.
+        """
         super(SO3Convolution, self).__init__()
 
         self.register_buffer("_l_in", torch.tensor(l_in))

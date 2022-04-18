@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Literal, Optional, Union
+from typing import Callable, Dict, Literal, Optional, Union, Tuple
 
 import numpy as np
 import torch
@@ -11,7 +11,9 @@ def group_b_values(
     b_s: np.ndarray,
     ti_idx: Optional[int] = 0,
     te_idx: Optional[int] = 0,
-) -> np.ndarray:
+    data_grouped: Optional[torch.Tensor] = None,
+    data: Optional[torch.Tensor] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Group DWI gradients by b-values and returns the grouped gradient directions.
     This function is necessary for the S^2 fourier transforms.
 
@@ -22,11 +24,17 @@ def group_b_values(
         b_s: all unique b-values.
         ti_idx: TI index of the ``gradients`` attribute. Defaults to 0.
         te_idx: TE index of the ``gradients`` attribute. Defaults to 0.
+        data_grouped: empty numpy array to store grouped data in. Defaults to None
+        data: Optional data to group. Defaults to None.
 
     Returns:
-        grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz}.
+        grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz} and grouped data of
+        shape {batch size, TI, TE, gradient directions, b-values}
     """
     for b_idx, b in enumerate(b_s):
+        if b == 0:
+            continue
+
         parameters_b: np.ndarray = parameters[parameters[:, 3] == b]
 
         if parameters_b.shape[0] > gradients.shape[3]:
@@ -37,26 +45,49 @@ def group_b_values(
                     gradients.shape[1],
                     gradients.shape[2],
                     parameters_b.shape[0],
-                    3,
+                    gradients.shape[4],
                 ),
             )
 
+            if data_grouped is not None:
+                data_grouped = np.resize(
+                    data_grouped,
+                    (
+                        data_grouped.shape[0],
+                        data_grouped.shape[1],
+                        data_grouped.shape[2],
+                        parameters_b.shape[0],
+                        data_grouped.shape[4],
+                    ),
+                )
+
         gradients[ti_idx, te_idx, b_idx, : parameters_b.shape[0]] = parameters_b[:, :3]
 
-    return gradients
+        if data_grouped is not None:
+            data_b = data[:, parameters[:, 3] == b]
+            data_grouped[:, ti_idx, te_idx, : parameters_b.shape[0], b_idx] = data_b
+
+    return gradients, data_grouped
 
 
-def group_te_ti_b_values(parameters: np.ndarray) -> np.ndarray:
+def group_te_ti_b_values(
+    parameters: np.ndarray, data: Optional[torch.Tensor] = None
+) -> Tuple[np.ndarray, Optional[np.ndarray]]:
     """Group DWI gradient direction by b-values and TI and TE parameters if applicable.
     This function is necessary for the S^2 fourier transforms.
 
     Args:
         parameters: ungrouped gradients directions.
+        data: Optional data to group. Defaults to None.
 
     Returns:
-        grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz}.
+        grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz} and optionally grouped data of
+        shape {batch size, TI, TE, gradient directions, b-values}
     """
+    # FIXME: This function is slow and is executed a lot. Maybe some caching would help?
+
     b_s = np.unique(parameters[:, 3])
+    b_s = b_s[b_s != 0]
     ti_s = np.unique(parameters[:, 4]) if parameters.shape[1] > 4 else None
     te_s = np.unique(parameters[:, 5]) if parameters.shape[1] > 5 else None
 
@@ -70,16 +101,41 @@ def group_te_ti_b_values(parameters: np.ndarray) -> np.ndarray:
         )
     )
 
+    data_grouped = (
+        np.zeros(
+            (
+                data.shape[0],
+                ti_s.shape[0] if ti_s is not None else 1,
+                te_s.shape[0] if te_s is not None else 1,
+                1,  # initial number of gradient direction per b-value, will resize later
+                b_s.shape[0],
+            )
+        )
+        if data is not None
+        else None
+    )
+
+    data_ti = None
+    data_te = None
     if ti_s is not None and te_s is not None:
         for ti_idx, ti in enumerate(ti_s):
             parameters_ti = parameters[parameters[:, 4] == ti]
+            if data is not None:
+                data_ti = data[:, parameters[:, 4] == ti]
             for te_idx, te in enumerate(te_s):
                 parameters_te = parameters_ti[parameters_ti[:, 5] == te]
-                gradients = group_b_values(gradients, parameters_te, b_s, ti_idx, te_idx)
+                if data is not None:
+                    data_te = data_ti[:, parameters_ti[:, 5] == te]
+                gradients, data_grouped = group_b_values(
+                    gradients, parameters_te, b_s, ti_idx, te_idx, data_grouped, data_te
+                )
     else:
-        gradients = group_b_values(gradients, parameters, b_s)
+        gradients, data_grouped = group_b_values(gradients, parameters, b_s, data_grouped=data_grouped, data=data)
 
-    return gradients
+    if data_grouped is not None:
+        return gradients, data_grouped
+    else:
+        return gradients
 
 
 class SignalToS2(torch.nn.Module):
@@ -397,5 +453,5 @@ class SO3ToSignal(torch.nn.Module):
 
     def forward(self, x: Dict[int, torch.Tensor]):
         x = [x[l][:, :, :, :, :, (2 * l + 1) // 2] for l in x]
-        x = torch.cat(x, 4).squeeze()
+        x = torch.cat(x, 4)
         return self.s2_to_signal(x)

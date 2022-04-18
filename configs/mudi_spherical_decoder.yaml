@@ -9,27 +9,16 @@ trainer:
 model:
   class_path: autoencoder.models.SphericalDecoder
   init_args:
-    n_ti: 28
-    n_te: 3
-    linear_layer_input_size: 2688
-    linear_layer_output_size: 1344
-    n_shells:
-      - 4
-      - 8
-      - 16
-    L:
-      - 2
-      - 2
-      - 0
-    learning_rate: 0.001
+    parameters_file_path: ./data/prj_MUDI_parameters.hdf5
+    sh_degree: 2
+    n_shells: 3
+    learning_rate: 0.0001
 data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
-    include_parameters: ./data/mudi_include_latent.txt
+    include_parameters: ./data/MUDI-500-b8aaa2201b2a4e5895127541f5dd1122.txt
     return_target: True
-    transform:
-      class_path: autoencoder.datasets.SphericalTransformer
-      init_args:
-        l_max: 2
-        symmetric: true
-        inversion_n_iters: 1000
+    use_spherical_data: true
+tags:
+  data: MUDI
+  input_size: "60"

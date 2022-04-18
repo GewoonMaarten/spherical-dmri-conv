@@ -40,15 +40,15 @@ autosummary_generate = True
 
 autoapi_type = "python"
 autoapi_dirs = ["../../src"]
-autoapi_options = [
-    "members",
-    # "undoc-members",
-    "private-members",
-    "show-inheritance",
-    "show-module-summary",
-    "special-members",
-    "imported-members",
-]
+# autoapi_options = [
+#     "members",
+#     # "undoc-members",
+#     "private-members",
+#     "show-inheritance",
+#     "show-module-summary",
+#     "special-members",
+#     "imported-members",
+# ]
 autoapi_python_class_content = "init"
 
 autodoc_typehints = "description"

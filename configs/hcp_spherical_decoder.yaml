@@ -10,18 +10,17 @@ trainer:
 model:
   class_path: autoencoder.models.SphericalDecoder
   init_args:
+    parameters_file_path: ./data/prj_HCP_parameters.hdf5
+    sh_degree: 8
+    n_shells: 3
     learning_rate: 0.0001
 data:
   class_path: autoencoder.datasets.MRIDataModule
   init_args:
     include_parameters: data/HCP-60-random-b1000-b2000.txt
     return_target: True
-    transform:
-      class_path: autoencoder.datasets.SphericalTransformer
-      init_args:
-        l_max: 6
-        symmetric: true
-        inversion_n_iters: 1000
+    use_spherical_data: true
+
 tags:
   data: HCP
   input_size: "60"

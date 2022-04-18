@@ -157,8 +157,20 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
+  <ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="../spherical/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../spherical/convolution/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.convolution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../spherical/transform/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.transform</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../__main__/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.__main__</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.datasets</span></code></a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.logger</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../models/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.models</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -235,8 +247,39 @@ NOTSET      0</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.logger.get_logger" title="autoencoder.logger.get_logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_logger</span></code></a>()</p></td>
 <td><p>Create a logger with a stream handler and a file handler</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.logger.set_log_level" title="autoencoder.logger.set_log_level"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_log_level</span></code></a>(log_level)</p></td>
+<td><p></p></td>
+</tr>
 </tbody>
 </table></div>
+</section>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this headline">#</a></h3>
+<div class="table-wrapper"><table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%"/>
+<col style="width: 90%"/>
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.logger.LOGGER_NAME" title="autoencoder.logger.LOGGER_NAME"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LOGGER_NAME</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.logger.FORMATTER" title="autoencoder.logger.FORMATTER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FORMATTER</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.logger.logger" title="autoencoder.logger.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table></div>
+<dl class="py data">
+<dt class="sig sig-object py" id="autoencoder.logger.LOGGER_NAME">
+<span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">LOGGER_NAME</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">MUDI</span></em><a class="headerlink" href="#autoencoder.logger.LOGGER_NAME" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="autoencoder.logger.FORMATTER">
+<span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">FORMATTER</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">%(asctime)s</span> <span class="pre">-</span> <span class="pre">%(name)s</span> <span class="pre">-</span> <span class="pre">%(levelname)s</span> <span class="pre">-</span> <span class="pre">%(message)s</span> <span class="pre">(%(filename)s:%(lineno)d)</span></em><a class="headerlink" href="#autoencoder.logger.FORMATTER" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="autoencoder.logger.BraceString">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">BraceString</span></span><a class="headerlink" href="#autoencoder.logger.BraceString" title="Permalink to this definition">#</a></dt>
@@ -289,6 +332,30 @@ use one of %-formatting, <code class="xref py py-meth docutils literal notransla
 <div class="versionchanged">
 <p><span class="versionmodified changed">Changed in version 3.2: </span>Added the <code class="docutils literal notranslate"><span class="pre">style</span></code> parameter.</p>
 </div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter.grey">
+<span class="sig-name descname"><span class="pre">grey</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">[38;21m</span></em><a class="headerlink" href="#autoencoder.logger.ColorFormatter.grey" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter.yellow">
+<span class="sig-name descname"><span class="pre">yellow</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">[33;21m</span></em><a class="headerlink" href="#autoencoder.logger.ColorFormatter.yellow" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter.red">
+<span class="sig-name descname"><span class="pre">red</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">[31;21m</span></em><a class="headerlink" href="#autoencoder.logger.ColorFormatter.red" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter.bold_red">
+<span class="sig-name descname"><span class="pre">bold_red</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">[31;1m</span></em><a class="headerlink" href="#autoencoder.logger.ColorFormatter.bold_red" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">[0m</span></em><a class="headerlink" href="#autoencoder.logger.ColorFormatter.reset" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter.FORMATS">
+<span class="sig-name descname"><span class="pre">FORMATS</span></span><a class="headerlink" href="#autoencoder.logger.ColorFormatter.FORMATS" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.logger.ColorFormatter.format">
 <span class="sig-name descname"><span class="pre">format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">record</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.logger.ColorFormatter.format" title="Permalink to this definition">#</a></dt>
@@ -321,6 +388,22 @@ it is formatted using formatException() and appended to the message.</p>
 </dd>
 </dl>
 </dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="autoencoder.logger.set_log_level">
+<span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">set_log_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.logger.set_log_level" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>log_level</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="autoencoder.logger.logger">
+<span class="sig-prename descclassname"><span class="pre">autoencoder.logger.</span></span><span class="sig-name descname"><span class="pre">logger</span></span><a class="headerlink" href="#autoencoder.logger.logger" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
 </section>
 </section>
 </section>
@@ -367,7 +450,10 @@ it is formatted using formatException() and appended to the message.</p>
 <li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.logger</span></code></a><ul>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#classes">Classes</a></li>
-<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+<li><a class="reference internal" href="#attributes">Attributes</a><ul>
+<li><a class="reference internal" href="#autoencoder.logger.LOGGER_NAME">LOGGER_NAME</a></li>
+<li><a class="reference internal" href="#autoencoder.logger.FORMATTER">FORMATTER</a></li>
 <li><a class="reference internal" href="#autoencoder.logger.BraceString">BraceString</a><ul>
 <li><a class="reference internal" href="#autoencoder.logger.BraceString.__mod__">__mod__</a></li>
 <li><a class="reference internal" href="#autoencoder.logger.BraceString.__str__">__str__</a></li>
@@ -378,10 +464,18 @@ it is formatted using formatException() and appended to the message.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#autoencoder.logger.ColorFormatter">ColorFormatter</a><ul>
+<li><a class="reference internal" href="#autoencoder.logger.ColorFormatter.grey">grey</a></li>
+<li><a class="reference internal" href="#autoencoder.logger.ColorFormatter.yellow">yellow</a></li>
+<li><a class="reference internal" href="#autoencoder.logger.ColorFormatter.red">red</a></li>
+<li><a class="reference internal" href="#autoencoder.logger.ColorFormatter.bold_red">bold_red</a></li>
+<li><a class="reference internal" href="#autoencoder.logger.ColorFormatter.reset">reset</a></li>
+<li><a class="reference internal" href="#autoencoder.logger.ColorFormatter.FORMATS">FORMATS</a></li>
 <li><a class="reference internal" href="#autoencoder.logger.ColorFormatter.format">format</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#autoencoder.logger.get_logger">get_logger</a></li>
+<li><a class="reference internal" href="#autoencoder.logger.set_log_level">set_log_level</a></li>
+<li><a class="reference internal" href="#autoencoder.logger.logger">logger</a></li>
 </ul>
 </li>
 </ul>

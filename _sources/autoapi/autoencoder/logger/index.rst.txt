@@ -35,8 +35,29 @@ Functions
 .. autoapisummary::
 
    autoencoder.logger.get_logger
+   autoencoder.logger.set_log_level
 
 
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.logger.LOGGER_NAME
+   autoencoder.logger.FORMATTER
+   autoencoder.logger.logger
+
+
+.. py:data:: LOGGER_NAME
+   :annotation: = MUDI
+
+   
+
+.. py:data:: FORMATTER
+   :annotation: = %(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)
+
+   
 
 .. py:class:: BraceString
 
@@ -98,6 +119,36 @@ Functions
    .. versionchanged:: 3.2
       Added the ``style`` parameter.
 
+   .. py:attribute:: grey
+      :annotation: = [38;21m
+
+      
+
+   .. py:attribute:: yellow
+      :annotation: = [33;21m
+
+      
+
+   .. py:attribute:: red
+      :annotation: = [31;21m
+
+      
+
+   .. py:attribute:: bold_red
+      :annotation: = [31;1m
+
+      
+
+   .. py:attribute:: reset
+      :annotation: = [0m
+
+      
+
+   .. py:attribute:: FORMATS
+      
+
+      
+
    .. py:method:: format(self, record)
 
       Format the specified record as text.
@@ -117,4 +168,12 @@ Functions
 
    Create a logger with a stream handler and a file handler
 
+
+.. py:function:: set_log_level(log_level)
+
+
+.. py:data:: logger
+   
+
+   
 

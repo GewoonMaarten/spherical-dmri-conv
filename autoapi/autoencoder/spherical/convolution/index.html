@@ -157,8 +157,20 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../../index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
+  <ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.convolution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../transform/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.transform</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../__main__/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.__main__</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../datasets/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.datasets</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.logger</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../models/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.models</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -220,12 +232,29 @@
 <dt class="sig sig-object py" id="autoencoder.spherical.convolution.QuadraticNonLinearity">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.spherical.convolution.</span></span><span class="sig-name descname"><span class="pre">QuadraticNonLinearity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_in</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_out</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.convolution.QuadraticNonLinearity" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></p>
-<p>Special non-linearity function for data in spectral domain.</p>
+<p>Special non-linearity function for data in spectral domain.
+Code adapated from: <a class="reference external" href="https://gitlab.inria.fr/ssedlar/fourier_s2cnn/-/blob/master/fourier_s2cnn/estimators/fourier_s2cnn_utils.py#L180">https://gitlab.inria.fr/ssedlar/fourier_s2cnn/-/blob/master/fourier_s2cnn/estimators/fourier_s2cnn_utils.py#L180</a></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>symmetric</strong> (<em>bool</em>) – </p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>l_in</strong> (<em>int</em>) – input Spherical Harmonic degree.</p></li>
+<li><p><strong>l_out</strong> (<em>int</em>) – output Spherical Harmonic degree.</p></li>
+<li><p><strong>symmetric</strong> (<em>bool</em>) – only use Spherical Harmonics of even degree. Defaults to True.</p></li>
+</ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.spherical.convolution.QuadraticNonLinearity.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.convolution.QuadraticNonLinearity.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>torch.Tensor</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Dict[int, torch.Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="autoencoder.spherical.convolution.S2Convolution">
@@ -234,9 +263,28 @@
 <p>Convolution between spherical signals and kernels in spectral domain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>symmetric</strong> (<em>bool</em>) – </p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ti_n</strong> (<em>int</em>) – number of TI values</p></li>
+<li><p><strong>te_n</strong> (<em>int</em>) – number of TE values</p></li>
+<li><p><strong>l_in</strong> (<em>int</em>) – Spherical Harmonics degree</p></li>
+<li><p><strong>b_in</strong> (<em>int</em>) – number of input b-values</p></li>
+<li><p><strong>b_out</strong> (<em>int</em>) – number of output b-values</p></li>
+<li><p><strong>symmetric</strong> (<em>bool</em>) – only use Spherical Harmonics of even degree. Defaults to True.</p></li>
+</ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.spherical.convolution.S2Convolution.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.convolution.S2Convolution.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>torch.Tensor</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Dict[int, torch.Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="autoencoder.spherical.convolution.SO3Convolution">
@@ -245,9 +293,28 @@
 <p>Convolution between SO(3) signals and kernels in spectral domain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>symmetric</strong> (<em>bool</em>) – </p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ti_n</strong> – number of TI values</p></li>
+<li><p><strong>te_n</strong> – number of TE values</p></li>
+<li><p><strong>l_in</strong> – Spherical Harmonics degree</p></li>
+<li><p><strong>b_in</strong> – number of input b-values</p></li>
+<li><p><strong>b_out</strong> – number of output b-values</p></li>
+<li><p><strong>symmetric</strong> (<em>bool</em>) – only use Spherical Harmonics of even degree. Defaults to True.</p></li>
+</ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.spherical.convolution.SO3Convolution.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.convolution.SO3Convolution.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>torch.Tensor</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Dict[int, torch.Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 </section>
 </section>
@@ -295,9 +362,18 @@
 <li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.convolution</span></code></a><ul>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#classes">Classes</a><ul>
-<li><a class="reference internal" href="#autoencoder.spherical.convolution.QuadraticNonLinearity">QuadraticNonLinearity</a></li>
-<li><a class="reference internal" href="#autoencoder.spherical.convolution.S2Convolution">S2Convolution</a></li>
-<li><a class="reference internal" href="#autoencoder.spherical.convolution.SO3Convolution">SO3Convolution</a></li>
+<li><a class="reference internal" href="#autoencoder.spherical.convolution.QuadraticNonLinearity">QuadraticNonLinearity</a><ul>
+<li><a class="reference internal" href="#autoencoder.spherical.convolution.QuadraticNonLinearity.forward">forward</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#autoencoder.spherical.convolution.S2Convolution">S2Convolution</a><ul>
+<li><a class="reference internal" href="#autoencoder.spherical.convolution.S2Convolution.forward">forward</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#autoencoder.spherical.convolution.SO3Convolution">SO3Convolution</a><ul>
+<li><a class="reference internal" href="#autoencoder.spherical.convolution.SO3Convolution.forward">forward</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

@@ -1,9 +1,16 @@
-:orphan:
-
 :py:mod:`autoencoder`
 =====================
 
 .. py:module:: autoencoder
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   spherical/index.rst
 
 
 Submodules
@@ -12,6 +19,9 @@ Submodules
    :titlesonly:
    :maxdepth: 1
 
+   __main__/index.rst
+   datasets/index.rst
    logger/index.rst
+   models/index.rst
 
 

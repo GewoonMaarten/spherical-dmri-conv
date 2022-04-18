@@ -1,5 +1,3 @@
-:orphan:
-
 :py:mod:`autoencoder.spherical.transform`
 =========================================
 
@@ -19,6 +17,45 @@ Classes
    autoencoder.spherical.transform.SO3ToSignal
 
 
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.spherical.transform.group_b_values
+   autoencoder.spherical.transform.group_te_ti_b_values
+
+
+
+.. py:function:: group_b_values(gradients, parameters, b_s, ti_idx = 0, te_idx = 0, data_grouped = None, data = None)
+
+   Group DWI gradients by b-values and returns the grouped gradient directions.
+   This function is necessary for the S^2 fourier transforms.
+
+   :param gradients: empty numpy array to store gradients of shape: {TI, TE, b-value, gradient directions, xyz}. The
+                     gradient direction dimension can be an arbitrary value as it will be resized in this function.
+   :param parameters: ungrouped gradient directions.
+   :param b_s: all unique b-values.
+   :param ti_idx: TI index of the ``gradients`` attribute. Defaults to 0.
+   :param te_idx: TE index of the ``gradients`` attribute. Defaults to 0.
+   :param data_grouped: empty numpy array to store grouped data in. Defaults to None
+   :param data: Optional data to group. Defaults to None.
+
+   :returns: grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz} and grouped data of
+             shape {batch size, TI, TE, gradient directions, b-values}
+
+
+.. py:function:: group_te_ti_b_values(parameters, data = None)
+
+   Group DWI gradient direction by b-values and TI and TE parameters if applicable.
+   This function is necessary for the S^2 fourier transforms.
+
+   :param parameters: ungrouped gradients directions.
+   :param data: Optional data to group. Defaults to None.
+
+   :returns: grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz} and optionally grouped data of
+             shape {batch size, TI, TE, gradient directions, b-values}
 
 
 .. py:class:: SignalToS2(gradients, sh_degree_max, inversion_function, **kwargs)
@@ -44,13 +81,13 @@ Classes
        :linenos:
 
        # Create random dwi data with 90 gradient directions and 4 b-values
-       gradients = torch.rand((4, 90, 3)) # {b-values, gradients, xyz}
-       data = torch.rand((512, 90, 4)) # {batch size, gradients, b-values}
+       gradients = torch.rand((1,1,4, 90, 3)) # {TI, TE, b-values, gradients, xyz}
+       data = torch.rand((1,1,512, 90, 4)) # {TI, TE, batch size, gradients, b-values}
 
        signal_to_s2 = SignalToS2(gradients, 4, "gram_schmidt")
        signal_to_s2(data)
 
-   :param gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a, b, 3)``, where
+   :param gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(TI, TE, a, b, 3)``, where
                      ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is
                      in cartesian coordinates (xyz).
    :param sh_degree_max: Maximum degree (``l``) of Spherical Harmonics to fit. Denoted by :math:`L_{max}` in the
@@ -66,6 +103,13 @@ Classes
 
    .. _spherical harmonics: https://en.wikipedia.org/wiki/Spherical_harmonics
    .. _complex conjugation: https://en.wikipedia.org/wiki/Complex_conjugate
+
+   .. py:method:: n_sh(self)
+      :property:
+
+
+   .. py:method:: forward(self, x)
+
 
    .. py:method:: lms_sh_inv(self, sh, l_max, **kwargs)
 
@@ -142,13 +186,20 @@ Classes
        s2_to_signal = S2ToSignal(gradients, 4)
        s2_to_signal(data)
 
-   :param gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(a,b,3)``, where
+   :param gradients: Vectors to fit the Spherical Harmonics to. Has to be of shape ``(TI, TE, a, b, 3)``, where
                      ``a`` are the number of b-values (shells) and ``b`` is the number of gradient directions. The vector is
                      in cartesian coordinates (xyz).
    :param sh_degree_max: Maximum degree (``l``) of Spherical Harmonics to fit. Denoted by :math:`L_{max}` in the
                          equation.
 
    .. _spherical harmonics: https://en.wikipedia.org/wiki/Spherical_harmonics
+
+   .. py:method:: n_sh(self)
+      :property:
+
+
+   .. py:method:: forward(self, x)
+
 
 
 .. py:class:: SO3ToSignal(gradients, sh_degree_max)
@@ -186,5 +237,8 @@ Classes
    :param sh_degree_max: Maximum degree of Spherical Harmonics to fit.
 
    .. _Wigner-D matrix: https://en.wikipedia.org/wiki/Wigner_D-matrix
+
+   .. py:method:: forward(self, x)
+
 
 

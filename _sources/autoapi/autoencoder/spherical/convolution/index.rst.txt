@@ -1,5 +1,3 @@
-:orphan:
-
 :py:mod:`autoencoder.spherical.convolution`
 ===========================================
 
@@ -26,6 +24,14 @@ Classes
    Bases: :py:obj:`torch.nn.Module`
 
    Special non-linearity function for data in spectral domain.
+   Code adapated from: https://gitlab.inria.fr/ssedlar/fourier_s2cnn/-/blob/master/fourier_s2cnn/estimators/fourier_s2cnn_utils.py#L180
+
+   :param l_in: input Spherical Harmonic degree.
+   :param l_out: output Spherical Harmonic degree.
+   :param symmetric: only use Spherical Harmonics of even degree. Defaults to True.
+
+   .. py:method:: forward(self, x)
+
 
 
 .. py:class:: S2Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric = True)
@@ -34,11 +40,31 @@ Classes
 
    Convolution between spherical signals and kernels in spectral domain.
 
+   :param ti_n: number of TI values
+   :param te_n: number of TE values
+   :param l_in: Spherical Harmonics degree
+   :param b_in: number of input b-values
+   :param b_out: number of output b-values
+   :param symmetric: only use Spherical Harmonics of even degree. Defaults to True.
+
+   .. py:method:: forward(self, x)
+
+
 
 .. py:class:: SO3Convolution(ti_n, te_n, l_in, b_in, b_out, symmetric = True)
 
    Bases: :py:obj:`torch.nn.Module`
 
    Convolution between SO(3) signals and kernels in spectral domain.
+
+   :param ti_n: number of TI values
+   :param te_n: number of TE values
+   :param l_in: Spherical Harmonics degree
+   :param b_in: number of input b-values
+   :param b_out: number of output b-values
+   :param symmetric: only use Spherical Harmonics of even degree. Defaults to True.
+
+   .. py:method:: forward(self, x)
+
 
 

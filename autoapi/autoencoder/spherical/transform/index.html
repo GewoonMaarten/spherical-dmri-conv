@@ -157,8 +157,20 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../../index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
+  <ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="../../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 current has-children"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../convolution/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.convolution</span></code></a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.transform</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../__main__/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.__main__</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../datasets/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.datasets</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.logger</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../models/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.models</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -216,6 +228,71 @@
 </tr>
 </tbody>
 </table></div>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">#</a></h3>
+<div class="table-wrapper"><table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%"/>
+<col style="width: 90%"/>
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.spherical.transform.group_b_values" title="autoencoder.spherical.transform.group_b_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_b_values</span></code></a>(gradients, parameters, b_s, ti_idx = 0, te_idx = 0, data_grouped = None, data = None)</p></td>
+<td><p>Group DWI gradients by b-values and returns the grouped gradient directions.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.spherical.transform.group_te_ti_b_values" title="autoencoder.spherical.transform.group_te_ti_b_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">group_te_ti_b_values</span></code></a>(parameters, data = None)</p></td>
+<td><p>Group DWI gradient direction by b-values and TI and TE parameters if applicable.</p></td>
+</tr>
+</tbody>
+</table></div>
+<dl class="py function">
+<dt class="sig sig-object py" id="autoencoder.spherical.transform.group_b_values">
+<span class="sig-prename descclassname"><span class="pre">autoencoder.spherical.transform.</span></span><span class="sig-name descname"><span class="pre">group_b_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradients</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ti_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">te_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_grouped</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.group_b_values" title="Permalink to this definition">#</a></dt>
+<dd><p>Group DWI gradients by b-values and returns the grouped gradient directions.
+This function is necessary for the S^2 fourier transforms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gradients</strong> (<em>numpy.ndarray</em>) – empty numpy array to store gradients of shape: {TI, TE, b-value, gradient directions, xyz}. The
+gradient direction dimension can be an arbitrary value as it will be resized in this function.</p></li>
+<li><p><strong>parameters</strong> (<em>numpy.ndarray</em>) – ungrouped gradient directions.</p></li>
+<li><p><strong>b_s</strong> (<em>numpy.ndarray</em>) – all unique b-values.</p></li>
+<li><p><strong>ti_idx</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – TI index of the <code class="docutils literal notranslate"><span class="pre">gradients</span></code> attribute. Defaults to 0.</p></li>
+<li><p><strong>te_idx</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – TE index of the <code class="docutils literal notranslate"><span class="pre">gradients</span></code> attribute. Defaults to 0.</p></li>
+<li><p><strong>data_grouped</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – empty numpy array to store grouped data in. Defaults to None</p></li>
+<li><p><strong>data</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – Optional data to group. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz} and grouped data of
+shape {batch size, TI, TE, gradient directions, b-values}</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[numpy.ndarray, numpy.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="autoencoder.spherical.transform.group_te_ti_b_values">
+<span class="sig-prename descclassname"><span class="pre">autoencoder.spherical.transform.</span></span><span class="sig-name descname"><span class="pre">group_te_ti_b_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.group_te_ti_b_values" title="Permalink to this definition">#</a></dt>
+<dd><p>Group DWI gradient direction by b-values and TI and TE parameters if applicable.
+This function is necessary for the S^2 fourier transforms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameters</strong> (<em>numpy.ndarray</em>) – ungrouped gradients directions.</p></li>
+<li><p><strong>data</strong> (<em>Optional</em><em>[</em><em>torch.Tensor</em><em>]</em>) – Optional data to group. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>grouped gradient directions of shape {TI, TE, b-value, gradient directions, xyz} and optionally grouped data of
+shape {batch size, TI, TE, gradient directions, b-values}</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[numpy.ndarray, Optional[numpy.ndarray]]</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="autoencoder.spherical.transform.SignalToS2">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.spherical.transform.</span></span><span class="sig-name descname"><span class="pre">SignalToS2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gradients</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sh_degree_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_function</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.SignalToS2" title="Permalink to this definition">#</a></dt>
@@ -227,11 +304,11 @@ According to:</p>
 <p>where <span class="math notranslate nohighlight">\(\hat{s}^m_l\)</span> are the spherical coefficients, <span class="math notranslate nohighlight">\(r \in \mathbb{R}^3\)</span>,
 <span class="math notranslate nohighlight">\(s : S^2 \mapsto \mathbb{C}\)</span> and <span class="math notranslate nohighlight">\(\overline{Y^m_l(r)}\)</span> denotes the <a class="reference external" href="https://en.wikipedia.org/wiki/Spherical_harmonics">spherical harmonics</a>, the
 overbar denotes the <a class="reference external" href="https://en.wikipedia.org/wiki/Complex_conjugate">complex conjugation</a>.</p>
-<p>See “Spherical CNNs” by T. Cohen <cite>et al.</cite> for more information <span id="id1">[<a class="reference internal" href="../../../../index.html#id5" title="Taco S Cohen, Mario Geiger, Jonas Köhler, and Max Welling. Spherical cnns. arXiv preprint arXiv:1801.10130, 2018.">1</a>]</span>.</p>
+<p>See “Spherical CNNs” by T. Cohen <cite>et al.</cite> for more information <span id="id1">[<a class="reference internal" href="../../../../index.html#id5" title="Taco S Cohen, Mario Geiger, Jonas Köhler, and Max Welling. Spherical cnns. arXiv preprint arXiv:1801.10130, 2018.">2</a>]</span>.</p>
 <p>Example usage:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Create random dwi data with 90 gradient directions and 4 b-values</span>
-<span class="linenos">2</span><span class="n">gradients</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="c1"># {b-values, gradients, xyz}</span>
-<span class="linenos">3</span><span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">((</span><span class="mi">512</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span> <span class="c1"># {batch size, gradients, b-values}</span>
+<span class="linenos">2</span><span class="n">gradients</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="c1"># {TI, TE, b-values, gradients, xyz}</span>
+<span class="linenos">3</span><span class="n">data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">512</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span> <span class="c1"># {TI, TE, batch size, gradients, b-values}</span>
 <span class="linenos">4</span>
 <span class="linenos">5</span><span class="n">signal_to_s2</span> <span class="o">=</span> <span class="n">SignalToS2</span><span class="p">(</span><span class="n">gradients</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">"gram_schmidt"</span><span class="p">)</span>
 <span class="linenos">6</span><span class="n">signal_to_s2</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
@@ -240,7 +317,7 @@ overbar denotes the <a class="reference external" href="https://en.wikipedia.org
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>gradients</strong> (<em>torch.Tensor</em>) – Vectors to fit the Spherical Harmonics to. Has to be of shape <code class="docutils literal notranslate"><span class="pre">(a,</span> <span class="pre">b,</span> <span class="pre">3)</span></code>, where
+<li><p><strong>gradients</strong> (<em>Union</em><em>[</em><em>torch.Tensor</em><em>, </em><em>numpy.ndarray</em><em>]</em>) – Vectors to fit the Spherical Harmonics to. Has to be of shape <code class="docutils literal notranslate"><span class="pre">(TI,</span> <span class="pre">TE,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">3)</span></code>, where
 <code class="docutils literal notranslate"><span class="pre">a</span></code> are the number of b-values (shells) and <code class="docutils literal notranslate"><span class="pre">b</span></code> is the number of gradient directions. The vector is
 in cartesian coordinates (xyz).</p></li>
 <li><p><strong>sh_degree_max</strong> (<em>int</em>) – Maximum degree (<code class="docutils literal notranslate"><span class="pre">l</span></code>) of Spherical Harmonics to fit. Denoted by <span class="math notranslate nohighlight">\(L_{max}\)</span> in the
@@ -259,6 +336,19 @@ equation.</p></li>
 <dd class="field-even"><p><strong>ValueError</strong> – raised when an unknown inversion function is given.</p>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.spherical.transform.SignalToS2.n_sh">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_sh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.SignalToS2.n_sh" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.spherical.transform.SignalToS2.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.SignalToS2.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.spherical.transform.SignalToS2.lms_sh_inv">
 <span class="sig-name descname"><span class="pre">lms_sh_inv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_max</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.SignalToS2.lms_sh_inv" title="Permalink to this definition">#</a></dt>
@@ -281,7 +371,7 @@ equation.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.spherical.transform.SignalToS2.lms_tikhonov_sh_inv">
 <span class="sig-name descname"><span class="pre">lms_tikhonov_sh_inv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_max</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.SignalToS2.lms_tikhonov_sh_inv" title="Permalink to this definition">#</a></dt>
-<dd><p>Inversion of spherical harmonic basis with least-mean square regularized with Tikhonov regularization term <span id="id2">[<a class="reference internal" href="../../../../index.html#id3" title="Christopher P Hess, Pratik Mukherjee, Eric T Han, Duan Xu, and Daniel B Vigneron. Q-ball reconstruction of multimodal fiber orientations using the spherical harmonic basis. Magnetic Resonance in Medicine: An Official Journal of the International Society for Magnetic Resonance in Medicine, 56(1):104–117, 2006.">2</a>]</span></p>
+<dd><p>Inversion of spherical harmonic basis with least-mean square regularized with Tikhonov regularization term <span id="id2">[<a class="reference internal" href="../../../../index.html#id3" title="Christopher P Hess, Pratik Mukherjee, Eric T Han, Duan Xu, and Daniel B Vigneron. Q-ball reconstruction of multimodal fiber orientations using the spherical harmonic basis. Magnetic Resonance in Medicine: An Official Journal of the International Society for Magnetic Resonance in Medicine, 56(1):104–117, 2006.">3</a>]</span></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -301,7 +391,7 @@ equation.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.spherical.transform.SignalToS2.lms_laplace_beltrami_sh_inv">
 <span class="sig-name descname"><span class="pre">lms_laplace_beltrami_sh_inv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_max</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.SignalToS2.lms_laplace_beltrami_sh_inv" title="Permalink to this definition">#</a></dt>
-<dd><p>Inversion of spherical harmonic basis with least-mean square regularized with Laplace-Beltrami regularization term <span id="id3">[<a class="reference internal" href="../../../../index.html#id2" title="Maxime Descoteaux, Elaine Angelino, Shaun Fitzgibbons, and Rachid Deriche. Regularized, fast, and robust analytical q-ball imaging. Magnetic Resonance in Medicine: An Official Journal of the International Society for Magnetic Resonance in Medicine, 58(3):497–510, 2007.">3</a>]</span></p>
+<dd><p>Inversion of spherical harmonic basis with least-mean square regularized with Laplace-Beltrami regularization term <span id="id3">[<a class="reference internal" href="../../../../index.html#id2" title="Maxime Descoteaux, Elaine Angelino, Shaun Fitzgibbons, and Rachid Deriche. Regularized, fast, and robust analytical q-ball imaging. Magnetic Resonance in Medicine: An Official Journal of the International Society for Magnetic Resonance in Medicine, 58(3):497–510, 2007.">4</a>]</span></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -321,7 +411,7 @@ equation.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.spherical.transform.SignalToS2.gram_schmidt_sh_inv">
 <span class="sig-name descname"><span class="pre">gram_schmidt_sh_inv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_max</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.SignalToS2.gram_schmidt_sh_inv" title="Permalink to this definition">#</a></dt>
-<dd><p>Inversion of spherical harmonic basis with Gram-Schmidt orthonormalization process <span id="id4">[<a class="reference internal" href="../../../../index.html#id4" title="Boon Thye Thomas Yeo. Computing spherical transform and convolution on the 2-sphere. Manuscript, MIT, 2005.">4</a>]</span></p>
+<dd><p>Inversion of spherical harmonic basis with Gram-Schmidt orthonormalization process <span id="id4">[<a class="reference internal" href="../../../../index.html#id4" title="Boon Thye Thomas Yeo. Computing spherical transform and convolution on the 2-sphere. Manuscript, MIT, 2005.">5</a>]</span></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -349,7 +439,7 @@ According to:</p>
 \[s(r) = \sum^{L_{max}}_{l=0} \sum^{m=l}_{m=-l} \hat{s}^m_l Y^m_l(r)\]</div></div>
 <p>where <span class="math notranslate nohighlight">\(s(r)\)</span> is the DWI signal, <span class="math notranslate nohighlight">\(r \in \mathbb{R}^3\)</span>,
 <span class="math notranslate nohighlight">\(Y^m_l(r)\)</span> denotes the <a class="reference external" href="https://en.wikipedia.org/wiki/Spherical_harmonics">spherical harmonics</a> and <span class="math notranslate nohighlight">\(\hat{s}^m_l\)</span> are the spherical coefficients.</p>
-<p>See “Spherical CNNs” by T. Cohen <cite>et al.</cite> for more information <span id="id5">[<a class="reference internal" href="../../../../index.html#id5" title="Taco S Cohen, Mario Geiger, Jonas Köhler, and Max Welling. Spherical cnns. arXiv preprint arXiv:1801.10130, 2018.">1</a>]</span>.</p>
+<p>See “Spherical CNNs” by T. Cohen <cite>et al.</cite> for more information <span id="id5">[<a class="reference internal" href="../../../../index.html#id5" title="Taco S Cohen, Mario Geiger, Jonas Köhler, and Max Welling. Spherical cnns. arXiv preprint arXiv:1801.10130, 2018.">2</a>]</span>.</p>
 <p>Example usage:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="c1"># Create random sh coefficients with 90 gradient directions and 4 b-values</span>
 <span class="linenos">2</span><span class="n">gradients</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="c1"># {b-values, gradients, xyz}</span>
@@ -362,7 +452,7 @@ According to:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>gradients</strong> (<em>torch.Tensor</em>) – Vectors to fit the Spherical Harmonics to. Has to be of shape <code class="docutils literal notranslate"><span class="pre">(a,b,3)</span></code>, where
+<li><p><strong>gradients</strong> (<em>Union</em><em>[</em><em>torch.Tensor</em><em>, </em><em>numpy.ndarray</em><em>]</em>) – Vectors to fit the Spherical Harmonics to. Has to be of shape <code class="docutils literal notranslate"><span class="pre">(TI,</span> <span class="pre">TE,</span> <span class="pre">a,</span> <span class="pre">b,</span> <span class="pre">3)</span></code>, where
 <code class="docutils literal notranslate"><span class="pre">a</span></code> are the number of b-values (shells) and <code class="docutils literal notranslate"><span class="pre">b</span></code> is the number of gradient directions. The vector is
 in cartesian coordinates (xyz).</p></li>
 <li><p><strong>sh_degree_max</strong> (<em>int</em>) – Maximum degree (<code class="docutils literal notranslate"><span class="pre">l</span></code>) of Spherical Harmonics to fit. Denoted by <span class="math notranslate nohighlight">\(L_{max}\)</span> in the
@@ -370,6 +460,19 @@ equation.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.spherical.transform.S2ToSignal.n_sh">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_sh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.S2ToSignal.n_sh" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.spherical.transform.S2ToSignal.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.S2ToSignal.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="autoencoder.spherical.transform.SO3ToSignal">
@@ -403,6 +506,15 @@ in cartesian coordinates (xyz).</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.spherical.transform.SO3ToSignal.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.spherical.transform.SO3ToSignal.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Dict</em><em>[</em><em>int</em><em>, </em><em>torch.Tensor</em><em>]</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 </section>
 </section>
@@ -449,16 +561,28 @@ in cartesian coordinates (xyz).</p></li>
             <ul>
 <li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.transform</span></code></a><ul>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
-<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#autoencoder.spherical.transform.group_b_values">group_b_values</a></li>
+<li><a class="reference internal" href="#autoencoder.spherical.transform.group_te_ti_b_values">group_te_ti_b_values</a></li>
 <li><a class="reference internal" href="#autoencoder.spherical.transform.SignalToS2">SignalToS2</a><ul>
+<li><a class="reference internal" href="#autoencoder.spherical.transform.SignalToS2.n_sh">n_sh</a></li>
+<li><a class="reference internal" href="#autoencoder.spherical.transform.SignalToS2.forward">forward</a></li>
 <li><a class="reference internal" href="#autoencoder.spherical.transform.SignalToS2.lms_sh_inv">lms_sh_inv</a></li>
 <li><a class="reference internal" href="#autoencoder.spherical.transform.SignalToS2.lms_tikhonov_sh_inv">lms_tikhonov_sh_inv</a></li>
 <li><a class="reference internal" href="#autoencoder.spherical.transform.SignalToS2.lms_laplace_beltrami_sh_inv">lms_laplace_beltrami_sh_inv</a></li>
 <li><a class="reference internal" href="#autoencoder.spherical.transform.SignalToS2.gram_schmidt_sh_inv">gram_schmidt_sh_inv</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#autoencoder.spherical.transform.S2ToSignal">S2ToSignal</a></li>
-<li><a class="reference internal" href="#autoencoder.spherical.transform.SO3ToSignal">SO3ToSignal</a></li>
+<li><a class="reference internal" href="#autoencoder.spherical.transform.S2ToSignal">S2ToSignal</a><ul>
+<li><a class="reference internal" href="#autoencoder.spherical.transform.S2ToSignal.n_sh">n_sh</a></li>
+<li><a class="reference internal" href="#autoencoder.spherical.transform.S2ToSignal.forward">forward</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#autoencoder.spherical.transform.SO3ToSignal">SO3ToSignal</a><ul>
+<li><a class="reference internal" href="#autoencoder.spherical.transform.SO3ToSignal.forward">forward</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

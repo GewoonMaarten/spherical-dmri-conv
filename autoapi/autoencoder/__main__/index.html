@@ -157,8 +157,20 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
+  <ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="../spherical/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../spherical/convolution/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.convolution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../spherical/transform/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.transform</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.__main__</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.datasets</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.logger</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../models/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.models</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -208,6 +220,23 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.__main__.kwargs_append_action" title="autoencoder.__main__.kwargs_append_action"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kwargs_append_action</span></code></a></p></td>
 <td><p>argparse action to split an argument into KEY=VALUE form on append to a dictionary.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.__main__.MyLightningCLI" title="autoencoder.__main__.MyLightningCLI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MyLightningCLI</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table></div>
+</section>
+<section id="attributes">
+<h3>Attributes<a class="headerlink" href="#attributes" title="Permalink to this headline">#</a></h3>
+<div class="table-wrapper"><table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%"/>
+<col style="width: 90%"/>
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.__main__.cli" title="autoencoder.__main__.cli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cli</span></code></a></p></td>
+<td><p></p></td>
+</tr>
 </tbody>
 </table></div>
 <dl class="py class">
@@ -215,7 +244,24 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.__main__.</span></span><span class="sig-name descname"><span class="pre">kwargs_append_action</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">option_strings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">const</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">help</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metavar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.__main__.kwargs_append_action" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">argparse.Action</span></code></p>
 <p>argparse action to split an argument into KEY=VALUE form on append to a dictionary.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.__main__.kwargs_append_action.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parser</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">option_string</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.__main__.kwargs_append_action.__call__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
 </dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="autoencoder.__main__.MyLightningCLI">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.__main__.</span></span><span class="sig-name descname"><span class="pre">MyLightningCLI</span></span><a class="headerlink" href="#autoencoder.__main__.MyLightningCLI" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pytorch_lightning.utilities.cli.LightningCLI</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.__main__.MyLightningCLI.add_arguments_to_parser">
+<span class="sig-name descname"><span class="pre">add_arguments_to_parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parser</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.__main__.MyLightningCLI.add_arguments_to_parser" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="autoencoder.__main__.cli">
+<span class="sig-prename descclassname"><span class="pre">autoencoder.__main__.</span></span><span class="sig-name descname"><span class="pre">cli</span></span><a class="headerlink" href="#autoencoder.__main__.cli" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
 </section>
 </section>
 </section>
@@ -261,8 +307,17 @@
             <ul>
 <li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.__main__</span></code></a><ul>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
-<li><a class="reference internal" href="#classes">Classes</a><ul>
-<li><a class="reference internal" href="#autoencoder.__main__.kwargs_append_action">kwargs_append_action</a></li>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#attributes">Attributes</a><ul>
+<li><a class="reference internal" href="#autoencoder.__main__.kwargs_append_action">kwargs_append_action</a><ul>
+<li><a class="reference internal" href="#autoencoder.__main__.kwargs_append_action.__call__">__call__</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#autoencoder.__main__.MyLightningCLI">MyLightningCLI</a><ul>
+<li><a class="reference internal" href="#autoencoder.__main__.MyLightningCLI.add_arguments_to_parser">add_arguments_to_parser</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#autoencoder.__main__.cli">cli</a></li>
 </ul>
 </li>
 </ul>

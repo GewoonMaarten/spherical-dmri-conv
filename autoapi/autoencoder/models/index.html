@@ -157,8 +157,20 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
+  <ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="../spherical/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../spherical/convolution/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.convolution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../spherical/transform/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.transform</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../__main__/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.__main__</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.datasets</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.logger</span></code></a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.models</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -206,38 +218,74 @@
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.models.Encoder" title="autoencoder.models.Encoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Encoder</span></code></a></p></td>
-<td><p>Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and <a href="#id1"><span class="problematic" id="id2">Reconstruction_</span></a>](<a class="reference external" href="https://arxiv.org/abs/1901.09346">https://arxiv.org/abs/1901.09346</a>).</p></td>
+<td><p>Feature selection encoder</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.models.Decoder" title="autoencoder.models.Decoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Decoder</span></code></a></p></td>
 <td><p>Standard decoder. It generates a network from <cite>input_size</cite> to <cite>output_size</cite>. The layers are generates as</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder" title="autoencoder.models.ConcreteAutoencoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConcreteAutoencoder</span></code></a></p></td>
-<td><p>Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and <a href="#id3"><span class="problematic" id="id4">Reconstruction_</span></a>](<a class="reference external" href="https://arxiv.org/abs/1901.09346">https://arxiv.org/abs/1901.09346</a>).</p></td>
+<td><p>Trains a concrete autoencoder</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.models.FCNDecoder" title="autoencoder.models.FCNDecoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FCNDecoder</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.models.BaseDecoder" title="autoencoder.models.BaseDecoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseDecoder</span></code></a></p></td>
+<td><p>Internal module used as a base for the <a class="reference internal" href="#autoencoder.models.FCNDecoder" title="autoencoder.models.FCNDecoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">FCNDecoder</span></code></a> and the <a class="reference internal" href="#autoencoder.models.SphericalDecoder" title="autoencoder.models.SphericalDecoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">SphericalDecoder</span></code></a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.models.FCNDecoder" title="autoencoder.models.FCNDecoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FCNDecoder</span></code></a></p></td>
 <td><p>Fully Connected Network decoder</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.models.SphericalDecoder" title="autoencoder.models.SphericalDecoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SphericalDecoder</span></code></a></p></td>
+<td><p>Spherical decoder</p></td>
 </tr>
 </tbody>
 </table></div>
+</section>
+<section id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">#</a></h3>
+<div class="table-wrapper"><table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%"/>
+<col style="width: 90%"/>
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.models.init_weights_orthogonal" title="autoencoder.models.init_weights_orthogonal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_weights_orthogonal</span></code></a>(m)</p></td>
+<td><p>If Pytorch module is Linear then initialize the according to <code class="docutils literal notranslate"><span class="pre">torch.nn.init.orthogonal</span></code></p></td>
+</tr>
+</tbody>
+</table></div>
+<dl class="py function">
+<dt class="sig sig-object py" id="autoencoder.models.init_weights_orthogonal">
+<span class="sig-prename descclassname"><span class="pre">autoencoder.models.</span></span><span class="sig-name descname"><span class="pre">init_weights_orthogonal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.init_weights_orthogonal" title="Permalink to this definition">#</a></dt>
+<dd><p>If Pytorch module is Linear then initialize the according to <code class="docutils literal notranslate"><span class="pre">torch.nn.init.orthogonal</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>m</strong> (<em>torch.nn.Module</em>) – input module</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py class">
 <dt class="sig sig-object py" id="autoencoder.models.Encoder">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.models.</span></span><span class="sig-name descname"><span class="pre">Encoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_temp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_temp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.Encoder" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.nn.Module</span></code></p>
-<p>Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and <a href="#id5"><span class="problematic" id="id6">Reconstruction_</span></a>](<a class="reference external" href="https://arxiv.org/abs/1901.09346">https://arxiv.org/abs/1901.09346</a>).</p>
+<p>Feature selection encoder
+Implemented according to “<cite>Concrete Autoencoders for Differentiable Feature Selection and Reconstruction.</cite>”
+<span id="id1">[<a class="reference internal" href="../../../index.html#id6" title="Abubakar Abid, Muhammad Fatih Balin, and James Y. Zou. Concrete autoencoders for differentiable feature selection and reconstruction. CoRR, 2019. URL: http://arxiv.org/abs/1901.09346, arXiv:1901.09346.">1</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>input_size</strong> (<em>int</em>) – size of the input layer. Should be the same as the <cite>output_size</cite> of the decoder.</p></li>
 <li><p><strong>output_size</strong> (<em>int</em>) – size of the latent layer. Should be the same as the <cite>input_size</cite> of the decoder.</p></li>
-<li><p><strong>max_temp</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum temperature for Gumble Softmax. Defaults to 10.0.</p></li>
-<li><p><strong>min_temp</strong> (<em>float</em><em>, </em><em>optional</em>) – minimum temperature for Gumble Softmax. Defaults to 0.1.</p></li>
-<li><p><strong>reg_threshold</strong> (<em>float</em><em>, </em><em>optional</em>) – regularization threshold. The encoder will be penalized when the sum of</p></li>
-<li><p><strong>0.3.</strong> (<em>probabilities for a selection neuron exceed this threshold. Defaults to</em>) – </p></li>
-<li><p><strong>reg_eps</strong> (<em>float</em><em>, </em><em>optional</em>) – regularization epsilon. Minimum value for the clamped softmax function in</p></li>
-<li><p><strong>1e-10.</strong> (<em>regularization term. Defaults to</em>) – </p></li>
+<li><p><strong>max_temp</strong> (<em>float</em>) – maximum temperature for Gumble Softmax. Defaults to 10.0.</p></li>
+<li><p><strong>min_temp</strong> (<em>float</em>) – minimum temperature for Gumble Softmax. Defaults to 0.1.</p></li>
+<li><p><strong>reg_threshold</strong> (<em>float</em>) – regularization threshold. The encoder will be penalized when the sum of
+probabilities for a selection neuron exceed this threshold. Defaults to 0.3.</p></li>
+<li><p><strong>reg_eps</strong> (<em>float</em>) – regularization epsilon. Minimum value for the clamped softmax function in
+regularization term. Defaults to 1e-10.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.Encoder.latent_features">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">latent_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.Encoder.latent_features" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.models.Encoder.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.Encoder.forward" title="Permalink to this definition">#</a></dt>
@@ -249,6 +297,24 @@
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>encoder output of size <cite>output_size</cite>.</p>
 </dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.Encoder.update_temp">
+<span class="sig-name descname"><span class="pre">update_temp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_epoch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_epochs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.Encoder.update_temp" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.Encoder.calc_mean_max">
+<span class="sig-name descname"><span class="pre">calc_mean_max</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.Encoder.calc_mean_max" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
@@ -285,7 +351,7 @@ follows:
 <li><p><strong>output_size</strong> (<em>int</em>) – size of the output layer. Should be the same as <cite>input_size</cite> of the encoder.</p></li>
 <li><p><strong>n_hidden_layers</strong> (<em>int</em>) – number of hidden layers. If 0 then the input will be directly connected to the</p></li>
 <li><p><strong>output.</strong> – </p></li>
-<li><p><strong>negative_slope</strong> (<em>float</em><em>, </em><em>optional</em>) – negative slope for the Leaky ReLu activation layer. Defaults to 0.2.</p></li>
+<li><p><strong>negative_slope</strong> (<em>float</em>) – negative slope for the Leaky ReLu activation layer. Defaults to 0.2.</p></li>
 </ul>
 </dd>
 </dl>
@@ -310,18 +376,22 @@ follows:
 <dt class="sig sig-object py" id="autoencoder.models.ConcreteAutoencoder">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.models.</span></span><span class="sig-name descname"><span class="pre">ConcreteAutoencoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_output_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1344</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latent_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">decoder_hidden_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_temp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_temp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_lambda</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reg_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.ConcreteAutoencoder" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pytorch_lightning.LightningModule</span></code></p>
-<p>Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and <a href="#id7"><span class="problematic" id="id8">Reconstruction_</span></a>](<a class="reference external" href="https://arxiv.org/abs/1901.09346">https://arxiv.org/abs/1901.09346</a>).</p>
+<p>Trains a concrete autoencoder
+Implemented according to “<cite>Concrete Autoencoders for Differentiable Feature Selection and Reconstruction.</cite>”
+<span id="id2">[<a class="reference internal" href="../../../index.html#id6" title="Abubakar Abid, Muhammad Fatih Balin, and James Y. Zou. Concrete autoencoders for differentiable feature selection and reconstruction. CoRR, 2019. URL: http://arxiv.org/abs/1901.09346, arXiv:1901.09346.">1</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>input_output_size</strong> (<em>int</em>) – size of the input and output layer.</p></li>
 <li><p><strong>latent_size</strong> (<em>int</em>) – size of the latent layer.</p></li>
-<li><p><strong>decoder_hidden_layers</strong> (<em>int</em><em>, </em><em>optional</em>) – number of hidden layers for the decoder. Defaults to 2.</p></li>
-<li><p><strong>learning_rate</strong> (<em>float</em><em>, </em><em>optional</em>) – learning rate for the optimizer. Defaults to 1e-3.</p></li>
-<li><p><strong>max_temp</strong> (<em>float</em><em>, </em><em>optional</em>) – maximum temperature for Gumble Softmax. Defaults to 10.0.</p></li>
-<li><p><strong>min_temp</strong> (<em>float</em><em>, </em><em>optional</em>) – minimum temperature for Gumble Softmax. Defaults to 0.1.</p></li>
-<li><p><strong>reg_lambda</strong> (<em>float</em><em>, </em><em>optional</em>) – how much weight to apply to the regularization term. If the value is 0.0 then no regularization will be applied. Defaults to 0.0.</p></li>
-<li><p><strong>reg_threshold</strong> (<em>float</em><em>, </em><em>optional</em>) – regularization threshold. The encoder will be penalized when the sum of probabilities for a selection neuron exceed this threshold. Defaults to 1.0.</p></li>
+<li><p><strong>decoder_hidden_layers</strong> (<em>int</em>) – number of hidden layers for the decoder. Defaults to 2.</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>) – learning rate for the optimizer. Defaults to 1e-3.</p></li>
+<li><p><strong>max_temp</strong> (<em>float</em>) – maximum temperature for Gumble Softmax. Defaults to 10.0.</p></li>
+<li><p><strong>min_temp</strong> (<em>float</em>) – minimum temperature for Gumble Softmax. Defaults to 0.1.</p></li>
+<li><p><strong>reg_lambda</strong> (<em>float</em>) – how much weight to apply to the regularization term. If the value is 0.0 then no regularization
+will be applied. Defaults to 0.0.</p></li>
+<li><p><strong>reg_threshold</strong> (<em>float</em>) – regularization threshold. The encoder will be penalized when the sum of probabilities for a
+selection neuron exceed this threshold. Defaults to 1.0.</p></li>
 </ul>
 </dd>
 </dl>
@@ -338,6 +408,79 @@ follows:
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>tuple[torch.Tensor, torch.Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.ConcreteAutoencoder.configure_optimizers">
+<span class="sig-name descname"><span class="pre">configure_optimizers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.ConcreteAutoencoder.configure_optimizers" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.optim.Adam</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.ConcreteAutoencoder.training_step">
+<span class="sig-name descname"><span class="pre">training_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.ConcreteAutoencoder.training_step" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>batch_idx</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.ConcreteAutoencoder.validation_step">
+<span class="sig-name descname"><span class="pre">validation_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.ConcreteAutoencoder.validation_step" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>batch_idx</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.ConcreteAutoencoder.test_step">
+<span class="sig-name descname"><span class="pre">test_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.ConcreteAutoencoder.test_step" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>batch_idx</strong> (<em>int</em>) – </p></li>
+<li><p><strong>dataloader_idx</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.ConcreteAutoencoder.on_train_epoch_start">
+<span class="sig-name descname"><span class="pre">on_train_epoch_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.ConcreteAutoencoder.on_train_epoch_start" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.ConcreteAutoencoder.on_epoch_end">
+<span class="sig-name descname"><span class="pre">on_epoch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.ConcreteAutoencoder.on_epoch_end" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
@@ -364,20 +507,135 @@ follows:
 </dd></dl>
 </dd></dl>
 <dl class="py class">
+<dt class="sig sig-object py" id="autoencoder.models.BaseDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.models.</span></span><span class="sig-name descname"><span class="pre">BaseDecoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.BaseDecoder" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pytorch_lightning.LightningModule</span></code></p>
+<p>Internal module used as a base for the <a class="reference internal" href="#autoencoder.models.FCNDecoder" title="autoencoder.models.FCNDecoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">FCNDecoder</span></code></a> and the <a class="reference internal" href="#autoencoder.models.SphericalDecoder" title="autoencoder.models.SphericalDecoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">SphericalDecoder</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>learning_rate</strong> (<em>float</em>) – Learning rate</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.BaseDecoder.configure_optimizers">
+<span class="sig-name descname"><span class="pre">configure_optimizers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.BaseDecoder.configure_optimizers" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.optim.Adam</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.BaseDecoder.training_step">
+<span class="sig-name descname"><span class="pre">training_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.BaseDecoder.training_step" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>torch.Tensor</em><em>]</em>) – </p></li>
+<li><p><strong>batch_idx</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.BaseDecoder.validation_step">
+<span class="sig-name descname"><span class="pre">validation_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.BaseDecoder.validation_step" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>batch_idx</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.BaseDecoder.test_step">
+<span class="sig-name descname"><span class="pre">test_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.BaseDecoder.test_step" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.Tensor</em>) – </p></li>
+<li><p><strong>batch_idx</strong> (<em>int</em>) – </p></li>
+<li><p><strong>dataloader_idx</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.BaseDecoder._shared_eval">
+<span class="sig-name descname"><span class="pre">_shared_eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.BaseDecoder._shared_eval" title="Permalink to this definition">#</a></dt>
+<dd><p>Calculate the loss for a batch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch</strong> (<em>torch.Tensor</em>) – batch data.</p></li>
+<li><p><strong>batch_idx</strong> (<em>int</em>) – batch id.</p></li>
+<li><p><strong>prefix</strong> (<em>str</em>) – prefix for logging.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>calculated loss.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
 <dt class="sig sig-object py" id="autoencoder.models.FCNDecoder">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.models.</span></span><span class="sig-name descname"><span class="pre">FCNDecoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.FCNDecoder" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseDecoder</span></code></p>
+<dd><p>Bases: <a class="reference internal" href="#autoencoder.models.BaseDecoder" title="autoencoder.models.BaseDecoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseDecoder</span></code></a></p>
 <p>Fully Connected Network decoder</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>input_size</strong> (<em>int</em>) – input size of the network</p></li>
 <li><p><strong>output_size</strong> (<em>int</em>) – output size of the network</p></li>
-<li><p><strong>hidden_layers</strong> (<em>int</em><em>, </em><em>optional</em>) – number of hidden layers. Defaults to 2.</p></li>
-<li><p><strong>learning_rate</strong> (<em>float</em><em>, </em><em>optional</em>) – learning rate. Defaults to 1e-3.</p></li>
+<li><p><strong>hidden_layers</strong> (<em>int</em>) – number of hidden layers. Defaults to 2.</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>) – learning rate. Defaults to 1e-3.</p></li>
 </ul>
 </dd>
 </dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.FCNDecoder.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.FCNDecoder.forward" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="autoencoder.models.SphericalDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.models.</span></span><span class="sig-name descname"><span class="pre">SphericalDecoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sh_degree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_shells</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.SphericalDecoder" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#autoencoder.models.BaseDecoder" title="autoencoder.models.BaseDecoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseDecoder</span></code></a></p>
+<p>Spherical decoder</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameters_file_path</strong> (<em>str</em>) – Path string of the parameters file</p></li>
+<li><p><strong>sh_degree</strong> (<em>int</em>) – Spherical Harmonics degree</p></li>
+<li><p><strong>n_shells</strong> (<em>int</em>) – Number of b-values</p></li>
+<li><p><strong>learning_rate</strong> (<em>float</em>) – Learning rate. Defaults to 1e-3.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.models.SphericalDecoder.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.models.SphericalDecoder.forward" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>torch.Tensor</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
 </dd></dl>
 </section>
 </section>
@@ -424,9 +682,14 @@ follows:
             <ul>
 <li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.models</span></code></a><ul>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
-<li><a class="reference internal" href="#classes">Classes</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#autoencoder.models.init_weights_orthogonal">init_weights_orthogonal</a></li>
 <li><a class="reference internal" href="#autoencoder.models.Encoder">Encoder</a><ul>
+<li><a class="reference internal" href="#autoencoder.models.Encoder.latent_features">latent_features</a></li>
 <li><a class="reference internal" href="#autoencoder.models.Encoder.forward">forward</a></li>
+<li><a class="reference internal" href="#autoencoder.models.Encoder.update_temp">update_temp</a></li>
+<li><a class="reference internal" href="#autoencoder.models.Encoder.calc_mean_max">calc_mean_max</a></li>
 <li><a class="reference internal" href="#autoencoder.models.Encoder.regularization">regularization</a></li>
 </ul>
 </li>
@@ -436,10 +699,31 @@ follows:
 </li>
 <li><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder">ConcreteAutoencoder</a><ul>
 <li><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder.forward">forward</a></li>
+<li><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder.configure_optimizers">configure_optimizers</a></li>
+<li><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder.training_step">training_step</a></li>
+<li><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder.validation_step">validation_step</a></li>
+<li><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder.test_step">test_step</a></li>
+<li><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder.on_train_epoch_start">on_train_epoch_start</a></li>
+<li><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder.on_epoch_end">on_epoch_end</a></li>
 <li><a class="reference internal" href="#autoencoder.models.ConcreteAutoencoder._shared_eval">_shared_eval</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#autoencoder.models.FCNDecoder">FCNDecoder</a></li>
+<li><a class="reference internal" href="#autoencoder.models.BaseDecoder">BaseDecoder</a><ul>
+<li><a class="reference internal" href="#autoencoder.models.BaseDecoder.configure_optimizers">configure_optimizers</a></li>
+<li><a class="reference internal" href="#autoencoder.models.BaseDecoder.training_step">training_step</a></li>
+<li><a class="reference internal" href="#autoencoder.models.BaseDecoder.validation_step">validation_step</a></li>
+<li><a class="reference internal" href="#autoencoder.models.BaseDecoder.test_step">test_step</a></li>
+<li><a class="reference internal" href="#autoencoder.models.BaseDecoder._shared_eval">_shared_eval</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#autoencoder.models.FCNDecoder">FCNDecoder</a><ul>
+<li><a class="reference internal" href="#autoencoder.models.FCNDecoder.forward">forward</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#autoencoder.models.SphericalDecoder">SphericalDecoder</a><ul>
+<li><a class="reference internal" href="#autoencoder.models.SphericalDecoder.forward">forward</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

@@ -157,8 +157,20 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="simple">
+  <ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../../index.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="../index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder</span></code></a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="../spherical/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../spherical/convolution/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.convolution</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../spherical/transform/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.spherical.transform</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../__main__/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.__main__</span></code></a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.datasets</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../logger/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.logger</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../models/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.models</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -205,77 +217,135 @@
 <col style="width: 90%"/>
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.datasets.Transformer" title="autoencoder.datasets.Transformer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Transformer</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.datasets.SphericalTransformer" title="autoencoder.datasets.SphericalTransformer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SphericalTransformer</span></code></a></p></td>
-<td><p>Helper class that provides a standard way to create an ABC using</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#autoencoder.datasets.DiffusionMRIDataset" title="autoencoder.datasets.DiffusionMRIDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DiffusionMRIDataset</span></code></a></p></td>
 <td><p>Diffusion MRI dataset. Loads voxel data from HDF5 file fast.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#autoencoder.datasets.MRIDataModule" title="autoencoder.datasets.MRIDataModule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MRIDataModule</span></code></a></p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table></div>
 <dl class="py class">
-<dt class="sig sig-object py" id="autoencoder.datasets.Transformer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.datasets.</span></span><span class="sig-name descname"><span class="pre">Transformer</span></span><a class="headerlink" href="#autoencoder.datasets.Transformer" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">abc.ABC</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
-</dd></dl>
-<dl class="py class">
-<dt class="sig sig-object py" id="autoencoder.datasets.SphericalTransformer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.datasets.</span></span><span class="sig-name descname"><span class="pre">SphericalTransformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_n_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.SphericalTransformer" title="Permalink to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#autoencoder.datasets.Transformer" title="autoencoder.datasets.Transformer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Transformer</span></code></a></p>
-<p>Helper class that provides a standard way to create an ABC using
-inheritance.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>l_max</strong> (<em>int</em>) – </p></li>
-<li><p><strong>symmetric</strong> (<em>bool</em>) – </p></li>
-<li><p><strong>inversion_n_iters</strong> (<em>int</em>) – </p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py class">
 <dt class="sig sig-object py" id="autoencoder.datasets.DiffusionMRIDataset">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.datasets.</span></span><span class="sig-name descname"><span class="pre">DiffusionMRIDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.DiffusionMRIDataset" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.datasets.</span></span><span class="sig-name descname"><span class="pre">DiffusionMRIDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tissue</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_spherical_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.DiffusionMRIDataset" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">torch.utils.data.Dataset</span></code></p>
 <p>Diffusion MRI dataset. Loads voxel data from HDF5 file fast.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>parameters_file_path</strong> (<em>Path</em>) – HDF5 file path that contains all parameters from the MRI data</p></li>
-<li><p><strong>data_file_paths</strong> (<em>List</em><em>[</em><em>Path</em><em>]</em>) – list of HDF5 file paths containing voxel data</p></li>
-<li><p><strong>tissue</strong> (<em>str</em>) – <p>The tissue to return. Can be the following values: <cite>wb</cite>, <cite>gm</cite>, <cite>wm</cite>, and <cite>csf</cite>.
+<li><p><strong>parameters_file_path</strong> (<em>pathlib.Path</em>) – HDF5 file path that contains all parameters from the MRI data</p></li>
+<li><p><strong>data_file_path</strong> (<em>pathlib.Path</em>) – HDF5 file path containing voxel data</p></li>
+<li><p><strong>subject_list</strong> (<em>numpy.ndarray</em>) – list of subjects to create the dataset with.</p></li>
+<li><p><strong>tissue</strong> (<em>Literal</em><em>[</em><em>wb</em><em>, </em><em>gm</em><em>, </em><em>wm</em><em>, </em><em>csf</em><em>]</em>) – <p>The tissue to return. Can be the following values: <code class="docutils literal notranslate"><span class="pre">wb</span></code>, <code class="docutils literal notranslate"><span class="pre">gm</span></code>, <code class="docutils literal notranslate"><span class="pre">wm</span></code>, and <code class="docutils literal notranslate"><span class="pre">csf</span></code>.
 where:</p>
 <blockquote>
 <div><ul>
-<li><p><cite>wb</cite>  = Whole Brain</p></li>
-<li><p><cite>cgm</cite> = Grey Matter</p></li>
-<li><p><cite>wm</cite>  = White Matter</p></li>
-<li><p><cite>csf</cite> = Cerebral Spinal Fluid</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wb</span></code> = Whole Brain</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gm</span></code> = Grey Matter</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wm</span></code> = White Matter</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">csf</span></code> = Cerebral Spinal Fluid</p></li>
 </ul>
 </div></blockquote>
-<p>These tissue types should be created beforehand with MRTrix3 <cite>5ttgen</cite> tool.</p>
+<p>These tissue types should be created beforehand with MRTrix3 <code class="docutils literal notranslate"><span class="pre">5ttgen</span></code> tool.</p>
 </p></li>
-<li><p><strong>include_parameters</strong> (<em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – parameters to <em>only</em> include in the dataset. Defaults to None.</p></li>
-<li><p><strong>exclude_parameters</strong> (<em>List</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – parameters to exclude from the dataset. Defaults to None.</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – batch size. Defaults to 0.</p></li>
-<li><p><strong>return_target</strong> (<em>bool</em><em>, </em><em>optional</em>) – return target data with all parameters included. Useful for loss calculation
-when recreating the dataset from a subset of parameters. Defaults to False.</p></li>
-<li><p><strong>transform</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#autoencoder.datasets.SphericalTransformer" title="autoencoder.datasets.SphericalTransformer"><em>SphericalTransformer</em></a><em>, </em><em>DelimitTransformer</em><em>]</em><em>, </em><em>optional</em>) – Used to transform the data for models
-that require different data. Defaults to None.</p></li>
-<li><p><strong>data_file_path</strong> (<em>pathlib.Path</em>) – </p></li>
+<li><p><strong>include_parameters</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – parameters to <em>only</em> include in the dataset. Defaults to None.</p></li>
+<li><p><strong>exclude_parameters</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – parameters to exclude from the dataset. Defaults to None.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) – batch size. Defaults to 0.</p></li>
+<li><p><strong>return_target</strong> (<em>bool</em>) – return target data with all parameters included. Useful for loss calculation when recreating
+the dataset from a subset of parameters. Defaults to False.</p></li>
+<li><p><strong>use_spherical_data</strong> (<em>bool</em>) – Used to transform the data for models that require spherical data. Defaults to False.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.datasets.DiffusionMRIDataset.get_subject_id_by_batch_id">
+<span class="sig-name descname"><span class="pre">get_subject_id_by_batch_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.DiffusionMRIDataset.get_subject_id_by_batch_id" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>batch_id</strong> (<em>int</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.datasets.DiffusionMRIDataset.get_metadata_by_subject_id">
+<span class="sig-name descname"><span class="pre">get_metadata_by_subject_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.DiffusionMRIDataset.get_metadata_by_subject_id" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>subject_id</strong> (<em>int</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.datasets.DiffusionMRIDataset.__len__">
+<span class="sig-name descname"><span class="pre">__len__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.DiffusionMRIDataset.__len__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+<dl class="py method">
 <dt class="sig sig-object py" id="autoencoder.datasets.DiffusionMRIDataset.__getitem__">
 <span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.DiffusionMRIDataset.__getitem__" title="Permalink to this definition">#</a></dt>
 <dd><p>Generates one sample of data</p>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="autoencoder.datasets.MRIDataModule">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">autoencoder.datasets.</span></span><span class="sig-name descname"><span class="pre">MRIDataModule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_subject_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate_subject_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_spherical_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.MRIDataModule" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">pytorch_lightning.LightningDataModule</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameters_file_path</strong> (<em>str</em>) – </p></li>
+<li><p><strong>data_file_path</strong> (<em>str</em>) – </p></li>
+<li><p><strong>train_subject_ids</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>validate_subject_ids</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+<li><p><strong>include_parameters</strong> (<em>str</em>) – </p></li>
+<li><p><strong>exclude_parameters</strong> (<em>str</em>) – </p></li>
+<li><p><strong>return_target</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>use_spherical_data</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) – </p></li>
+<li><p><strong>num_workers</strong> (<em>int</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.datasets.MRIDataModule.setup">
+<span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.MRIDataModule.setup" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>stage</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.datasets.MRIDataModule.train_dataloader">
+<span class="sig-name descname"><span class="pre">train_dataloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.MRIDataModule.train_dataloader" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.utils.data.DataLoader</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.datasets.MRIDataModule.val_dataloader">
+<span class="sig-name descname"><span class="pre">val_dataloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.MRIDataModule.val_dataloader" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.utils.data.DataLoader</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="autoencoder.datasets.MRIDataModule.test_dataloader">
+<span class="sig-name descname"><span class="pre">test_dataloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#autoencoder.datasets.MRIDataModule.test_dataloader" title="Permalink to this definition">#</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>torch.utils.data.DataLoader</p>
+</dd>
+</dl>
 </dd></dl>
 </dd></dl>
 </section>
@@ -324,10 +394,18 @@ that require different data. Defaults to None.</p></li>
 <li><a class="reference internal" href="#"><code class="xref py py-mod docutils literal notranslate"><span class="pre">autoencoder.datasets</span></code></a><ul>
 <li><a class="reference internal" href="#module-contents">Module Contents</a><ul>
 <li><a class="reference internal" href="#classes">Classes</a><ul>
-<li><a class="reference internal" href="#autoencoder.datasets.Transformer">Transformer</a></li>
-<li><a class="reference internal" href="#autoencoder.datasets.SphericalTransformer">SphericalTransformer</a></li>
 <li><a class="reference internal" href="#autoencoder.datasets.DiffusionMRIDataset">DiffusionMRIDataset</a><ul>
+<li><a class="reference internal" href="#autoencoder.datasets.DiffusionMRIDataset.get_subject_id_by_batch_id">get_subject_id_by_batch_id</a></li>
+<li><a class="reference internal" href="#autoencoder.datasets.DiffusionMRIDataset.get_metadata_by_subject_id">get_metadata_by_subject_id</a></li>
+<li><a class="reference internal" href="#autoencoder.datasets.DiffusionMRIDataset.__len__">__len__</a></li>
 <li><a class="reference internal" href="#autoencoder.datasets.DiffusionMRIDataset.__getitem__">__getitem__</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#autoencoder.datasets.MRIDataModule">MRIDataModule</a><ul>
+<li><a class="reference internal" href="#autoencoder.datasets.MRIDataModule.setup">setup</a></li>
+<li><a class="reference internal" href="#autoencoder.datasets.MRIDataModule.train_dataloader">train_dataloader</a></li>
+<li><a class="reference internal" href="#autoencoder.datasets.MRIDataModule.val_dataloader">val_dataloader</a></li>
+<li><a class="reference internal" href="#autoencoder.datasets.MRIDataModule.test_dataloader">test_dataloader</a></li>
 </ul>
 </li>
 </ul>

@@ -1,5 +1,3 @@
-:orphan:
-
 :py:mod:`autoencoder.models`
 ============================
 
@@ -17,31 +15,48 @@ Classes
    autoencoder.models.Encoder
    autoencoder.models.Decoder
    autoencoder.models.ConcreteAutoencoder
+   autoencoder.models.BaseDecoder
    autoencoder.models.FCNDecoder
+   autoencoder.models.SphericalDecoder
 
 
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   autoencoder.models.init_weights_orthogonal
+
+
+
+.. py:function:: init_weights_orthogonal(m)
+
+   If Pytorch module is Linear then initialize the according to ``torch.nn.init.orthogonal``
+
+   :param m: input module
 
 
 .. py:class:: Encoder(input_size, output_size, max_temp = 10.0, min_temp = 0.1, reg_threshold = 3.0, reg_eps = 1e-10)
 
    Bases: :py:obj:`torch.nn.Module`
 
-   Feature selection encoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
+   Feature selection encoder
+   Implemented according to "`Concrete Autoencoders for Differentiable Feature Selection and Reconstruction.`"
+   :cite:p:`DBLP:journals/corr/abs-1901-09346`.
 
    :param input_size: size of the input layer. Should be the same as the `output_size` of the decoder.
-   :type input_size: int
    :param output_size: size of the latent layer. Should be the same as the `input_size` of the decoder.
-   :type output_size: int
    :param max_temp: maximum temperature for Gumble Softmax. Defaults to 10.0.
-   :type max_temp: float, optional
    :param min_temp: minimum temperature for Gumble Softmax. Defaults to 0.1.
-   :type min_temp: float, optional
    :param reg_threshold: regularization threshold. The encoder will be penalized when the sum of
-   :type reg_threshold: float, optional
-   :param probabilities for a selection neuron exceed this threshold. Defaults to 0.3.:
+                         probabilities for a selection neuron exceed this threshold. Defaults to 0.3.
    :param reg_eps: regularization epsilon. Minimum value for the clamped softmax function in
-   :type reg_eps: float, optional
-   :param regularization term. Defaults to 1e-10.:
+                   regularization term. Defaults to 1e-10.
+
+   .. py:method:: latent_features(self)
+      :property:
+
 
    .. py:method:: forward(self, x)
 
@@ -52,6 +67,12 @@ Classes
 
       :returns: encoder output of size `output_size`.
       :rtype: torch.Tensor
+
+
+   .. py:method:: update_temp(self, current_epoch, max_epochs)
+
+
+   .. py:method:: calc_mean_max(self)
 
 
    .. py:method:: regularization(self)
@@ -75,14 +96,10 @@ Classes
    ```
 
    :param input_size: size of the latent layer. Should be the same as the `output_size` of the encoder.
-   :type input_size: int
    :param output_size: size of the output layer. Should be the same as `input_size` of the encoder.
-   :type output_size: int
    :param n_hidden_layers: number of hidden layers. If 0 then the input will be directly connected to the
-   :type n_hidden_layers: int
    :param output.:
    :param negative_slope: negative slope for the Leaky ReLu activation layer. Defaults to 0.2.
-   :type negative_slope: float, optional
 
    .. py:method:: forward(self, x)
 
@@ -100,24 +117,20 @@ Classes
 
    Bases: :py:obj:`pytorch_lightning.LightningModule`
 
-   Trains a concrete autoencoder. Implemented according to [_Concrete Autoencoders for Differentiable Feature Selection and Reconstruction_](https://arxiv.org/abs/1901.09346).
+   Trains a concrete autoencoder
+   Implemented according to "`Concrete Autoencoders for Differentiable Feature Selection and Reconstruction.`"
+   :cite:p:`DBLP:journals/corr/abs-1901-09346`.
 
    :param input_output_size: size of the input and output layer.
-   :type input_output_size: int
    :param latent_size: size of the latent layer.
-   :type latent_size: int
    :param decoder_hidden_layers: number of hidden layers for the decoder. Defaults to 2.
-   :type decoder_hidden_layers: int, optional
    :param learning_rate: learning rate for the optimizer. Defaults to 1e-3.
-   :type learning_rate: float, optional
    :param max_temp: maximum temperature for Gumble Softmax. Defaults to 10.0.
-   :type max_temp: float, optional
    :param min_temp: minimum temperature for Gumble Softmax. Defaults to 0.1.
-   :type min_temp: float, optional
-   :param reg_lambda: how much weight to apply to the regularization term. If the value is 0.0 then no regularization will be applied. Defaults to 0.0.
-   :type reg_lambda: float, optional
-   :param reg_threshold: regularization threshold. The encoder will be penalized when the sum of probabilities for a selection neuron exceed this threshold. Defaults to 1.0.
-   :type reg_threshold: float, optional
+   :param reg_lambda: how much weight to apply to the regularization term. If the value is 0.0 then no regularization
+                      will be applied. Defaults to 0.0.
+   :param reg_threshold: regularization threshold. The encoder will be penalized when the sum of probabilities for a
+                         selection neuron exceed this threshold. Defaults to 1.0.
 
    .. py:method:: forward(self, x)
 
@@ -130,7 +143,61 @@ Classes
       :rtype: tuple[torch.Tensor, torch.Tensor]
 
 
+   .. py:method:: configure_optimizers(self)
+
+
+   .. py:method:: training_step(self, batch, batch_idx)
+
+
+   .. py:method:: validation_step(self, batch, batch_idx)
+
+
+   .. py:method:: test_step(self, batch, batch_idx, dataloader_idx)
+
+
+   .. py:method:: on_train_epoch_start(self)
+
+
+   .. py:method:: on_epoch_end(self)
+
+
    .. py:method:: _shared_eval(self, batch, dataloader_idx, prefix)
+
+      Calculate the loss for a batch.
+
+      :param batch: batch data.
+      :type batch: torch.Tensor
+      :param batch_idx: batch id.
+      :type batch_idx: int
+      :param prefix: prefix for logging.
+      :type prefix: str
+
+      :returns: calculated loss.
+      :rtype: torch.Tensor
+
+
+
+.. py:class:: BaseDecoder(learning_rate, *args, **kwargs)
+
+   Bases: :py:obj:`pytorch_lightning.LightningModule`
+
+   Internal module used as a base for the :class:`.FCNDecoder` and the :class:`.SphericalDecoder`.
+
+   :param learning_rate: Learning rate
+
+   .. py:method:: configure_optimizers(self)
+
+
+   .. py:method:: training_step(self, batch, batch_idx)
+
+
+   .. py:method:: validation_step(self, batch, batch_idx)
+
+
+   .. py:method:: test_step(self, batch, batch_idx, dataloader_idx)
+
+
+   .. py:method:: _shared_eval(self, batch, batch_idx, prefix)
 
       Calculate the loss for a batch.
 
@@ -153,12 +220,26 @@ Classes
    Fully Connected Network decoder
 
    :param input_size: input size of the network
-   :type input_size: int
    :param output_size: output size of the network
-   :type output_size: int
    :param hidden_layers: number of hidden layers. Defaults to 2.
-   :type hidden_layers: int, optional
    :param learning_rate: learning rate. Defaults to 1e-3.
-   :type learning_rate: float, optional
+
+   .. py:method:: forward(self, x)
+
+
+
+.. py:class:: SphericalDecoder(parameters_file_path, sh_degree, n_shells, learning_rate = 0.001)
+
+   Bases: :py:obj:`BaseDecoder`
+
+   Spherical decoder
+
+   :param parameters_file_path: Path string of the parameters file
+   :param sh_degree: Spherical Harmonics degree
+   :param n_shells: Number of b-values
+   :param learning_rate: Learning rate. Defaults to 1e-3.
+
+   .. py:method:: forward(self, x)
+
 
 

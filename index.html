@@ -205,8 +205,15 @@
           </label>
         </div>
         <article role="main">
-          <section id="welcome-to-concrete-autoencoder-s-documentation">
-<h1>Welcome to Concrete Autoencoder’s documentation!<a class="headerlink" href="#welcome-to-concrete-autoencoder-s-documentation" title="Permalink to this headline">#</a></h1>
+          <section id="concrete-autoencoder-documentation">
+<h1>Concrete Autoencoder documentation!<a class="headerlink" href="#concrete-autoencoder-documentation" title="Permalink to this headline">#</a></h1>
+<p>Sub-sampling on multi-dimensional diffusion MRI with rotation equivariance.</p>
+<figure class="align-default" id="id7">
+<img alt="_images/connectome.jpg" src="_images/connectome.jpg"/>
+<figcaption>
+<p><span class="caption-text">The human connectome. Credit: Human Connectome Project</span><a class="headerlink" href="#id7" title="Permalink to this image">#</a></p>
+</figcaption>
+</figure>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="autoapi/index.html">API Reference</a><ul>
@@ -215,6 +222,49 @@
 </li>
 </ul>
 </div>
+</section>
+<section id="getting-started">
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">#</a></h1>
+<section id="installing-the-project">
+<h2>Installing the project<a class="headerlink" href="#installing-the-project" title="Permalink to this headline">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python -m pip install -e .
+</pre></div>
+</div>
+<p>This installs all dependencies to run the project. Install the development dependencies with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python -m pip install -e .<span class="o">[</span>dev<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="running-the-project">
+<h2>Running the project<a class="headerlink" href="#running-the-project" title="Permalink to this headline">#</a></h2>
+<p><a class="reference external" href="https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html">PyTorch Lightning CLI</a> is used to generate a command line interface which you can use to run the project.
+This CLI is automatically generated based on the parameters required by each model and dataset.
+The values for the parameters can be provided via config files or command line arguments.
+Several config files are provided in the <cite>configs</cite> folder:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">trainer.yaml</span></code>: this config file contains basic trainer parameters, like which GPU to use.
+This config file should be included in every training session.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mudi_data.yaml</span></code>: contains the configuration for the MUDI dataset.
+Used if you want to train with the MUDI dataset.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mudi_concrete_autoencder.yaml</span></code>: config for the Concrete autoencoder with MUDI specific parameters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mudi_fcn_decoder.yaml</span></code>: config for the Fully Connected Decoder with MUDI specific parameters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mudi_spherical_decoder.yaml</span></code>: config for the Spherical Decoder with MUDI specific parameters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hcp_data.yaml</span></code>: contains the configuration for the HCP dataset.
+Used if you want to train with the HCP dataset.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hcp_concrete_autoencder.yaml</span></code>: config for the Concrete autoencoder with HCP specific parameters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hcp_fcn_decoder.yaml</span></code>: config for the Fully Connected Decoder with HCP specific parameters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hcp_spherical_decoder.yaml</span></code>: config for the Spherical Decoder with HCP specific parameters.</p></li>
+</ul>
+</div></blockquote>
+<p>Multiple configs can be chained:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python -m autoencoder <span class="se">\</span>
+   --config ./configs/trainer.yaml <span class="se">\</span>
+   --config ./configs/hcp_data.yaml <span class="se">\</span>
+   --config ./configs/hcp_fcn_decoder.yaml
+</pre></div>
+</div>
+</section>
 </section>
 <section id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">#</a></h1>
@@ -286,7 +336,12 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Welcome to Concrete Autoencoder’s documentation!</a></li>
+<li><a class="reference internal" href="#">Concrete Autoencoder documentation!</a></li>
+<li><a class="reference internal" href="#getting-started">Getting started</a><ul>
+<li><a class="reference internal" href="#installing-the-project">Installing the project</a></li>
+<li><a class="reference internal" href="#running-the-project">Running the project</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 <li><a class="reference internal" href="#bibliography">Bibliography</a></li>
 </ul>
